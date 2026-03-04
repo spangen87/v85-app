@@ -16,10 +16,14 @@ async function getRaces(supabase: Awaited<ReturnType<typeof createClient>>, game
   const { data, error } = await supabase
     .from("races")
     .select(`
-      id, race_number, distance, start_method,
+      id, race_number, race_name, distance, start_method, start_time,
       starters (
-        id, start_number, horse_id, driver, trainer, odds, bet_distribution,
-        starts_total, wins_total, starts_current_year, wins_current_year,
+        id, start_number, post_position, horse_id,
+        driver, driver_win_pct, trainer, trainer_win_pct,
+        odds, bet_distribution,
+        shoes_reported, shoes_front, shoes_back, shoes_front_changed, shoes_back_changed,
+        sulky_type, horse_age, horse_sex, horse_color, pedigree_father, home_track,
+        starts_total, wins_total, places_total, starts_current_year, wins_current_year,
         starts_prev_year, wins_prev_year,
         best_time, last_5_results, life_records, formscore,
         horses ( name )

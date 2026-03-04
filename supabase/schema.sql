@@ -70,11 +70,32 @@ create policy "Service kan skriva horses" on horses for all using (auth.role() =
 create policy "Service kan skriva starters" on starters for all using (auth.role() = 'service_role');
 
 -- ============================================================
--- MIGRATION: Kör dessa i Supabase Dashboard → SQL Editor
--- om du redan skapat tabellerna ovan
+-- MIGRATION v2: Kör dessa i Supabase Dashboard → SQL Editor
 -- ============================================================
+-- Races
 -- alter table races add column if not exists start_method text;
+-- alter table races add column if not exists race_name text;
+-- alter table races add column if not exists start_time timestamptz;
+
+-- Starters (batch 1 — från förra migrationen)
 -- alter table starters add column if not exists bet_distribution float;
 -- alter table starters add column if not exists starts_prev_year integer;
 -- alter table starters add column if not exists wins_prev_year integer;
 -- alter table starters add column if not exists life_records jsonb;
+
+-- Starters (batch 2 — ny statistik)
+-- alter table starters add column if not exists post_position integer;
+-- alter table starters add column if not exists driver_win_pct float;
+-- alter table starters add column if not exists trainer_win_pct float;
+-- alter table starters add column if not exists shoes_reported boolean;
+-- alter table starters add column if not exists shoes_front boolean;
+-- alter table starters add column if not exists shoes_back boolean;
+-- alter table starters add column if not exists shoes_front_changed boolean;
+-- alter table starters add column if not exists shoes_back_changed boolean;
+-- alter table starters add column if not exists sulky_type text;
+-- alter table starters add column if not exists horse_age integer;
+-- alter table starters add column if not exists horse_sex text;
+-- alter table starters add column if not exists horse_color text;
+-- alter table starters add column if not exists pedigree_father text;
+-- alter table starters add column if not exists home_track text;
+-- alter table starters add column if not exists places_total integer;

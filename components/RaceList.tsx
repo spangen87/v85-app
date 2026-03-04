@@ -8,13 +8,28 @@ import type { LifeRecord } from "@/lib/analysis";
 interface Starter {
   id: string;
   start_number: number;
+  post_position: number | null;
   horse_id: string;
   driver: string;
+  driver_win_pct: number | null;
   trainer: string;
+  trainer_win_pct: number | null;
   odds: number | null;
   bet_distribution: number | null;
+  shoes_reported: boolean | null;
+  shoes_front: boolean | null;
+  shoes_back: boolean | null;
+  shoes_front_changed: boolean | null;
+  shoes_back_changed: boolean | null;
+  sulky_type: string | null;
+  horse_age: number | null;
+  horse_sex: string | null;
+  horse_color: string | null;
+  pedigree_father: string | null;
+  home_track: string | null;
   starts_total: number | null;
   wins_total: number | null;
+  places_total: number | null;
   starts_current_year: number | null;
   wins_current_year: number | null;
   starts_prev_year: number | null;
@@ -29,8 +44,10 @@ interface Starter {
 interface Race {
   id: string;
   race_number: number;
+  race_name: string | null;
   distance: number;
   start_method: string | null;
+  start_time: string | null;
   starters: Starter[];
 }
 
@@ -53,9 +70,24 @@ export function RaceList({ races }: { races: Race[] }) {
               onClick={() => setOpenRace(isOpen ? null : race.id)}
               className="w-full flex items-center justify-between px-5 py-3 text-left hover:bg-gray-800 transition"
             >
-              <span className="text-white font-semibold">Lopp {race.race_number}</span>
-              <span className="text-gray-400 text-sm">
-                {race.distance} m &nbsp; {isOpen ? "▲" : "▼"}
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="text-white font-semibold shrink-0">
+                  Lopp {race.race_number}
+                </span>
+                {race.race_name && (
+                  <span className="text-gray-400 text-xs truncate hidden sm:block">
+                    {race.race_name}
+                  </span>
+                )}
+              </div>
+              <span className="text-gray-400 text-sm shrink-0 ml-2">
+                {race.start_time
+                  ? new Date(race.start_time).toLocaleTimeString("sv-SE", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }) + " · "
+                  : ""}
+                {race.distance} m &nbsp;{isOpen ? "▲" : "▼"}
               </span>
             </button>
 
