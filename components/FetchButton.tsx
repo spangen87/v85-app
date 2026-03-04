@@ -14,6 +14,12 @@ function minDate(): string {
   return d.toLocaleDateString("sv-SE");
 }
 
+function maxDate(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 14);
+  return d.toLocaleDateString("sv-SE");
+}
+
 export function FetchButton() {
   const [date, setDate] = useState(todayLocal());
   const [loading, setLoading] = useState(false);
@@ -48,7 +54,7 @@ export function FetchButton() {
         type="date"
         value={date}
         min={minDate()}
-        max={todayLocal()}
+        max={maxDate()}
         onChange={(e) => setDate(e.target.value)}
         className="rounded-lg bg-gray-800 border border-gray-700 text-white text-sm px-3 py-2 focus:outline-none focus:border-blue-500"
       />
