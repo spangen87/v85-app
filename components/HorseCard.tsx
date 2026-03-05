@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 interface LastResult {
   place: string;
   date: string;
@@ -80,7 +82,7 @@ function ShoeBadge({
   );
 }
 
-export function HorseCard({ starter }: { starter: Starter }) {
+export function HorseCard({ starter, notesSection }: { starter: Starter; notesSection?: ReactNode }) {
   const winRateYear = starter.starts_current_year
     ? Math.round(((starter.wins_current_year ?? 0) / starter.starts_current_year) * 100)
     : null;
@@ -225,6 +227,9 @@ export function HorseCard({ starter }: { starter: Starter }) {
           })}
         </div>
       )}
+
+      {/* Anteckningar */}
+      {notesSection}
     </div>
   );
 }

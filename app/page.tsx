@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { RaceList } from "@/components/RaceList";
 import { FetchButton } from "@/components/FetchButton";
 import { GameSelector } from "@/components/GameSelector";
+import { UserMenu } from "@/components/groups/UserMenu";
+import { getProfile, getMyGroups } from "@/lib/actions/groups";
 import { redirect } from "next/navigation";
 
 async function getAllGames(supabase: Awaited<ReturnType<typeof createClient>>) {
@@ -47,7 +49,11 @@ export default async function HomePage({
   if (!user) redirect("/login");
 
   const params = await searchParams;
-  const games = await getAllGames(supabase);
+  const [games, profile, userGroups] = await Promise.all([
+    getAllGames(supabase),
+    getProfile(),
+    getMyGroups(),
+  ]);
 
   // Välj spel: URL-param → senaste sparade
   const selectedId = params.game && games.find((g) => g.id === params.game)
@@ -64,6 +70,11 @@ export default async function HomePage({
         <div className="flex items-center gap-3 flex-wrap justify-end">
           <GameSelector games={games} selectedId={selectedId} />
           <FetchButton />
+          <UserMenu
+            profile={profile}
+            groups={userGroups}
+            userEmail={user.email ?? ""}
+          />
         </div>
       </header>
 
@@ -83,7 +94,7 @@ export default async function HomePage({
           </div>
         ) : (
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          <RaceList races={races as any} />
+          <RaceList races={races as any} userGroups={userGroups} currentUserId={user.id} />
         )}
       </div>
     </main>

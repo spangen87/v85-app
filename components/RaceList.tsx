@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { HorseCard } from "./HorseCard";
 import { AnalysisPanel } from "./AnalysisPanel";
+import { HorseNotes } from "./notes/HorseNotes";
 import type { LifeRecord } from "@/lib/analysis";
+import type { Group } from "@/lib/types";
 
 interface Starter {
   id: string;
@@ -51,13 +53,21 @@ interface Race {
   starters: Starter[];
 }
 
-export function RaceList({ races }: { races: Race[] }) {
+export function RaceList({
+  races,
+  userGroups,
+  currentUserId,
+}: {
+  races: Race[];
+  userGroups: Group[];
+  currentUserId: string;
+}) {
   const [openRace, setOpenRace] = useState<string | null>(races[0]?.id ?? null);
   const [analysisRace, setAnalysisRace] = useState<string | null>(null);
 
   return (
     <div className="space-y-2">
-      {races.map((race) => {
+      {races.map((race, index) => {
         const sorted = [...race.starters].sort(
           (a, b) => (b.formscore ?? 0) - (a.formscore ?? 0)
         );
@@ -72,7 +82,7 @@ export function RaceList({ races }: { races: Race[] }) {
             >
               <div className="flex items-center gap-3 min-w-0">
                 <span className="text-white font-semibold shrink-0">
-                  Lopp {race.race_number}
+                  Avd {index + 1}
                 </span>
                 {race.race_name && (
                   <span className="text-gray-400 text-xs truncate hidden sm:block">
@@ -116,7 +126,17 @@ export function RaceList({ races }: { races: Race[] }) {
 
                 <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 mt-3">
                   {sorted.map((s) => (
-                    <HorseCard key={s.id} starter={s} />
+                    <HorseCard
+                      key={s.id}
+                      starter={s}
+                      notesSection={
+                        <HorseNotes
+                          horseId={s.horse_id}
+                          userGroups={userGroups}
+                          currentUserId={currentUserId}
+                        />
+                      }
+                    />
                   ))}
                 </div>
               </div>
