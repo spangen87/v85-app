@@ -4,7 +4,7 @@ import { useState } from "react";
 import { leaveGroup } from "@/lib/actions/groups";
 import type { Group } from "@/lib/types";
 
-function CopyButton({ text }: { text: string }) {
+function CopyButton({ text, label, mono }: { text: string; label: string; mono?: boolean }) {
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
@@ -16,10 +16,31 @@ function CopyButton({ text }: { text: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-300 transition font-mono tracking-widest"
-      title="Kopiera inbjudningskod"
+      className={`text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-300 transition ${mono ? "font-mono tracking-widest" : ""}`}
+      title={`Kopiera ${label}`}
     >
-      {text} {copied ? "✓" : "⎘"}
+      {mono ? text : label} {copied ? "✓" : "⎘"}
+    </button>
+  );
+}
+
+function CopyLinkButton({ inviteCode }: { inviteCode: string }) {
+  const [copied, setCopied] = useState(false);
+
+  async function handleCopy() {
+    const url = `${window.location.origin}/join/${inviteCode}`;
+    await navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  return (
+    <button
+      onClick={handleCopy}
+      className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-300 transition"
+      title="Kopiera inbjudningslänk"
+    >
+      Kopiera länk {copied ? "✓" : "🔗"}
     </button>
   );
 }
@@ -57,9 +78,12 @@ export function GroupList({
         >
           <div className="min-w-0">
             <p className="text-gray-900 dark:text-white text-sm font-medium truncate">{g.name}</p>
-            <div className="flex items-center gap-1 mt-0.5">
-              <span className="text-gray-500 dark:text-gray-400 text-xs">Kod:</span>
-              <CopyButton text={g.invite_code} />
+            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+              <div className="flex items-center gap-1">
+                <span className="text-gray-500 dark:text-gray-400 text-xs">Kod:</span>
+                <CopyButton text={g.invite_code} label="inbjudningskod" mono />
+              </div>
+              <CopyLinkButton inviteCode={g.invite_code} />
             </div>
           </div>
           <button
