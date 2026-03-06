@@ -16,9 +16,9 @@ function formatTime(timeObj: Record<string, number> | null | undefined): string 
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { horseId: string } }
+  { params }: { params: Promise<{ horseId: string }> }
 ) {
-  const { horseId } = params;
+  const { horseId } = await params;
 
   if (!horseId) {
     return NextResponse.json({ error: "horseId saknas" }, { status: 400 });
