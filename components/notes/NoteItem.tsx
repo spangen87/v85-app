@@ -52,28 +52,28 @@ export function NoteItem({
   }
 
   return (
-    <div className={`${isReply ? "ml-4 pl-3 border-l-2 border-gray-700" : ""}`}>
-      <div className="bg-gray-750 rounded-lg p-3 space-y-1.5" style={{ backgroundColor: "rgb(40,44,52)" }}>
+    <div className={`${isReply ? "ml-4 pl-3 border-l-2 border-gray-300 dark:border-gray-700" : ""}`}>
+      <div className="bg-gray-100 dark:bg-[rgb(40,44,52)] rounded-lg p-3 space-y-1.5">
         {/* Header */}
         <div className="flex items-center gap-2 flex-wrap">
           <NoteLabelDot label={note.label} />
-          <span className="text-white text-xs font-medium">{note.author_display_name}</span>
-          <span className="text-gray-500 text-xs">·</span>
-          <span className="text-gray-400 text-xs bg-gray-700 px-1.5 py-0.5 rounded">
+          <span className="text-gray-900 dark:text-white text-xs font-medium">{note.author_display_name}</span>
+          <span className="text-gray-400 dark:text-gray-500 text-xs">·</span>
+          <span className="text-gray-600 bg-gray-200 dark:text-gray-400 dark:bg-gray-700 text-xs px-1.5 py-0.5 rounded">
             {note.group_name ?? "Personlig"}
           </span>
-          <span className="text-gray-500 text-xs ml-auto">{relativeTime(note.created_at)}</span>
+          <span className="text-gray-400 dark:text-gray-500 text-xs ml-auto">{relativeTime(note.created_at)}</span>
         </div>
 
         {/* Content */}
-        <p className="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap">{note.content}</p>
+        <p className="text-gray-800 dark:text-gray-200 text-sm leading-relaxed whitespace-pre-wrap">{note.content}</p>
 
         {/* Actions */}
         <div className="flex items-center gap-3 pt-0.5">
           {!isReply && (
             <button
               onClick={() => setShowReplyForm((v) => !v)}
-              className="text-xs text-indigo-400 hover:text-indigo-300 transition"
+              className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-300 transition"
             >
               {showReplyForm ? "Avbryt" : "Svara"}
             </button>

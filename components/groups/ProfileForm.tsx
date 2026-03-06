@@ -25,7 +25,7 @@ export function ProfileForm({ initialName }: { initialName: string }) {
         onChange={(e) => setName(e.target.value)}
         placeholder="Ditt visningsnamn"
         maxLength={40}
-        className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-400 focus:outline-none focus:border-indigo-500"
+        className="flex-1 bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-indigo-500"
       />
       <button
         type="submit"
@@ -35,7 +35,7 @@ export function ProfileForm({ initialName }: { initialName: string }) {
         {loading ? "Sparar…" : "Spara"}
       </button>
       {message && (
-        <span className="text-xs text-gray-400 self-center">{message}</span>
+        <span className="text-xs text-gray-500 dark:text-gray-400 self-center">{message}</span>
       )}
     </form>
   );

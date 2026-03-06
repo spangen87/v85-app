@@ -63,6 +63,31 @@ function FormBadge({ score }: { score: number | null }) {
   );
 }
 
+function HorseshoeIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
+    >
+      {/* Hästsko – U-form med flänsar */}
+      <path
+        d="M8 20 L8 11 C8 7 10 5 12 5 C14 5 16 7 16 11 L16 20"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+        fill="none"
+      />
+      <line x1="5.5" y1="20" x2="10.5" y2="20" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+      <line x1="13.5" y1="20" x2="18.5" y2="20" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function ShoeBadge({
   hasShoe,
   changed,
@@ -73,13 +98,47 @@ function ShoeBadge({
   label: string;
 }) {
   if (hasShoe == null) return null;
-  const shoe = hasShoe ? "🧲" : "–";
-  return (
-    <span className={`text-xs ${changed ? "text-amber-400 font-semibold" : "text-gray-400"}`}>
-      {label}: {shoe}
-      {changed ? " ändrat" : ""}
-    </span>
-  );
+
+  if (hasShoe) {
+    // Hästen HAR sko
+    return (
+      <div className="flex flex-col items-center gap-0.5">
+        <HorseshoeIcon
+          className={changed ? "text-amber-400" : "text-gray-400"}
+        />
+        <span className={`text-[10px] leading-none ${changed ? "text-amber-400 font-semibold" : "text-gray-500"}`}>
+          {label}
+        </span>
+        {changed && (
+          <span className="text-[10px] leading-none text-amber-400 font-bold">Ändrad</span>
+        )}
+      </div>
+    );
+  } else {
+    // Hästen HAR INTE sko
+    return (
+      <div className="flex flex-col items-center gap-0.5 relative">
+        <div className="relative">
+          <HorseshoeIcon className={changed ? "text-amber-400" : "text-gray-600"} />
+          {/* Genomstrykning */}
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            className={`absolute inset-0 ${changed ? "text-amber-400" : "text-gray-600"}`}
+          >
+            <line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        </div>
+        <span className={`text-[10px] leading-none ${changed ? "text-amber-400 font-semibold" : "text-gray-600"}`}>
+          {label}
+        </span>
+        {changed && (
+          <span className="text-[10px] leading-none text-amber-400 font-bold">Ändrad</span>
+        )}
+      </div>
+    );
+  }
 }
 
 export function HorseCard({ starter, notesSection }: { starter: Starter; notesSection?: ReactNode }) {
@@ -93,30 +152,30 @@ export function HorseCard({ starter, notesSection }: { starter: Starter; notesSe
     starter.shoes_front_changed || starter.shoes_back_changed;
 
   return (
-    <div className="bg-gray-800 rounded-lg p-4 flex flex-col gap-3">
+    <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 flex flex-col gap-3">
       {/* Huvud: nummer, namn, driver, odds, FS */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="text-gray-400 text-sm shrink-0 w-5 text-center">
+          <span className="text-gray-500 dark:text-gray-400 text-sm shrink-0 w-5 text-center">
             {starter.start_number}
           </span>
           <div className="min-w-0">
-            <p className="text-white font-semibold truncate">
+            <p className="text-gray-900 dark:text-white font-semibold truncate">
               {starter.horses?.name ?? "–"}
             </p>
-            <p className="text-gray-400 text-xs truncate">{starter.driver}</p>
+            <p className="text-gray-500 dark:text-gray-400 text-xs truncate">{starter.driver}</p>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {starter.odds != null && (
-            <span className="text-gray-300 text-sm">{starter.odds.toFixed(1)}x</span>
+            <span className="text-gray-700 dark:text-gray-300 text-sm">{starter.odds.toFixed(1)}x</span>
           )}
           <FormBadge score={starter.formscore} />
         </div>
       </div>
 
       {/* Häst-info: ålder, kön, färg, far, hemmaplan */}
-      <div className="text-xs text-gray-400 space-y-0.5">
+      <div className="text-xs text-gray-500 dark:text-gray-400 space-y-0.5">
         {(starter.horse_age || sex || starter.horse_color) && (
           <p>
             {[
@@ -129,50 +188,49 @@ export function HorseCard({ starter, notesSection }: { starter: Starter; notesSe
           </p>
         )}
         {starter.pedigree_father && (
-          <p>Far: <span className="text-gray-300">{starter.pedigree_father}</span></p>
+          <p>Far: <span className="text-gray-700 dark:text-gray-300">{starter.pedigree_father}</span></p>
         )}
         {starter.home_track && (
-          <p>Hemmaplan: <span className="text-gray-300">{starter.home_track}</span></p>
+          <p>Hemmaplan: <span className="text-gray-700 dark:text-gray-300">{starter.home_track}</span></p>
         )}
       </div>
 
       {/* Skoinfo + sulky */}
       {starter.shoes_reported && (
         <div
-          className={`rounded p-2 text-xs space-y-1 ${
-            shoesChanged ? "bg-amber-900/30 border border-amber-700/50" : "bg-gray-700/50"
+          className={`rounded p-2 text-xs ${
+            shoesChanged ? "bg-amber-50 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700/50" : "bg-gray-100 dark:bg-gray-700/50"
           }`}
         >
-          <p className="text-gray-300 font-medium">
-            Skor{shoesChanged ? " — ändring!" : ""}
-          </p>
-          <div className="flex gap-4">
-            <ShoeBadge
-              hasShoe={starter.shoes_front}
-              changed={starter.shoes_front_changed}
-              label="Fram"
-            />
-            <ShoeBadge
-              hasShoe={starter.shoes_back}
-              changed={starter.shoes_back_changed}
-              label="Bak"
-            />
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-4">
+              <ShoeBadge
+                hasShoe={starter.shoes_front}
+                changed={starter.shoes_front_changed}
+                label="Fram"
+              />
+              <ShoeBadge
+                hasShoe={starter.shoes_back}
+                changed={starter.shoes_back_changed}
+                label="Bak"
+              />
+            </div>
+            {starter.sulky_type && (
+              <span className="text-gray-500 dark:text-gray-400 ml-auto">Sulky: {starter.sulky_type}</span>
+            )}
           </div>
-          {starter.sulky_type && (
-            <p className="text-gray-400">Sulky: {starter.sulky_type}</p>
-          )}
         </div>
       )}
 
       {/* Karriärstatistik */}
       <div className="grid grid-cols-3 gap-2 text-center text-xs">
-        <div className="bg-gray-700 rounded p-2">
-          <p className="text-gray-400">Starter</p>
-          <p className="text-white font-medium">{starter.starts_total ?? "–"}</p>
+        <div className="bg-gray-200 dark:bg-gray-700 rounded p-2">
+          <p className="text-gray-500 dark:text-gray-400">Starter</p>
+          <p className="text-gray-900 dark:text-white font-medium">{starter.starts_total ?? "–"}</p>
         </div>
-        <div className="bg-gray-700 rounded p-2">
-          <p className="text-gray-400">1-2-3</p>
-          <p className="text-white font-medium">
+        <div className="bg-gray-200 dark:bg-gray-700 rounded p-2">
+          <p className="text-gray-500 dark:text-gray-400">1-2-3</p>
+          <p className="text-gray-900 dark:text-white font-medium">
             {starter.wins_total ?? "–"}-{starter.places_total != null
               ? Math.round(starter.places_total / 2) // 2:or ungefär
               : "–"}-{starter.places_total != null
@@ -180,26 +238,26 @@ export function HorseCard({ starter, notesSection }: { starter: Starter; notesSe
               : "–"}
           </p>
         </div>
-        <div className="bg-gray-700 rounded p-2">
-          <p className="text-gray-400">Bästa tid</p>
-          <p className="text-white font-medium">{starter.best_time || "–"}</p>
+        <div className="bg-gray-200 dark:bg-gray-700 rounded p-2">
+          <p className="text-gray-500 dark:text-gray-400">Bästa tid</p>
+          <p className="text-gray-900 dark:text-white font-medium">{starter.best_time || "–"}</p>
         </div>
       </div>
 
       {/* Årets statistik */}
       <div className="grid grid-cols-2 gap-2 text-center text-xs">
-        <div className="bg-gray-700 rounded p-2">
-          <p className="text-gray-400">Vinstprocent år</p>
-          <p className="text-white font-medium">
+        <div className="bg-gray-200 dark:bg-gray-700 rounded p-2">
+          <p className="text-gray-500 dark:text-gray-400">Vinstprocent år</p>
+          <p className="text-gray-900 dark:text-white font-medium">
             {winRateYear != null ? `${winRateYear}%` : "–"}
             {starter.starts_current_year
               ? ` (${starter.starts_current_year} st)`
               : ""}
           </p>
         </div>
-        <div className="bg-gray-700 rounded p-2">
-          <p className="text-gray-400">Kusk / Tränarens V%</p>
-          <p className="text-white font-medium">
+        <div className="bg-gray-200 dark:bg-gray-700 rounded p-2">
+          <p className="text-gray-500 dark:text-gray-400">Kusk / Tränarens V%</p>
+          <p className="text-gray-900 dark:text-white font-medium">
             {starter.driver_win_pct != null ? `${starter.driver_win_pct}%` : "–"}
             {" / "}
             {starter.trainer_win_pct != null ? `${starter.trainer_win_pct}%` : "–"}
@@ -215,7 +273,7 @@ export function HorseCard({ starter, notesSection }: { starter: Starter; notesSe
               r.place === "1" ? "bg-yellow-500 text-black" :
               r.place === "2" ? "bg-gray-300 text-black" :
               r.place === "3" ? "bg-orange-600 text-white" :
-              "bg-gray-700 text-gray-300";
+              "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300";
             return (
               <span
                 key={i}

@@ -27,10 +27,10 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-950">
-      <div className="w-full max-w-sm bg-gray-900 rounded-xl p-8 shadow-xl">
-        <h1 className="text-2xl font-bold text-white mb-2">V85 Analys</h1>
-        <p className="text-gray-400 text-sm mb-6">Logga in för att fortsätta</p>
+    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950">
+      <div className="w-full max-w-sm bg-gray-50 dark:bg-gray-900 rounded-xl p-8 shadow-xl">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">V85 Analys</h1>
+        <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">Logga in för att fortsätta</p>
         <form onSubmit={handleLogin} className="space-y-4">
           <input
             type="email"
@@ -38,7 +38,7 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full px-4 py-2 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-blue-500"
+            className="w-full px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-700 focus:outline-none focus:border-blue-500"
           />
           <input
             type="password"
@@ -46,7 +46,7 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full px-4 py-2 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-blue-500"
+            className="w-full px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-700 focus:outline-none focus:border-blue-500"
           />
           {error && <p className="text-red-400 text-sm">{error}</p>}
           <button

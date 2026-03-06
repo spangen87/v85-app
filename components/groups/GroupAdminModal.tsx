@@ -41,15 +41,15 @@ export function GroupAdminModal({ open, onClose, profile, initialGroups }: Group
 
       {/* Modal */}
       <div
-        className="relative bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl"
+        className="relative bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-700">
-          <h2 className="text-white font-semibold text-lg">Mina sällskap</h2>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-300 dark:border-gray-700">
+          <h2 className="text-gray-900 dark:text-white font-semibold text-lg">Mina sällskap</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition text-xl leading-none"
+            className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition text-xl leading-none"
           >
             ✕
           </button>
@@ -58,7 +58,7 @@ export function GroupAdminModal({ open, onClose, profile, initialGroups }: Group
         <div className="px-5 py-4 space-y-6">
           {/* Visningsnamn */}
           <section>
-            <h3 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">
+            <h3 className="text-gray-500 dark:text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">
               Visningsnamn
             </h3>
             <ProfileForm initialName={profile?.display_name ?? ""} />
@@ -66,7 +66,7 @@ export function GroupAdminModal({ open, onClose, profile, initialGroups }: Group
 
           {/* Mina sällskap */}
           <section>
-            <h3 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">
+            <h3 className="text-gray-500 dark:text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">
               Mina sällskap
             </h3>
             <GroupList groups={groups} onLeft={handleLeft} />
@@ -74,7 +74,7 @@ export function GroupAdminModal({ open, onClose, profile, initialGroups }: Group
 
           {/* Skapa nytt sällskap */}
           <section>
-            <h3 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">
+            <h3 className="text-gray-500 dark:text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">
               Skapa nytt sällskap
             </h3>
             <CreateGroupForm onCreated={handleCreated} />
@@ -82,7 +82,7 @@ export function GroupAdminModal({ open, onClose, profile, initialGroups }: Group
 
           {/* Gå med via inbjudningskod */}
           <section>
-            <h3 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">
+            <h3 className="text-gray-500 dark:text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">
               Gå med via inbjudningskod
             </h3>
             <JoinGroupForm onJoined={handleJoined} />
