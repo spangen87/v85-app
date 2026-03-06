@@ -3,6 +3,7 @@ import { RaceList } from "@/components/RaceList";
 import { FetchButton } from "@/components/FetchButton";
 import { GameSelector } from "@/components/GameSelector";
 import { UserMenu } from "@/components/groups/UserMenu";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { getProfile, getMyGroups } from "@/lib/actions/groups";
 import { redirect } from "next/navigation";
 
@@ -64,12 +65,13 @@ export default async function HomePage({
   const races = selectedId ? await getRaces(supabase, selectedId) : [];
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white">
-      <header className="border-b border-gray-800 px-6 py-4 flex items-center justify-between gap-4">
+    <main className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white">
+      <header className="border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between gap-4">
         <h1 className="text-xl font-bold shrink-0">V85 Analys</h1>
         <div className="flex items-center gap-3 flex-wrap justify-end">
           <GameSelector games={games} selectedId={selectedId} />
           <FetchButton />
+          <ThemeToggle />
           <UserMenu
             profile={profile}
             groups={userGroups}
@@ -79,14 +81,14 @@ export default async function HomePage({
       </header>
 
       {selectedGame && (
-        <div className="px-6 py-2 text-sm text-gray-400 border-b border-gray-800">
+        <div className="px-6 py-2 text-sm text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-800">
           {selectedGame.date} &middot; {selectedGame.track}
         </div>
       )}
 
       <div className="max-w-5xl mx-auto px-4 py-6">
         {races.length === 0 ? (
-          <div className="text-center py-20 text-gray-500">
+          <div className="text-center py-20 text-gray-400 dark:text-gray-500">
             <p className="text-lg mb-2">Ingen V85-data inladdad ännu.</p>
             <p className="text-sm">
               Välj ett datum och klicka &quot;Hämta V85&quot; för att ladda en omgång från ATG.

@@ -2,11 +2,11 @@ import Link from "next/link";
 
 export default function ManualPage() {
   return (
-    <main className="min-h-screen bg-gray-950 text-white">
-      <header className="border-b border-gray-800 px-6 py-4 flex items-center gap-4">
+    <main className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white">
+      <header className="border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center gap-4">
         <Link
           href="/"
-          className="text-gray-400 hover:text-white transition text-sm flex items-center gap-1"
+          className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition text-sm flex items-center gap-1"
         >
           ← Tillbaka
         </Link>
@@ -16,30 +16,30 @@ export default function ManualPage() {
       <div className="max-w-3xl mx-auto px-4 py-10 space-y-12">
 
         {/* TOC */}
-        <nav className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-          <h2 className="text-lg font-semibold mb-3 text-white">Innehåll</h2>
-          <ol className="space-y-1 text-sm text-indigo-400 list-decimal list-inside">
-            <li><a href="#intro" className="hover:text-indigo-300 transition">Introduktion</a></li>
-            <li><a href="#login" className="hover:text-indigo-300 transition">Komma igång – inloggning</a></li>
-            <li><a href="#hamta" className="hover:text-indigo-300 transition">Hämta V85-omgång</a></li>
-            <li><a href="#navigera" className="hover:text-indigo-300 transition">Navigera bland omgångar</a></li>
-            <li><a href="#hastkort" className="hover:text-indigo-300 transition">Hästarnas informationskort</a></li>
-            <li><a href="#analys" className="hover:text-indigo-300 transition">Analysverktyget</a></li>
-            <li><a href="#grupper" className="hover:text-indigo-300 transition">Grupper och samarbete</a></li>
-            <li><a href="#anteckningar" className="hover:text-indigo-300 transition">Anteckningar på hästar</a></li>
-            <li><a href="#ordlista" className="hover:text-indigo-300 transition">Ordlista</a></li>
+        <nav className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
+          <h2 className="text-lg font-semibold mb-3 text-gray-900 dark:text-white">Innehåll</h2>
+          <ol className="space-y-1 text-sm text-indigo-600 dark:text-indigo-400 list-decimal list-inside">
+            <li><a href="#intro" className="hover:text-indigo-700 dark:hover:text-indigo-300 transition">Introduktion</a></li>
+            <li><a href="#login" className="hover:text-indigo-700 dark:hover:text-indigo-300 transition">Komma igång – inloggning</a></li>
+            <li><a href="#hamta" className="hover:text-indigo-700 dark:hover:text-indigo-300 transition">Hämta V85-omgång</a></li>
+            <li><a href="#navigera" className="hover:text-indigo-700 dark:hover:text-indigo-300 transition">Navigera bland omgångar</a></li>
+            <li><a href="#hastkort" className="hover:text-indigo-700 dark:hover:text-indigo-300 transition">Hästarnas informationskort</a></li>
+            <li><a href="#analys" className="hover:text-indigo-700 dark:hover:text-indigo-300 transition">Analysverktyget</a></li>
+            <li><a href="#grupper" className="hover:text-indigo-700 dark:hover:text-indigo-300 transition">Grupper och samarbete</a></li>
+            <li><a href="#anteckningar" className="hover:text-indigo-700 dark:hover:text-indigo-300 transition">Anteckningar på hästar</a></li>
+            <li><a href="#ordlista" className="hover:text-indigo-700 dark:hover:text-indigo-300 transition">Ordlista</a></li>
           </ol>
         </nav>
 
         {/* 1 Introduktion */}
         <section id="intro">
           <SectionHeading number="1" title="Introduktion" />
-          <p className="text-gray-300 leading-relaxed">
-            <strong className="text-white">V85 Analys</strong> är ett verktyg för dig som spelar V85 på ATG.
+          <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+            <strong className="text-gray-900 dark:text-white">V85 Analys</strong> är ett verktyg för dig som spelar V85 på ATG.
             Systemet hämtar aktuell tävlingsdata direkt från ATG, räknar ut sannolikheter baserat på
             form, odds och statistik, och låter dig dela anteckningar med dina spelvänner i en gemensam grupp.
           </p>
-          <p className="text-gray-300 leading-relaxed mt-3">
+          <p className="text-gray-700 dark:text-gray-300 leading-relaxed mt-3">
             Appen är byggd för att ge dig ett bättre beslutsunderlag – den ersätter inte din egen bedömning,
             men hjälper dig hitta hästar vars oddsvärde kan vara bättre än marknadens.
           </p>
@@ -48,13 +48,13 @@ export default function ManualPage() {
         {/* 2 Inloggning */}
         <section id="login">
           <SectionHeading number="2" title="Komma igång – inloggning" />
-          <p className="text-gray-300 leading-relaxed mb-4">
+          <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
             Du möts av inloggningssidan om du inte redan är inloggad.
           </p>
           <Steps>
             <Step>Öppna appen i webbläsaren.</Step>
-            <Step><strong className="text-white">Ny användare?</strong> Ange din e-postadress och ett lösenord och klicka på <Kbd>Registrera</Kbd>.</Step>
-            <Step><strong className="text-white">Redan registrerad?</strong> Ange dina uppgifter och klicka på <Kbd>Logga in</Kbd>.</Step>
+            <Step><strong className="text-gray-900 dark:text-white">Ny användare?</strong> Ange din e-postadress och ett lösenord och klicka på <Kbd>Registrera</Kbd>.</Step>
+            <Step><strong className="text-gray-900 dark:text-white">Redan registrerad?</strong> Ange dina uppgifter och klicka på <Kbd>Logga in</Kbd>.</Step>
             <Step>Efter lyckad inloggning hamnar du på huvudsidan.</Step>
           </Steps>
           <Tip>Ditt visningsnamn kan ändras via din profil och syns för övriga medlemmar i dina grupper.</Tip>
@@ -63,12 +63,12 @@ export default function ManualPage() {
         {/* 3 Hämta */}
         <section id="hamta">
           <SectionHeading number="3" title="Hämta V85-omgång" />
-          <p className="text-gray-300 leading-relaxed mb-4">
+          <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
             Innan du kan analysera en omgång måste du hämta data från ATG.
           </p>
           <Steps>
             <Step>Klicka på knappen <Kbd>Hämta V85</Kbd> högst upp på sidan.</Step>
-            <Step>En datumväljare visas. Du kan välja datum upp till <strong className="text-white">14 dagar bakåt eller framåt</strong> från dagens datum.</Step>
+            <Step>En datumväljare visas. Du kan välja datum upp till <strong className="text-gray-900 dark:text-white">14 dagar bakåt eller framåt</strong> från dagens datum.</Step>
             <Step>Välj det datum då V85-omgången körs.</Step>
             <Step>Klicka på <Kbd>Hämta</Kbd> för att ladda ner alla lopp och hästar.</Step>
             <Step>Om hämtningen lyckas dyker omgången upp i listan omedelbart.</Step>
@@ -79,14 +79,14 @@ export default function ManualPage() {
         {/* 4 Navigera */}
         <section id="navigera">
           <SectionHeading number="4" title="Navigera bland omgångar" />
-          <p className="text-gray-300 leading-relaxed mb-4">
+          <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
             På huvudsidan ser du alla hämtade omgångar.
           </p>
-          <ul className="space-y-2 text-gray-300 text-sm">
-            <li className="flex gap-2"><span className="text-indigo-400 mt-0.5">▸</span>Välj omgång via <strong className="text-white">rullgardinsmenyn</strong> längst upp.</li>
-            <li className="flex gap-2"><span className="text-indigo-400 mt-0.5">▸</span>Omgångens <strong className="text-white">åtta lopp</strong> visas under varandra.</li>
-            <li className="flex gap-2"><span className="text-indigo-400 mt-0.5">▸</span>Klicka på ett lopp för att <strong className="text-white">expandera</strong> det och se alla startande hästar.</li>
-            <li className="flex gap-2"><span className="text-indigo-400 mt-0.5">▸</span>Klicka igen för att fälla ihop loppet.</li>
+          <ul className="space-y-2 text-gray-700 dark:text-gray-300 text-sm">
+            <li className="flex gap-2"><span className="text-indigo-600 dark:text-indigo-400 mt-0.5">▸</span>Välj omgång via <strong className="text-gray-900 dark:text-white">rullgardinsmenyn</strong> längst upp.</li>
+            <li className="flex gap-2"><span className="text-indigo-600 dark:text-indigo-400 mt-0.5">▸</span>Omgångens <strong className="text-gray-900 dark:text-white">åtta lopp</strong> visas under varandra.</li>
+            <li className="flex gap-2"><span className="text-indigo-600 dark:text-indigo-400 mt-0.5">▸</span>Klicka på ett lopp för att <strong className="text-gray-900 dark:text-white">expandera</strong> det och se alla startande hästar.</li>
+            <li className="flex gap-2"><span className="text-indigo-600 dark:text-indigo-400 mt-0.5">▸</span>Klicka igen för att fälla ihop loppet.</li>
           </ul>
         </section>
 
