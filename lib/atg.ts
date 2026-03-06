@@ -26,6 +26,7 @@ export interface AtgStarter {
   trainer: string;
   trainer_win_pct: number | null;  // % innevarande år
   odds: number | null;
+  p_odds: number | null;           // Platsodds
   bet_distribution: number;
   // Skoinfo
   shoes_reported: boolean;
@@ -38,13 +39,19 @@ export interface AtgStarter {
   // Karriärstatistik
   starts_total: number;
   wins_total: number;
-  places_total: number;   // 2:or + 3:or
+  places_2nd: number;
+  places_3rd: number;
   earnings_total: number;
-  // Innevarande + föregående år
+  // Innevarande år
   starts_current_year: number;
   wins_current_year: number;
+  places_2nd_current_year: number;
+  places_3rd_current_year: number;
+  // Föregående år
   starts_prev_year: number;
   wins_prev_year: number;
+  places_2nd_prev_year: number;
+  places_3rd_prev_year: number;
   best_time: string;
   life_records: LifeRecord[];
   last_5_results: { place: string; date: string; track: string; time: string }[];
@@ -148,10 +155,13 @@ function parseGame(raw: Record<string, unknown>): AtgGame {
       const driver = (s["driver"] as Record<string, unknown>) ?? {};
       const trainer = (horse["trainer"] as Record<string, unknown>) ?? {};
 
-      // Odds + streckning
+      // Odds + streckning + platsodds
       const pools = (s["pools"] as Record<string, unknown>) ?? {};
       const vinnareOdds = (pools["vinnare"] as Record<string, unknown>)?.["odds"];
       const oddsFloat = vinnareOdds != null ? Math.round(Number(vinnareOdds)) / 100 : null;
+      const platsPool = (pools["plats"] as Record<string, unknown>) ?? {};
+      const pOddsRaw = platsPool["odds"];
+      const pOdds = pOddsRaw != null ? Math.round(Number(pOddsRaw)) / 100 : null;
       const betDistRaw = (pools["V85"] as Record<string, unknown>)?.["betDistribution"];
       const betDistribution = betDistRaw != null ? Math.round(Number(betDistRaw)) / 100 : 0;
 
@@ -212,6 +222,7 @@ function parseGame(raw: Record<string, unknown>): AtgGame {
         trainer: `${trainer["firstName"] ?? ""} ${trainer["lastName"] ?? ""}`.trim(),
         trainer_win_pct: winPct(trainer as Record<string, unknown>, currentYear),
         odds: oddsFloat,
+        p_odds: pOdds,
         bet_distribution: betDistribution,
         shoes_reported: Boolean(shoes["reported"]),
         shoes_front: Boolean(shoesFront["hasShoe"]),
@@ -221,13 +232,17 @@ function parseGame(raw: Record<string, unknown>): AtgGame {
         sulky_type: sulkyType,
         starts_total: Number(life["starts"] ?? 0),
         wins_total: Number(lifePlacement["1"] ?? 0),
-        places_total:
-          Number(lifePlacement["2"] ?? 0) + Number(lifePlacement["3"] ?? 0),
+        places_2nd: Number(lifePlacement["2"] ?? 0),
+        places_3rd: Number(lifePlacement["3"] ?? 0),
         earnings_total: Math.round(Number(life["earnings"] ?? 0) / 100),
         starts_current_year: Number(curr["starts"] ?? 0),
         wins_current_year: Number(currPlacement["1"] ?? 0),
+        places_2nd_current_year: Number(currPlacement["2"] ?? 0),
+        places_3rd_current_year: Number(currPlacement["3"] ?? 0),
         starts_prev_year: Number(prev["starts"] ?? 0),
         wins_prev_year: Number(prevPlacement["1"] ?? 0),
+        places_2nd_prev_year: Number(prevPlacement["2"] ?? 0),
+        places_3rd_prev_year: Number(prevPlacement["3"] ?? 0),
         best_time: bestRecord(lifeRecords),
         life_records: normalizedRecords,
         last_5_results: [],

@@ -99,3 +99,12 @@ create policy "Service kan skriva starters" on starters for all using (auth.role
 -- alter table starters add column if not exists pedigree_father text;
 -- alter table starters add column if not exists home_track text;
 -- alter table starters add column if not exists places_total integer;
+
+-- Starters (batch 3 — separata placeringskolumner + platsodds)
+-- alter table starters add column if not exists places_2nd integer;
+-- alter table starters add column if not exists places_3rd integer;
+-- alter table starters add column if not exists places_2nd_current_year integer;
+-- alter table starters add column if not exists places_3rd_current_year integer;
+-- alter table starters add column if not exists places_2nd_prev_year integer;
+-- alter table starters add column if not exists places_3rd_prev_year integer;
+-- alter table starters add column if not exists p_odds float;
