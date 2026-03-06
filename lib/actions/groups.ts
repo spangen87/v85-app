@@ -147,3 +147,40 @@ export async function leaveGroup(groupId: string): Promise<{ error: string | nul
   revalidatePath("/");
   return { error: null };
 }
+
+export async function getGroupById(groupId: string): Promise<Group | null> {
+  const db = createServiceClient();
+  const { data } = await db
+    .from("groups")
+    .select("id, name, invite_code, created_by, created_at, atg_team_url")
+    .eq("id", groupId)
+    .single();
+  return (data as Group) ?? null;
+}
+
+export async function updateGroup(
+  groupId: string,
+  updates: { name?: string; atg_team_url?: string | null }
+): Promise<{ error: string | null }> {
+  const user = await getAuthUser();
+  if (!user) return { error: "Inte inloggad" };
+
+  const db = createServiceClient();
+
+  const { data: group } = await db
+    .from("groups")
+    .select("created_by")
+    .eq("id", groupId)
+    .single();
+
+  if (!group || group.created_by !== user.id) return { error: "Inte behörig" };
+
+  const { error } = await db
+    .from("groups")
+    .update(updates)
+    .eq("id", groupId);
+
+  if (error) return { error: error.message };
+  revalidatePath(`/sallskap/${groupId}`);
+  return { error: null };
+}

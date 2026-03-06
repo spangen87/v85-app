@@ -4,6 +4,25 @@ export interface Group {
   invite_code: string;
   created_by: string;
   created_at: string;
+  atg_team_url?: string | null;
+}
+
+export interface GroupMember {
+  user_id: string;
+  display_name: string;
+  joined_at: string;
+}
+
+export interface GroupPost {
+  id: string;
+  group_id: string;
+  game_id: string;
+  author_id: string;
+  author_display_name: string;
+  content: string;
+  parent_id: string | null;
+  created_at: string;
+  replies: GroupPost[];
 }
 
 export interface Profile {

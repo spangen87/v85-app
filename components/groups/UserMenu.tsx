@@ -63,9 +63,14 @@ export function UserMenu({ profile, groups, userEmail }: UserMenuProps) {
               <div className="px-4 py-2 border-b border-gray-300 dark:border-gray-700">
                 <p className="text-gray-400 dark:text-gray-500 text-xs mb-1">Sällskap</p>
                 {groups.map((g) => (
-                  <p key={g.id} className="text-gray-700 dark:text-gray-300 text-xs truncate py-0.5">
+                  <Link
+                    key={g.id}
+                    href={`/sallskap/${g.id}`}
+                    onClick={() => setOpen(false)}
+                    className="block text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 text-xs truncate py-0.5 transition"
+                  >
                     {g.name}
-                  </p>
+                  </Link>
                 ))}
               </div>
             )}
