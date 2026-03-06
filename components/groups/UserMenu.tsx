@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { GroupAdminModal } from "./GroupAdminModal";
 import type { Group, Profile } from "@/lib/types";
@@ -76,6 +77,13 @@ export function UserMenu({ profile, groups, userEmail }: UserMenuProps) {
               >
                 Hantera sällskap
               </button>
+              <Link
+                href="/manual"
+                onClick={() => setOpen(false)}
+                className="block px-3 py-2 text-sm text-gray-200 hover:bg-gray-800 rounded-lg transition"
+              >
+                Användarmanual
+              </Link>
               <button
                 onClick={handleSignOut}
                 className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-gray-800 rounded-lg transition"
