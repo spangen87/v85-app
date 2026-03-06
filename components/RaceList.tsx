@@ -7,6 +7,8 @@ import { HorseNotes } from "./notes/HorseNotes";
 import type { LifeRecord } from "@/lib/analysis";
 import type { Group } from "@/lib/types";
 
+type SortKey = "number" | "formscore" | "odds" | "bet";
+
 interface Starter {
   id: string;
   start_number: number;
@@ -64,13 +66,58 @@ export function RaceList({
 }) {
   const [openRace, setOpenRace] = useState<string | null>(races[0]?.id ?? null);
   const [analysisRace, setAnalysisRace] = useState<string | null>(null);
+  const [sortKey, setSortKey] = useState<SortKey>("formscore");
+
+  const SORT_OPTIONS: { key: SortKey; label: string }[] = [
+    { key: "number", label: "Nr" },
+    { key: "formscore", label: "Formscore" },
+    { key: "odds", label: "Odds" },
+    { key: "bet", label: "Streck" },
+  ];
+
+  function sortStarters(starters: Starter[]): Starter[] {
+    return [...starters].sort((a, b) => {
+      switch (sortKey) {
+        case "number":
+          return a.start_number - b.start_number;
+        case "odds":
+          if (a.odds == null && b.odds == null) return 0;
+          if (a.odds == null) return 1;
+          if (b.odds == null) return -1;
+          return a.odds - b.odds;
+        case "bet":
+          if (a.bet_distribution == null && b.bet_distribution == null) return 0;
+          if (a.bet_distribution == null) return 1;
+          if (b.bet_distribution == null) return -1;
+          return b.bet_distribution - a.bet_distribution;
+        case "formscore":
+        default:
+          return (b.formscore ?? 0) - (a.formscore ?? 0);
+      }
+    });
+  }
 
   return (
     <div className="space-y-2">
+      <div className="flex items-center gap-2 px-1 pb-1">
+        <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0">Sortera:</span>
+        {SORT_OPTIONS.map((opt) => (
+          <button
+            key={opt.key}
+            onClick={() => setSortKey(opt.key)}
+            className={`text-xs px-3 py-1 rounded-lg border transition font-medium ${
+              sortKey === opt.key
+                ? "bg-indigo-700 border-indigo-600 text-white"
+                : "bg-transparent border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
       {races.map((race, index) => {
-        const sorted = [...race.starters].sort(
-          (a, b) => (b.formscore ?? 0) - (a.formscore ?? 0)
-        );
+        const sorted = sortStarters(race.starters);
         const isOpen = openRace === race.id;
         const showAnalysis = analysisRace === race.id;
 

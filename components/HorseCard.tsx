@@ -17,6 +17,7 @@ interface Starter {
   trainer: string;
   trainer_win_pct: number | null;
   odds: number | null;
+  bet_distribution: number | null;
   // Skoinfo
   shoes_reported: boolean | null;
   shoes_front: boolean | null;
@@ -56,7 +57,7 @@ function FormBadge({ score }: { score: number | null }) {
   return (
     <span
       className={`${color} text-white text-xs font-bold px-2 py-1 rounded-full`}
-      title="Formscore (0–100): viktat index baserat på vinstprocent (år), odds och bästa tid relativt fältet"
+      title="Formscore (0–100): viktat index baserat på senaste form, vinstprocent (år), odds och bästa tid. Inte samma som streckprocent."
     >
       FS {score}
     </span>
@@ -167,6 +168,14 @@ export function HorseCard({ starter, notesSection }: { starter: Starter; notesSe
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          {starter.bet_distribution != null && (
+            <span
+              className="text-blue-700 dark:text-blue-400 text-xs font-semibold"
+              title="Streckprocent i V85-poolen"
+            >
+              {starter.bet_distribution.toFixed(1)}%
+            </span>
+          )}
           {starter.odds != null && (
             <span className="text-gray-700 dark:text-gray-300 text-sm">{starter.odds.toFixed(1)}x</span>
           )}
