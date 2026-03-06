@@ -244,6 +244,13 @@ function LifeRecordsTable({ records, currentMethod, currentDistance }: {
   );
 }
 
+interface FetchedStart {
+  place: string;
+  date: string;
+  track: string;
+  time: string;
+}
+
 export function HorseCard({
   starter,
   notesSection,
@@ -256,13 +263,31 @@ export function HorseCard({
   raceStartMethod?: string;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [fetchedStarts, setFetchedStarts] = useState<FetchedStart[] | null>(null);
+  const [fetchingStarts, setFetchingStarts] = useState(false);
+  const [startsError, setStartsError] = useState<string | null>(null);
+
+  async function handleFetchStarts() {
+    setFetchingStarts(true);
+    setStartsError(null);
+    try {
+      const res = await fetch(`/api/horses/${starter.horse_id}/starts`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Okänt fel");
+      setFetchedStarts(data.starts);
+    } catch (err) {
+      setStartsError(err instanceof Error ? err.message : "Okänt fel");
+    } finally {
+      setFetchingStarts(false);
+    }
+  }
 
   const winRateYear = starter.starts_current_year
     ? Math.round(((starter.wins_current_year ?? 0) / starter.starts_current_year) * 100)
     : null;
 
   const platsRate = starter.starts_total
-    ? Math.round((((starter.places_2nd ?? 0) + (starter.places_3rd ?? 0)) / starter.starts_total) * 100)
+    ? Math.round((((starter.wins_total ?? 0) + (starter.places_2nd ?? 0) + (starter.places_3rd ?? 0)) / starter.starts_total) * 100)
     : null;
 
   const krPerStart =
@@ -477,24 +502,50 @@ export function HorseCard({
           )}
 
           {/* Kusk & Tränare */}
-          <div>
-            <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Kusk & Tränare</p>
-            <div className="bg-gray-200 dark:bg-gray-700/60 rounded p-2 space-y-0.5">
-              <StatRow
-                label={starter.driver}
-                value={starter.driver_win_pct != null ? `${starter.driver_win_pct}% vinst (år)` : "–"}
-              />
-              <StatRow
-                label={starter.trainer}
-                value={starter.trainer_win_pct != null ? `${starter.trainer_win_pct}% vinst (år)` : "–"}
-              />
+          {(starter.driver || starter.trainer) && (
+            <div>
+              <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Kusk & Tränare</p>
+              <div className="bg-gray-200 dark:bg-gray-700/60 rounded p-2 space-y-1">
+                {starter.driver && (
+                  <div className="flex justify-between text-xs py-0.5">
+                    <span className="text-gray-500 dark:text-gray-400">{starter.driver}</span>
+                    <span className="text-gray-900 dark:text-white font-medium">
+                      {starter.driver_win_pct != null ? `${starter.driver_win_pct}% vinst (år)` : "–"}
+                    </span>
+                  </div>
+                )}
+                {starter.trainer && (
+                  <div className="flex justify-between text-xs py-0.5">
+                    <span className="text-gray-500 dark:text-gray-400">{starter.trainer}</span>
+                    <span className="text-gray-900 dark:text-white font-medium">
+                      {starter.trainer_win_pct != null ? `${starter.trainer_win_pct}% vinst (år)` : "–"}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Senaste 5 starter — detaljvy */}
-          {starter.last_5_results.length > 0 ? (
-            <div>
-              <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Senaste starter</p>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">Senaste starter</p>
+              {fetchedStarts === null && (
+                <button
+                  onClick={handleFetchStarts}
+                  disabled={fetchingStarts}
+                  className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-200 disabled:opacity-50 transition"
+                >
+                  {fetchingStarts ? "Hämtar..." : "Hämta från ATG"}
+                </button>
+              )}
+            </div>
+            {startsError && (
+              <p className="text-xs text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded p-2">
+                {startsError}
+              </p>
+            )}
+            {fetchedStarts !== null && fetchedStarts.length > 0 && (
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
@@ -506,7 +557,7 @@ export function HorseCard({
                     </tr>
                   </thead>
                   <tbody>
-                    {starter.last_5_results.map((r, i) => (
+                    {fetchedStarts.map((r, i) => (
                       <tr key={i} className="border-t border-gray-200 dark:border-gray-700">
                         <td className="py-1 text-gray-500 dark:text-gray-400">{r.date}</td>
                         <td className="py-1 text-gray-700 dark:text-gray-300">{r.track}</td>
@@ -517,12 +568,16 @@ export function HorseCard({
                   </tbody>
                 </table>
               </div>
-            </div>
-          ) : (
-            <div className="text-xs text-gray-400 dark:text-gray-500 italic bg-gray-200 dark:bg-gray-700/40 rounded p-2">
-              Senaste starter hämtas ej ännu — kräver separat ATG-anrop per häst.
-            </div>
-          )}
+            )}
+            {fetchedStarts !== null && fetchedStarts.length === 0 && (
+              <p className="text-xs text-gray-400 dark:text-gray-500 italic">Inga starter hittades.</p>
+            )}
+            {fetchedStarts === null && !fetchingStarts && !startsError && (
+              <p className="text-xs text-gray-400 dark:text-gray-500 italic">
+                Klicka "Hämta från ATG" för att visa senaste starter.
+              </p>
+            )}
+          </div>
         </div>
       )}
 
