@@ -4,8 +4,14 @@ import { useState } from "react";
 import { HorseCard } from "./HorseCard";
 import { AnalysisPanel } from "./AnalysisPanel";
 import { HorseNotes } from "./notes/HorseNotes";
-import type { LifeRecord } from "@/lib/analysis";
 import type { Group } from "@/lib/types";
+
+interface LifeRecord {
+  start_method: string;
+  distance: string;
+  place: number;
+  time: string;
+}
 
 type SortKey = "number" | "formscore" | "odds" | "bet";
 
@@ -19,6 +25,7 @@ interface Starter {
   trainer: string;
   trainer_win_pct: number | null;
   odds: number | null;
+  p_odds: number | null;
   bet_distribution: number | null;
   shoes_reported: boolean | null;
   shoes_front: boolean | null;
@@ -33,11 +40,17 @@ interface Starter {
   home_track: string | null;
   starts_total: number | null;
   wins_total: number | null;
-  places_total: number | null;
+  places_2nd: number | null;
+  places_3rd: number | null;
+  earnings_total: number | null;
   starts_current_year: number | null;
   wins_current_year: number | null;
+  places_2nd_current_year: number | null;
+  places_3rd_current_year: number | null;
   starts_prev_year: number | null;
   wins_prev_year: number | null;
+  places_2nd_prev_year: number | null;
+  places_3rd_prev_year: number | null;
   best_time: string | null;
   last_5_results: { place: string; date: string; track: string; time: string }[];
   life_records: LifeRecord[] | null;
@@ -176,6 +189,8 @@ export function RaceList({
                     <HorseCard
                       key={s.id}
                       starter={s}
+                      raceDistance={race.distance}
+                      raceStartMethod={race.start_method ?? "auto"}
                       notesSection={
                         <HorseNotes
                           horseId={s.horse_id}

@@ -23,11 +23,12 @@ async function getRaces(supabase: Awaited<ReturnType<typeof createClient>>, game
       starters (
         id, start_number, post_position, horse_id,
         driver, driver_win_pct, trainer, trainer_win_pct,
-        odds, bet_distribution,
+        odds, p_odds, bet_distribution,
         shoes_reported, shoes_front, shoes_back, shoes_front_changed, shoes_back_changed,
         sulky_type, horse_age, horse_sex, horse_color, pedigree_father, home_track,
-        starts_total, wins_total, places_total, starts_current_year, wins_current_year,
-        starts_prev_year, wins_prev_year,
+        starts_total, wins_total, places_2nd, places_3rd, earnings_total,
+        starts_current_year, wins_current_year, places_2nd_current_year, places_3rd_current_year,
+        starts_prev_year, wins_prev_year, places_2nd_prev_year, places_3rd_prev_year,
         best_time, last_5_results, life_records, formscore,
         horses ( name )
       )
