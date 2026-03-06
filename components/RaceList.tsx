@@ -75,22 +75,22 @@ export function RaceList({
         const showAnalysis = analysisRace === race.id;
 
         return (
-          <div key={race.id} className="bg-gray-900 rounded-xl overflow-hidden">
+          <div key={race.id} className="bg-gray-50 dark:bg-gray-900 rounded-xl overflow-hidden">
             <button
               onClick={() => setOpenRace(isOpen ? null : race.id)}
-              className="w-full flex items-center justify-between px-5 py-3 text-left hover:bg-gray-800 transition"
+              className="w-full flex items-center justify-between px-5 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition"
             >
               <div className="flex items-center gap-3 min-w-0">
-                <span className="text-white font-semibold shrink-0">
+                <span className="text-gray-900 dark:text-white font-semibold shrink-0">
                   Avd {index + 1}
                 </span>
                 {race.race_name && (
-                  <span className="text-gray-400 text-xs truncate hidden sm:block">
+                  <span className="text-gray-500 dark:text-gray-400 text-xs truncate hidden sm:block">
                     {race.race_name}
                   </span>
                 )}
               </div>
-              <span className="text-gray-400 text-sm shrink-0 ml-2">
+              <span className="text-gray-500 dark:text-gray-400 text-sm shrink-0 ml-2">
                 {race.start_time
                   ? new Date(race.start_time).toLocaleTimeString("sv-SE", {
                       hour: "2-digit",
@@ -109,7 +109,7 @@ export function RaceList({
                     className={`text-xs px-3 py-1.5 rounded-lg border transition font-medium ${
                       showAnalysis
                         ? "bg-indigo-700 border-indigo-600 text-white"
-                        : "bg-transparent border-indigo-700 text-indigo-400 hover:bg-indigo-900/30"
+                        : "bg-transparent border-indigo-700 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30"
                     }`}
                   >
                     {showAnalysis ? "Dölj analys" : "Visa analys"}

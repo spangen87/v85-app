@@ -39,7 +39,7 @@ export function NoteLabelPicker({
 }) {
   return (
     <div className="flex items-center gap-1.5">
-      <span className="text-xs text-gray-400">Etikett:</span>
+      <span className="text-xs text-gray-500 dark:text-gray-400">Etikett:</span>
       {NOTE_LABELS.map((label) => (
         <button
           key={label}
@@ -55,7 +55,7 @@ export function NoteLabelPicker({
         <button
           type="button"
           onClick={() => onChange(null)}
-          className="text-xs text-gray-500 hover:text-gray-300 ml-1"
+          className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 ml-1"
         >
           ✕
         </button>

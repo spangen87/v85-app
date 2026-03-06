@@ -32,7 +32,7 @@ export function CreateGroupForm({ onCreated }: { onCreated: (group: Group) => vo
           onChange={(e) => setName(e.target.value)}
           placeholder="Namn på sällskapet"
           maxLength={50}
-          className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-400 focus:outline-none focus:border-indigo-500"
+          className="flex-1 bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-indigo-500"
         />
         <button
           type="submit"

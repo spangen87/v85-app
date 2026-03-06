@@ -32,7 +32,7 @@ export function JoinGroupForm({ onJoined }: { onJoined: (group: Group) => void }
           onChange={(e) => setCode(e.target.value.toUpperCase())}
           placeholder="Inbjudningskod (t.ex. AB12CD)"
           maxLength={10}
-          className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-400 focus:outline-none focus:border-indigo-500 font-mono tracking-widest"
+          className="flex-1 bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-indigo-500 font-mono tracking-widest"
         />
         <button
           type="submit"

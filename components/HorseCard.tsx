@@ -152,30 +152,30 @@ export function HorseCard({ starter, notesSection }: { starter: Starter; notesSe
     starter.shoes_front_changed || starter.shoes_back_changed;
 
   return (
-    <div className="bg-gray-800 rounded-lg p-4 flex flex-col gap-3">
+    <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 flex flex-col gap-3">
       {/* Huvud: nummer, namn, driver, odds, FS */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="text-gray-400 text-sm shrink-0 w-5 text-center">
+          <span className="text-gray-500 dark:text-gray-400 text-sm shrink-0 w-5 text-center">
             {starter.start_number}
           </span>
           <div className="min-w-0">
-            <p className="text-white font-semibold truncate">
+            <p className="text-gray-900 dark:text-white font-semibold truncate">
               {starter.horses?.name ?? "–"}
             </p>
-            <p className="text-gray-400 text-xs truncate">{starter.driver}</p>
+            <p className="text-gray-500 dark:text-gray-400 text-xs truncate">{starter.driver}</p>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {starter.odds != null && (
-            <span className="text-gray-300 text-sm">{starter.odds.toFixed(1)}x</span>
+            <span className="text-gray-700 dark:text-gray-300 text-sm">{starter.odds.toFixed(1)}x</span>
           )}
           <FormBadge score={starter.formscore} />
         </div>
       </div>
 
       {/* Häst-info: ålder, kön, färg, far, hemmaplan */}
-      <div className="text-xs text-gray-400 space-y-0.5">
+      <div className="text-xs text-gray-500 dark:text-gray-400 space-y-0.5">
         {(starter.horse_age || sex || starter.horse_color) && (
           <p>
             {[
@@ -188,10 +188,10 @@ export function HorseCard({ starter, notesSection }: { starter: Starter; notesSe
           </p>
         )}
         {starter.pedigree_father && (
-          <p>Far: <span className="text-gray-300">{starter.pedigree_father}</span></p>
+          <p>Far: <span className="text-gray-700 dark:text-gray-300">{starter.pedigree_father}</span></p>
         )}
         {starter.home_track && (
-          <p>Hemmaplan: <span className="text-gray-300">{starter.home_track}</span></p>
+          <p>Hemmaplan: <span className="text-gray-700 dark:text-gray-300">{starter.home_track}</span></p>
         )}
       </div>
 
@@ -199,7 +199,7 @@ export function HorseCard({ starter, notesSection }: { starter: Starter; notesSe
       {starter.shoes_reported && (
         <div
           className={`rounded p-2 text-xs ${
-            shoesChanged ? "bg-amber-900/30 border border-amber-700/50" : "bg-gray-700/50"
+            shoesChanged ? "bg-amber-50 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700/50" : "bg-gray-100 dark:bg-gray-700/50"
           }`}
         >
           <div className="flex items-center justify-between gap-2">
@@ -216,7 +216,7 @@ export function HorseCard({ starter, notesSection }: { starter: Starter; notesSe
               />
             </div>
             {starter.sulky_type && (
-              <span className="text-gray-400 ml-auto">Sulky: {starter.sulky_type}</span>
+              <span className="text-gray-500 dark:text-gray-400 ml-auto">Sulky: {starter.sulky_type}</span>
             )}
           </div>
         </div>
@@ -224,13 +224,13 @@ export function HorseCard({ starter, notesSection }: { starter: Starter; notesSe
 
       {/* Karriärstatistik */}
       <div className="grid grid-cols-3 gap-2 text-center text-xs">
-        <div className="bg-gray-700 rounded p-2">
-          <p className="text-gray-400">Starter</p>
-          <p className="text-white font-medium">{starter.starts_total ?? "–"}</p>
+        <div className="bg-gray-200 dark:bg-gray-700 rounded p-2">
+          <p className="text-gray-500 dark:text-gray-400">Starter</p>
+          <p className="text-gray-900 dark:text-white font-medium">{starter.starts_total ?? "–"}</p>
         </div>
-        <div className="bg-gray-700 rounded p-2">
-          <p className="text-gray-400">1-2-3</p>
-          <p className="text-white font-medium">
+        <div className="bg-gray-200 dark:bg-gray-700 rounded p-2">
+          <p className="text-gray-500 dark:text-gray-400">1-2-3</p>
+          <p className="text-gray-900 dark:text-white font-medium">
             {starter.wins_total ?? "–"}-{starter.places_total != null
               ? Math.round(starter.places_total / 2) // 2:or ungefär
               : "–"}-{starter.places_total != null
@@ -238,26 +238,26 @@ export function HorseCard({ starter, notesSection }: { starter: Starter; notesSe
               : "–"}
           </p>
         </div>
-        <div className="bg-gray-700 rounded p-2">
-          <p className="text-gray-400">Bästa tid</p>
-          <p className="text-white font-medium">{starter.best_time || "–"}</p>
+        <div className="bg-gray-200 dark:bg-gray-700 rounded p-2">
+          <p className="text-gray-500 dark:text-gray-400">Bästa tid</p>
+          <p className="text-gray-900 dark:text-white font-medium">{starter.best_time || "–"}</p>
         </div>
       </div>
 
       {/* Årets statistik */}
       <div className="grid grid-cols-2 gap-2 text-center text-xs">
-        <div className="bg-gray-700 rounded p-2">
-          <p className="text-gray-400">Vinstprocent år</p>
-          <p className="text-white font-medium">
+        <div className="bg-gray-200 dark:bg-gray-700 rounded p-2">
+          <p className="text-gray-500 dark:text-gray-400">Vinstprocent år</p>
+          <p className="text-gray-900 dark:text-white font-medium">
             {winRateYear != null ? `${winRateYear}%` : "–"}
             {starter.starts_current_year
               ? ` (${starter.starts_current_year} st)`
               : ""}
           </p>
         </div>
-        <div className="bg-gray-700 rounded p-2">
-          <p className="text-gray-400">Kusk / Tränarens V%</p>
-          <p className="text-white font-medium">
+        <div className="bg-gray-200 dark:bg-gray-700 rounded p-2">
+          <p className="text-gray-500 dark:text-gray-400">Kusk / Tränarens V%</p>
+          <p className="text-gray-900 dark:text-white font-medium">
             {starter.driver_win_pct != null ? `${starter.driver_win_pct}%` : "–"}
             {" / "}
             {starter.trainer_win_pct != null ? `${starter.trainer_win_pct}%` : "–"}
@@ -273,7 +273,7 @@ export function HorseCard({ starter, notesSection }: { starter: Starter; notesSe
               r.place === "1" ? "bg-yellow-500 text-black" :
               r.place === "2" ? "bg-gray-300 text-black" :
               r.place === "3" ? "bg-orange-600 text-white" :
-              "bg-gray-700 text-gray-300";
+              "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300";
             return (
               <span
                 key={i}

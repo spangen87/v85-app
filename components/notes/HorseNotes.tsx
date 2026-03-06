@@ -57,10 +57,10 @@ export function HorseNotes({ horseId, userGroups, currentUserId }: HorseNotesPro
   const noteCount = notes.length + notes.reduce((sum, n) => sum + n.replies.length, 0);
 
   return (
-    <div className="border-t border-gray-700 mt-3 pt-3">
+    <div className="border-t border-gray-300 dark:border-gray-700 mt-3 pt-3">
       <button
         onClick={handleExpand}
-        className="flex items-center gap-2 text-xs text-gray-400 hover:text-gray-200 transition w-full text-left"
+        className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition w-full text-left"
       >
         <span>{expanded ? "▲" : "▼"}</span>
         <span>

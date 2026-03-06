@@ -16,7 +16,7 @@ function CopyButton({ text }: { text: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="text-xs text-indigo-400 hover:text-indigo-300 transition font-mono tracking-widest"
+      className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-300 transition font-mono tracking-widest"
       title="Kopiera inbjudningskod"
     >
       {text} {copied ? "✓" : "⎘"}
@@ -53,12 +53,12 @@ export function GroupList({
       {groups.map((g) => (
         <li
           key={g.id}
-          className="flex items-center justify-between gap-3 bg-gray-700 rounded-lg px-3 py-2"
+          className="flex items-center justify-between gap-3 bg-gray-200 dark:bg-gray-700 rounded-lg px-3 py-2"
         >
           <div className="min-w-0">
-            <p className="text-white text-sm font-medium truncate">{g.name}</p>
+            <p className="text-gray-900 dark:text-white text-sm font-medium truncate">{g.name}</p>
             <div className="flex items-center gap-1 mt-0.5">
-              <span className="text-gray-400 text-xs">Kod:</span>
+              <span className="text-gray-500 dark:text-gray-400 text-xs">Kod:</span>
               <CopyButton text={g.invite_code} />
             </div>
           </div>
