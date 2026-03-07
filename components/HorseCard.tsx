@@ -78,16 +78,16 @@ const DIST_LABEL: Record<string, string> = {
   long: "Lång",
 };
 
-function FormBadge({ score }: { score: number | null }) {
+function FormBadge({ score, title, label }: { score: number | null; title?: string; label?: string }) {
   if (score == null) return null;
   const color =
     score >= 70 ? "bg-green-600" : score >= 40 ? "bg-yellow-600" : "bg-gray-600";
   return (
     <span
       className={`${color} text-white text-xs font-bold px-2 py-1 rounded-full`}
-      title="Formscore (0–100): viktat index baserat på senaste form, vinstprocent (år), odds och bästa tid. Inte samma som streckprocent."
+      title={title ?? "Formscore (0–100): viktat index baserat på senaste form, vinstprocent (år), odds och bästa tid. Inte samma som streckprocent."}
     >
-      FS {score}
+      {label ?? "FS"} {score}
     </span>
   );
 }
@@ -256,11 +256,17 @@ export function HorseCard({
   notesSection,
   raceDistance,
   raceStartMethod,
+  compositeScore: compScore,
+  valueIndex: vi,
+  isValue,
 }: {
   starter: Starter;
   notesSection?: ReactNode;
   raceDistance?: number;
   raceStartMethod?: string;
+  compositeScore?: number;
+  valueIndex?: number;
+  isValue?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [fetchedStarts, setFetchedStarts] = useState<FetchedStart[] | null>(null);
@@ -310,7 +316,7 @@ export function HorseCard({
   const currentMethod = raceStartMethod ?? "auto";
 
   return (
-    <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 flex flex-col gap-3">
+    <div className={`bg-gray-100 dark:bg-gray-800 rounded-lg p-4 flex flex-col gap-3 ${isValue ? "ring-2 ring-green-500 ring-inset" : ""}`}>
       {/* Huvud: nummer, namn, driver, streck, odds, FS */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
@@ -324,7 +330,7 @@ export function HorseCard({
             <p className="text-gray-500 dark:text-gray-400 text-xs truncate">{starter.driver}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
           {starter.bet_distribution != null && starter.bet_distribution > 0 && (
             <span
               className="text-blue-700 dark:text-blue-400 text-xs font-semibold"
@@ -336,9 +342,21 @@ export function HorseCard({
           {starter.odds != null && (
             <span className="text-gray-700 dark:text-gray-300 text-sm" title="Vinnarodds">
               {starter.odds.toFixed(1)}x
+              {vi != null && (
+                <span
+                  className={`ml-1 text-xs font-semibold ${vi > 0 ? "text-green-600 dark:text-green-400" : "text-red-500 dark:text-red-400"}`}
+                  title="Värdeindex: skillnad mellan beräknad vinstchans och odds-implicit sannolikhet"
+                >
+                  {vi > 0 ? "+" : ""}{vi.toFixed(1)}%{vi > 0 ? "↑" : "↓"}
+                </span>
+              )}
             </span>
           )}
-          <FormBadge score={starter.formscore} />
+          {compScore != null ? (
+            <FormBadge score={compScore} title="Sammansatt poäng (0–100): form, värde, konsistens och tid" label="CS" />
+          ) : (
+            <FormBadge score={starter.formscore} />
+          )}
         </div>
       </div>
 

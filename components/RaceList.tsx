@@ -4,6 +4,7 @@ import { useState } from "react";
 import { HorseCard } from "./HorseCard";
 import { AnalysisPanel } from "./AnalysisPanel";
 import { HorseNotes } from "./notes/HorseNotes";
+import { analyzeRaceEnhanced } from "@/lib/analysis";
 import type { Group } from "@/lib/types";
 
 interface LifeRecord {
@@ -134,6 +135,11 @@ export function RaceList({
         const isOpen = openRace === race.id;
         const showAnalysis = analysisRace === race.id;
 
+        // Beräkna utökad analys per lopp — indexeras på start_number
+        const enhancedMap = Object.fromEntries(
+          analyzeRaceEnhanced(race.starters).map((h) => [h.startNumber, h])
+        );
+
         return (
           <div key={race.id} className="bg-gray-50 dark:bg-gray-900 rounded-xl overflow-hidden">
             <button
@@ -185,21 +191,27 @@ export function RaceList({
                 )}
 
                 <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 mt-3">
-                  {sorted.map((s) => (
-                    <HorseCard
-                      key={s.id}
-                      starter={s}
-                      raceDistance={race.distance}
-                      raceStartMethod={race.start_method ?? "auto"}
-                      notesSection={
-                        <HorseNotes
-                          horseId={s.horse_id}
-                          userGroups={userGroups}
-                          currentUserId={currentUserId}
-                        />
-                      }
-                    />
-                  ))}
+                  {sorted.map((s) => {
+                    const enh = enhancedMap[s.start_number];
+                    return (
+                      <HorseCard
+                        key={s.id}
+                        starter={s}
+                        raceDistance={race.distance}
+                        raceStartMethod={race.start_method ?? "auto"}
+                        compositeScore={enh?.compositeScore}
+                        valueIndex={enh?.valueIndex}
+                        isValue={enh?.isValue}
+                        notesSection={
+                          <HorseNotes
+                            horseId={s.horse_id}
+                            userGroups={userGroups}
+                            currentUserId={currentUserId}
+                          />
+                        }
+                      />
+                    );
+                  })}
                 </div>
               </div>
             )}

@@ -94,6 +94,11 @@ export interface AnalysisStarter {
   odds: number | null;
   life_records: LifeRecord[] | null;
   bet_distribution: number | null;
+  // Optional extended fields used by analyzeRaceEnhanced
+  places_2nd?: number | null;
+  places_3rd?: number | null;
+  best_time?: string | null;
+  last_5_results?: { place: string; date: string; track: string; time: string }[];
 }
 
 /**
@@ -163,4 +168,215 @@ export function analyzeRace(
       dist_signal: distSignal,
     };
   });
+}
+
+// ─── Enhanced analysis functions ────────────────────────────────────────────
+
+/**
+ * Viktad formpoäng baserat på senaste starter.
+ * Nyare starter väger mer, placering viktas mot fältstorlek.
+ */
+export function weightedFormScore(
+  lastStarts: Array<{ place: number; fieldSize: number }>
+): number {
+  const weights = [0.35, 0.25, 0.20, 0.12, 0.08];
+  let score = 0;
+  let totalWeight = 0;
+  lastStarts.slice(0, 5).forEach((start, i) => {
+    const positionScore = 1 - (start.place - 1) / Math.max(start.fieldSize - 1, 1);
+    score += positionScore * weights[i];
+    totalWeight += weights[i];
+  });
+  return totalWeight > 0 ? Math.round((score / totalWeight) * 100) : 0;
+}
+
+/**
+ * Värdeindex: positiv = hästen är undervärderad av marknaden.
+ */
+export function valueIndex(estimatedWinPct: number, odds: number): number {
+  const impliedProb = 1 / odds;
+  return Math.round((estimatedWinPct - impliedProb) * 1000) / 10;
+}
+
+/**
+ * Konsistenspoäng: kombinerar vinstfrekvens (60%) och platsfrekvens (40%).
+ */
+export function consistencyScore(
+  starts: number,
+  wins: number,
+  places: number
+): number {
+  if (starts === 0) return 0;
+  const winRate = wins / starts;
+  const placeRate = places / starts;
+  return Math.round((winRate * 0.6 + placeRate * 0.4) * 100);
+}
+
+/**
+ * Tidsjustering relativt fältets medianbästa tid (sekunder).
+ * Negativt tal = snabbare = bättre.
+ */
+export function timeAdjustment(
+  horseBestTimeSec: number,
+  fieldMedianTimeSec: number
+): number {
+  return Math.round((horseBestTimeSec - fieldMedianTimeSec) * 10) / 10;
+}
+
+/**
+ * Konverterar "1:12,4" eller "1:12.4" → sekunder.
+ */
+export function parseTimeToSeconds(timeStr: string | null | undefined): number | null {
+  if (!timeStr) return null;
+  const match = timeStr.match(/(\d+):(\d+)[,.](\d+)/);
+  if (!match) return null;
+  return parseInt(match[1]) * 60 + parseInt(match[2]) + parseInt(match[3]) / 10;
+}
+
+/**
+ * Sammansatt rankingpoäng (0–100): normaliserar alla komponenter och viktar ihop.
+ */
+export function compositeScore(params: {
+  formScore: number;
+  valueIndex: number;
+  consistencyScore: number;
+  timeAdj: number;
+}): number {
+  const { formScore, valueIndex: vi, consistencyScore: cs, timeAdj } = params;
+  const formNorm = formScore / 100;
+  const valueNorm = Math.min(Math.max(vi / 20 + 0.5, 0), 1);
+  const consistNorm = cs / 100;
+  const timeNorm = Math.min(Math.max((-timeAdj + 3) / 6, 0), 1);
+  return Math.round(
+    (formNorm * 0.35 + valueNorm * 0.25 + consistNorm * 0.25 + timeNorm * 0.15) * 100
+  );
+}
+
+export interface HorseAnalysis {
+  horseId: string;
+  horseName: string;
+  startNumber: number;
+  formScore: number;
+  valueIndex: number;
+  consistencyScore: number;
+  timeAdjustment: number | null;
+  compositeScore: number;
+  estimatedWinPct: number;
+  impliedWinPct: number;
+  isValue: boolean;
+  rank: number;
+}
+
+function parsePlaceStr(place: string): number {
+  const n = parseInt(place);
+  return isNaN(n) ? 99 : n;
+}
+
+/**
+ * Utökad analys för ett helt lopp. Returnerar rankat HorseAnalysis[] per häst.
+ * Kräver AnalysisStarter[] med de optionella fälten last_5_results, places_2nd,
+ * places_3rd och best_time för bästa resultat; faller tillbaka på tillgänglig data.
+ */
+export function analyzeRaceEnhanced(starters: AnalysisStarter[]): HorseAnalysis[] {
+  // Beräkna medianbästa tid i sekunder
+  const times = starters
+    .map((s) => parseTimeToSeconds(s.best_time ?? null))
+    .filter((t): t is number => t !== null);
+  const sortedTimes = [...times].sort((a, b) => a - b);
+  const medianTime =
+    sortedTimes.length > 0
+      ? sortedTimes[Math.floor(sortedTimes.length / 2)]
+      : null;
+
+  const intermediate = starters.map((s) => {
+    const careerStarts = Number(s.starts_total) || 0;
+    const careerWins = Number(s.wins_total) || 0;
+    const careerWinRate = careerStarts > 0 ? careerWins / careerStarts : 0;
+
+    // Bygg lastStarts från last_5_results med estimerad fältstorlek 10.
+    // Om last_5_results saknas (ATG:s spelendpoint returnerar den inte),
+    // faller vi tillbaka på årets vinstprocent som formproxy (0–100).
+    const last5 = s.last_5_results ?? [];
+    let form: number;
+    if (last5.length > 0) {
+      const lastStarts = last5.map((r) => ({
+        place: parsePlaceStr(r.place),
+        fieldSize: 10,
+      }));
+      form = weightedFormScore(lastStarts);
+    } else {
+      // Proxy: årets vinstprocent, faller tillbaka på karriärvinstprocent
+      const recentStarts0 =
+        (Number(s.starts_current_year) || 0) + (Number(s.starts_prev_year) || 0);
+      const recentWins0 =
+        (Number(s.wins_current_year) || 0) + (Number(s.wins_prev_year) || 0);
+      const proxyRate =
+        recentStarts0 > 0 ? recentWins0 / recentStarts0 : careerWinRate;
+      form = Math.round(proxyRate * 100);
+    }
+
+    // careerPlaces = topp-3 placeringar (wins + 2nd + 3rd)
+    const careerPlaces =
+      careerWins +
+      (Number(s.places_2nd) || 0) +
+      (Number(s.places_3rd) || 0);
+
+    const consistency = consistencyScore(careerStarts, careerWins, careerPlaces);
+
+    const recentStarts =
+      (Number(s.starts_current_year) || 0) + (Number(s.starts_prev_year) || 0);
+    const recentWins =
+      (Number(s.wins_current_year) || 0) + (Number(s.wins_prev_year) || 0);
+    const recentWinRate =
+      recentStarts > 0 ? recentWins / recentStarts : careerWinRate;
+
+    const oddsNum = s.odds != null ? Number(s.odds) : null;
+    const impliedProb =
+      oddsNum && isFinite(oddsNum) && oddsNum > 0 ? 1 / oddsNum : 0;
+
+    const formRate = form / 100;
+    const estimated =
+      careerWinRate * 0.35 +
+      formRate * 0.35 +
+      recentWinRate * 0.15 +
+      impliedProb * 0.15;
+
+    const horseTimeSec = parseTimeToSeconds(s.best_time ?? null);
+    const timeAdj =
+      horseTimeSec !== null && medianTime !== null
+        ? timeAdjustment(horseTimeSec, medianTime)
+        : null;
+
+    const vi = valueIndex(estimated, oddsNum && oddsNum > 0 ? oddsNum : 999);
+
+    return { s, form, consistency, estimated, impliedProb, timeAdj, vi };
+  });
+
+  const results: HorseAnalysis[] = intermediate.map((d) => {
+    const cs = compositeScore({
+      formScore: d.form,
+      valueIndex: d.vi,
+      consistencyScore: d.consistency,
+      timeAdj: d.timeAdj ?? 0,
+    });
+    return {
+      horseId: String(d.s.start_number),
+      horseName: d.s.horses?.name ?? "–",
+      startNumber: d.s.start_number,
+      formScore: d.form,
+      valueIndex: d.vi,
+      consistencyScore: d.consistency,
+      timeAdjustment: d.timeAdj,
+      compositeScore: cs,
+      estimatedWinPct: Math.round(d.estimated * 1000) / 10,
+      impliedWinPct: Math.round(d.impliedProb * 1000) / 10,
+      isValue: cs > 55 && d.vi > 0,
+      rank: 0,
+    };
+  });
+
+  results.sort((a, b) => b.compositeScore - a.compositeScore);
+  results.forEach((r, i) => (r.rank = i + 1));
+
+  return results;
 }
