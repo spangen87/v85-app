@@ -4,6 +4,7 @@ import { FetchButton } from "@/components/FetchButton";
 import { GameSelector } from "@/components/GameSelector";
 import { UserMenu } from "@/components/groups/UserMenu";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { UsefulLinks } from "@/components/UsefulLinks";
 import { getProfile, getMyGroups } from "@/lib/actions/groups";
 import { redirect } from "next/navigation";
 
@@ -88,6 +89,10 @@ export default async function HomePage({
       )}
 
       <div className="max-w-5xl mx-auto px-4 py-6">
+        <div className="mb-6">
+          <UsefulLinks />
+        </div>
+
         {races.length === 0 ? (
           <div className="text-center py-20 text-gray-400 dark:text-gray-500">
             <p className="text-lg mb-2">Ingen V85-data inladdad ännu.</p>
