@@ -1,0 +1,121 @@
+"use client";
+
+import { analyzeRaceEnhanced } from "@/lib/analysis";
+import type { AnalysisStarter } from "@/lib/analysis";
+
+interface RaceForRanking {
+  id: string;
+  race_number: number;
+  distance: number;
+  start_method: string | null;
+  starters: AnalysisStarter[];
+}
+
+interface RankedHorse {
+  horseName: string;
+  startNumber: number;
+  raceNumber: number;
+  compositeScore: number;
+  estimatedWinPct: number;
+  odds: number | null;
+  isValue: boolean;
+}
+
+const MEDAL_COLORS = [
+  "bg-yellow-500 text-white",
+  "bg-gray-400 text-white",
+  "bg-amber-700 text-white",
+  "bg-indigo-600 text-white",
+  "bg-indigo-600 text-white",
+];
+
+export function TopFiveRanking({ races }: { races: RaceForRanking[] }) {
+  const allHorses: RankedHorse[] = [];
+
+  for (const race of races) {
+    const analyzed = analyzeRaceEnhanced(race.starters);
+    for (const h of analyzed) {
+      allHorses.push({
+        horseName: h.horseName,
+        startNumber: h.startNumber,
+        raceNumber: race.race_number,
+        compositeScore: h.compositeScore,
+        estimatedWinPct: h.estimatedWinPct,
+        odds: h.odds ?? null,
+        isValue: h.isValue,
+      });
+    }
+  }
+
+  if (allHorses.length === 0) return null;
+
+  allHorses.sort((a, b) => b.compositeScore - a.compositeScore);
+  const top5 = allHorses.slice(0, 5);
+
+  return (
+    <div className="mb-6 bg-gradient-to-b from-indigo-950/40 to-transparent dark:from-indigo-950/60 border border-indigo-800/40 rounded-xl overflow-hidden">
+      <div className="px-5 py-3 border-b border-indigo-800/30">
+        <h2 className="text-sm font-semibold text-indigo-300 uppercase tracking-wide">
+          Top 5 spelvärda hästar
+        </h2>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+          Rankad efter form, konsistens, tid och värde relativt marknaden
+        </p>
+      </div>
+
+      <div className="divide-y divide-indigo-900/30">
+        {top5.map((horse, i) => (
+          <div
+            key={`${horse.raceNumber}-${horse.startNumber}`}
+            className="flex items-center gap-3 px-5 py-3 hover:bg-indigo-950/30 transition"
+          >
+            {/* Rank badge */}
+            <span
+              className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${MEDAL_COLORS[i]}`}
+            >
+              {i + 1}
+            </span>
+
+            {/* Horse info */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-semibold text-gray-900 dark:text-white text-sm truncate">
+                  {horse.horseName}
+                </span>
+                {horse.isValue && (
+                  <span className="text-xs bg-green-900/60 text-green-300 border border-green-700/50 px-1.5 py-0.5 rounded font-medium shrink-0">
+                    Värde
+                  </span>
+                )}
+              </div>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                Avd {horse.raceNumber} &middot; Nr {horse.startNumber}
+                {horse.odds ? ` \u00B7 Odds ${horse.odds}` : ""}
+              </span>
+            </div>
+
+            {/* Score */}
+            <div className="text-right shrink-0">
+              <div className="text-sm font-bold text-indigo-400">
+                {horse.compositeScore}
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">
+                poäng
+              </div>
+            </div>
+
+            {/* Win pct */}
+            <div className="text-right shrink-0 hidden sm:block">
+              <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {horse.estimatedWinPct}%
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">
+                vinstchans
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}

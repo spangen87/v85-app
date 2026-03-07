@@ -4,6 +4,7 @@ import { useState } from "react";
 import { HorseCard } from "./HorseCard";
 import { AnalysisPanel } from "./AnalysisPanel";
 import { HorseNotes } from "./notes/HorseNotes";
+import { TopFiveRanking } from "./TopFiveRanking";
 import { analyzeRaceEnhanced } from "@/lib/analysis";
 import type { Group } from "@/lib/types";
 
@@ -113,6 +114,8 @@ export function RaceList({
 
   return (
     <div className="space-y-2">
+      <TopFiveRanking races={races} />
+
       <div className="flex items-center gap-2 px-1 pb-1">
         <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0">Sortera:</span>
         {SORT_OPTIONS.map((opt) => (
