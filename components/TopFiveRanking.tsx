@@ -34,6 +34,9 @@ export function TopFiveRanking({ races }: { races: RaceForRanking[] }) {
 
   for (const race of races) {
     const analyzed = analyzeRaceEnhanced(race.starters);
+    const oddsMap = Object.fromEntries(
+      race.starters.map((s) => [s.start_number, s.odds ?? null])
+    );
     for (const h of analyzed) {
       allHorses.push({
         horseName: h.horseName,
@@ -41,7 +44,7 @@ export function TopFiveRanking({ races }: { races: RaceForRanking[] }) {
         raceNumber: race.race_number,
         compositeScore: h.compositeScore,
         estimatedWinPct: h.estimatedWinPct,
-        odds: h.odds ?? null,
+        odds: oddsMap[h.startNumber] ?? null,
         isValue: h.isValue,
       });
     }
