@@ -77,6 +77,20 @@ export interface AtgGame {
 
 const SUPPORTED_GAME_TYPES = ["V75", "V86", "V85", "V64", "V65"] as const;
 
+export interface AtgStarterResult {
+  race_index: number;        // 0-baserat, matchar races[]-arrayen
+  horse_id: string;
+  start_number: number;
+  finish_position: number | null;   // null = ej startat/diskvalificerat
+  finish_time: string | null;
+}
+
+export interface AtgGameResults {
+  game_id: string;
+  is_complete: boolean;      // true om minst en starter har finish_position
+  results: AtgStarterResult[];
+}
+
 export interface AvailableGame {
   type: string;
   id: string;
@@ -159,6 +173,51 @@ function winPct(
   const placement = (yr["placement"] as Record<string, string>) ?? {};
   const wins = Number(placement["1"] ?? 0);
   return Math.round((wins / starts) * 1000) / 10; // en decimal
+}
+
+function parseGameResults(raw: Record<string, unknown>): AtgGameResults {
+  const gameId = String(raw["id"] ?? "");
+  const rawRaces = (raw["races"] as Record<string, unknown>[]) ?? [];
+  const results: AtgStarterResult[] = [];
+  let hasAnyResult = false;
+
+  rawRaces.forEach((race, raceIndex) => {
+    const starts = (race["starts"] as Record<string, unknown>[]) ?? [];
+    starts.forEach((s) => {
+      const horse = (s["horse"] as Record<string, unknown>) ?? {};
+      const horseId = String(horse["id"] ?? "");
+      const startNumber = Number(s["number"] ?? 0);
+
+      // Prova result.finish → result.place → s.place (fallback)
+      const result = (s["result"] as Record<string, unknown>) ?? {};
+      const finishRaw = result["finish"] ?? result["place"] ?? s["place"];
+      const finishNum = finishRaw != null && finishRaw !== "" && finishRaw !== "–"
+        ? Number(finishRaw)
+        : NaN;
+      const finish_position = !isNaN(finishNum) && finishNum > 0 ? finishNum : null;
+
+      // Prova result.time → s.time
+      const timeObj = (result["time"] ?? s["time"]) as Record<string, number> | null | undefined;
+      const formatted = formatTime(timeObj);
+      const finish_time = formatted || null;
+
+      if (finish_position !== null) hasAnyResult = true;
+
+      results.push({ race_index: raceIndex, horse_id: horseId, start_number: startNumber, finish_position, finish_time });
+    });
+  });
+
+  return { game_id: gameId, is_complete: hasAnyResult, results };
+}
+
+export async function fetchGameResults(gameId: string): Promise<AtgGameResults> {
+  const res = await fetch(`${ATG_BASE}/games/${gameId}`, {
+    headers: HEADERS,
+    next: { revalidate: 0 },
+  });
+  if (!res.ok) throw new Error(`ATG API svarade ${res.status} för ${gameId}`);
+  const raw = await res.json();
+  return parseGameResults(raw);
 }
 
 function parseGame(raw: Record<string, unknown>, gameType: string): AtgGame {

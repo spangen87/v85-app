@@ -1,12 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
 import { RaceList } from "@/components/RaceList";
 import { FetchButton } from "@/components/FetchButton";
+import { ResultsButton } from "@/components/ResultsButton";
 import { GameSelector } from "@/components/GameSelector";
 import { UserMenu } from "@/components/groups/UserMenu";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { UsefulLinks } from "@/components/UsefulLinks";
 import { getProfile, getMyGroups } from "@/lib/actions/groups";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 
 async function getAllGames(supabase: Awaited<ReturnType<typeof createClient>>) {
   const { data } = await supabase
@@ -30,7 +32,7 @@ async function getRaces(supabase: Awaited<ReturnType<typeof createClient>>, game
         starts_total, wins_total, places_2nd, places_3rd, earnings_total,
         starts_current_year, wins_current_year, places_2nd_current_year, places_3rd_current_year,
         starts_prev_year, wins_prev_year, places_2nd_prev_year, places_3rd_prev_year,
-        best_time, last_5_results, life_records, formscore,
+        best_time, last_5_results, life_records, formscore, finish_position,
         horses ( name )
       )
     `)
@@ -71,7 +73,14 @@ export default async function HomePage({
       <header className="border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between gap-4">
         <h1 className="text-xl font-bold shrink-0">Streckspel Analys</h1>
         <div className="flex items-center gap-3 flex-wrap justify-end">
+          <Link
+            href="/evaluation"
+            className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition shrink-0"
+          >
+            Utvärdering
+          </Link>
           <GameSelector games={games} selectedId={selectedId} />
+          <ResultsButton gameId={selectedId} />
           <FetchButton />
           <ThemeToggle />
           <UserMenu

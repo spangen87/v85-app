@@ -62,6 +62,7 @@ interface Starter {
   life_records: LifeRecord[] | null;
   last_5_results: LastResult[];
   formscore: number | null;
+  finish_position: number | null;
   horses: { name: string } | null;
 }
 
@@ -356,6 +357,22 @@ export function HorseCard({
             <FormBadge score={compScore} title="Sammansatt poäng (0–100): form, värde, konsistens och tid" label="CS" />
           ) : (
             <FormBadge score={starter.formscore} />
+          )}
+          {starter.finish_position != null && (
+            <span
+              className={`text-xs font-bold px-2 py-1 rounded-full ${
+                starter.finish_position === 1
+                  ? "bg-yellow-400 text-black"
+                  : starter.finish_position === 2
+                  ? "bg-gray-300 text-black"
+                  : starter.finish_position === 3
+                  ? "bg-amber-600 text-white"
+                  : "bg-gray-500 text-white"
+              }`}
+              title={`Slutplacering: ${starter.finish_position}`}
+            >
+              {starter.finish_position}:a
+            </span>
           )}
         </div>
       </div>
