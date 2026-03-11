@@ -11,7 +11,7 @@ import { redirect } from "next/navigation";
 async function getAllGames(supabase: Awaited<ReturnType<typeof createClient>>) {
   const { data } = await supabase
     .from("games")
-    .select("id, date, track")
+    .select("id, date, track, game_type")
     .order("date", { ascending: false });
   return data ?? [];
 }
@@ -69,7 +69,7 @@ export default async function HomePage({
   return (
     <main className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white">
       <header className="border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between gap-4">
-        <h1 className="text-xl font-bold shrink-0">V85 Analys</h1>
+        <h1 className="text-xl font-bold shrink-0">Streckspel Analys</h1>
         <div className="flex items-center gap-3 flex-wrap justify-end">
           <GameSelector games={games} selectedId={selectedId} />
           <FetchButton />
@@ -84,7 +84,7 @@ export default async function HomePage({
 
       {selectedGame && (
         <div className="px-6 py-2 text-sm text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-800">
-          {selectedGame.date} &middot; {selectedGame.track}
+          {selectedGame.date} &middot; {selectedGame.game_type} &middot; {selectedGame.track}
         </div>
       )}
 
@@ -95,9 +95,9 @@ export default async function HomePage({
 
         {races.length === 0 ? (
           <div className="text-center py-20 text-gray-400 dark:text-gray-500">
-            <p className="text-lg mb-2">Ingen V85-data inladdad ännu.</p>
+            <p className="text-lg mb-2">Ingen data inladdad ännu.</p>
             <p className="text-sm">
-              Välj ett datum och klicka &quot;Hämta V85&quot; för att ladda en omgång från ATG.
+              Välj ett datum och klicka på ett spel för att ladda en omgång från ATG.
             </p>
           </div>
         ) : (
