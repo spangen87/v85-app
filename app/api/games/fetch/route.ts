@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchV85Game } from "@/lib/atg";
+import { fetchGame } from "@/lib/atg";
 import { calculateFormscore } from "@/lib/formscore";
 import { createServiceClient } from "@/lib/supabase/server";
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
-  const gameDate: string | undefined = body.date;
+  const gameType: string = body.gameType ?? "V85";
+  const gameId: string = body.gameId;
+
+  if (!gameId) {
+    return NextResponse.json({ error: "gameId krävs" }, { status: 400 });
+  }
 
   try {
-    const game = await fetchV85Game(gameDate);
+    const game = await fetchGame(gameType, gameId);
     const supabase = createServiceClient();
 
     await supabase.from("games").upsert({
@@ -17,6 +22,17 @@ export async function POST(request: NextRequest) {
       date: game.date,
       track: game.track,
     });
+
+    // Rensa gamla races/starters (kan ha fel ID från tidigare hämtning)
+    const { data: oldRaces } = await supabase
+      .from("races")
+      .select("id")
+      .eq("game_id", game.game_id);
+    if (oldRaces && oldRaces.length > 0) {
+      const oldIds = oldRaces.map((r) => r.id);
+      await supabase.from("starters").delete().in("race_id", oldIds);
+      await supabase.from("races").delete().eq("game_id", game.game_id);
+    }
 
     for (const race of game.races) {
       const raceId = `${game.game_id}_${race.race_number}`;
