@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchV85Game } from "@/lib/atg";
+import { fetchV85Game, fetchHorseStarts } from "@/lib/atg";
 import { calculateFormscore } from "@/lib/formscore";
 import { createServiceClient } from "@/lib/supabase/server";
 
@@ -9,6 +9,16 @@ export async function POST(request: NextRequest) {
 
   try {
     const game = await fetchV85Game(gameDate);
+
+    // Berika starters med senaste 5 lopp (lopp för lopp för att undvika rate-limiting)
+    for (const race of game.races) {
+      await Promise.all(
+        race.starters.map(async (starter) => {
+          starter.last_5_results = await fetchHorseStarts(starter.horse_id);
+        })
+      );
+    }
+
     const supabase = createServiceClient();
 
     await supabase.from("games").upsert({
