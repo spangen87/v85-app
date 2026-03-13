@@ -15,7 +15,7 @@ interface LifeRecord {
   time: string;
 }
 
-type SortKey = "number" | "formscore" | "odds" | "bet";
+type SortKey = "number" | "formscore" | "odds" | "bet" | "composite";
 
 interface Starter {
   id: string;
@@ -84,15 +84,22 @@ export function RaceList({
   const [openRace, setOpenRace] = useState<string | null>(races[0]?.id ?? null);
   const [analysisRace, setAnalysisRace] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("formscore");
+  const [filterValue, setFilterValue] = useState(false);
+  const [hideOutsiders, setHideOutsiders] = useState(false);
+  const [search, setSearch] = useState("");
 
   const SORT_OPTIONS: { key: SortKey; label: string }[] = [
     { key: "number", label: "Nr" },
     { key: "formscore", label: "Formscore" },
     { key: "odds", label: "Odds" },
     { key: "bet", label: "Streck" },
+    { key: "composite", label: "Poäng" },
   ];
 
-  function sortStarters(starters: Starter[]): Starter[] {
+  function sortStarters(
+    starters: Starter[],
+    compositeMap: Record<number, number>
+  ): Starter[] {
     return [...starters].sort((a, b) => {
       switch (sortKey) {
         case "number":
@@ -107,6 +114,8 @@ export function RaceList({
           if (a.bet_distribution == null) return 1;
           if (b.bet_distribution == null) return -1;
           return b.bet_distribution - a.bet_distribution;
+        case "composite":
+          return (compositeMap[b.start_number] ?? 0) - (compositeMap[a.start_number] ?? 0);
         case "formscore":
         default:
           return (b.formscore ?? 0) - (a.formscore ?? 0);
@@ -114,36 +123,100 @@ export function RaceList({
     });
   }
 
+  const hasActiveFilter = filterValue || hideOutsiders || search.trim().length > 0;
+
   return (
     <div className="space-y-2">
       <TopFiveRanking races={races} />
 
-      <div className="flex items-center gap-2 px-1 pb-1">
-        <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0">Sortera:</span>
-        {SORT_OPTIONS.map((opt) => (
+      {/* Sorterings- och filterkontroller */}
+      <div className="space-y-2 px-1 pb-1">
+        {/* Rad 1: Sortering */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0">Sortera:</span>
+          {SORT_OPTIONS.map((opt) => (
+            <button
+              key={opt.key}
+              onClick={() => setSortKey(opt.key)}
+              className={`text-xs px-3 py-1 rounded-lg border transition font-medium ${
+                sortKey === opt.key
+                  ? "bg-indigo-700 border-indigo-600 text-white"
+                  : "bg-transparent border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Rad 2: Filter + sök */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0">Filtrera:</span>
           <button
-            key={opt.key}
-            onClick={() => setSortKey(opt.key)}
+            onClick={() => setFilterValue((v) => !v)}
             className={`text-xs px-3 py-1 rounded-lg border transition font-medium ${
-              sortKey === opt.key
+              filterValue
+                ? "bg-green-600 border-green-500 text-white"
+                : "bg-transparent border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+            }`}
+          >
+            Värde
+          </button>
+          <button
+            onClick={() => setHideOutsiders((v) => !v)}
+            className={`text-xs px-3 py-1 rounded-lg border transition font-medium ${
+              hideOutsiders
                 ? "bg-indigo-700 border-indigo-600 text-white"
                 : "bg-transparent border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
             }`}
           >
-            {opt.label}
+            Dölj &gt;50x
           </button>
-        ))}
+          {hasActiveFilter && (
+            <button
+              onClick={() => { setFilterValue(false); setHideOutsiders(false); setSearch(""); }}
+              className="text-xs px-2 py-1 text-gray-400 dark:text-gray-500 hover:text-red-500 transition"
+            >
+              Rensa filter ✕
+            </button>
+          )}
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Sök häst, kusk, tränare…"
+            className="ml-auto text-xs px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-400 w-48"
+          />
+        </div>
       </div>
 
       {races.map((race, index) => {
-        const sorted = sortStarters(race.starters);
         const isOpen = openRace === race.id;
         const showAnalysis = analysisRace === race.id;
 
         // Beräkna utökad analys per lopp — indexeras på start_number
-        const enhancedMap = Object.fromEntries(
-          analyzeRaceEnhanced(race.starters).map((h) => [h.startNumber, h])
+        const enhanced = analyzeRaceEnhanced(race.starters);
+        const enhancedMap = Object.fromEntries(enhanced.map((h) => [h.startNumber, h]));
+        const compositeMap = Object.fromEntries(
+          enhanced.map((h) => [h.startNumber, h.compositeScore])
         );
+
+        // Filtrera
+        const q = search.trim().toLowerCase();
+        const filtered = race.starters
+          .filter((s) => !filterValue || enhancedMap[s.start_number]?.isValue)
+          .filter((s) => !hideOutsiders || s.odds == null || s.odds <= 50)
+          .filter((s) => {
+            if (!q) return true;
+            return (
+              (s.horses?.name ?? "").toLowerCase().includes(q) ||
+              s.driver.toLowerCase().includes(q) ||
+              s.trainer.toLowerCase().includes(q)
+            );
+          });
+
+        // Sortera
+        const sorted = sortStarters(filtered, compositeMap);
 
         return (
           <div key={race.id} className="bg-gray-50 dark:bg-gray-900 rounded-xl overflow-hidden">
@@ -193,6 +266,12 @@ export function RaceList({
                     raceMeters={race.distance}
                     raceStartMethod={race.start_method ?? "auto"}
                   />
+                )}
+
+                {sorted.length === 0 && (
+                  <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-4">
+                    Inga hästar matchar filtret.
+                  </p>
                 )}
 
                 <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 mt-3">
