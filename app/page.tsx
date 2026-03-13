@@ -1,17 +1,19 @@
 import { createClient } from "@/lib/supabase/server";
 import { RaceList } from "@/components/RaceList";
 import { FetchButton } from "@/components/FetchButton";
+import { ResultsButton } from "@/components/ResultsButton";
 import { GameSelector } from "@/components/GameSelector";
 import { UserMenu } from "@/components/groups/UserMenu";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { UsefulLinks } from "@/components/UsefulLinks";
 import { getProfile, getMyGroups } from "@/lib/actions/groups";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 
 async function getAllGames(supabase: Awaited<ReturnType<typeof createClient>>) {
   const { data } = await supabase
     .from("games")
-    .select("id, date, track")
+    .select("id, date, track, game_type")
     .order("date", { ascending: false });
   return data ?? [];
 }
@@ -30,7 +32,7 @@ async function getRaces(supabase: Awaited<ReturnType<typeof createClient>>, game
         starts_total, wins_total, places_2nd, places_3rd, earnings_total,
         starts_current_year, wins_current_year, places_2nd_current_year, places_3rd_current_year,
         starts_prev_year, wins_prev_year, places_2nd_prev_year, places_3rd_prev_year,
-        best_time, last_5_results, life_records, formscore,
+        best_time, last_5_results, life_records, formscore, finish_position, finish_time,
         horses ( name )
       )
     `)
@@ -69,9 +71,16 @@ export default async function HomePage({
   return (
     <main className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white">
       <header className="border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between gap-4">
-        <h1 className="text-xl font-bold shrink-0">V85 Analys</h1>
+        <h1 className="text-xl font-bold shrink-0">Streckspel Analys</h1>
         <div className="flex items-center gap-3 flex-wrap justify-end">
+          <Link
+            href="/evaluation"
+            className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition shrink-0"
+          >
+            Utvärdering
+          </Link>
           <GameSelector games={games} selectedId={selectedId} />
+          <ResultsButton gameId={selectedId} />
           <FetchButton />
           <ThemeToggle />
           <UserMenu
@@ -84,7 +93,7 @@ export default async function HomePage({
 
       {selectedGame && (
         <div className="px-6 py-2 text-sm text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-800">
-          {selectedGame.date} &middot; {selectedGame.track}
+          {selectedGame.date} &middot; {selectedGame.game_type} &middot; {selectedGame.track}
         </div>
       )}
 
@@ -95,9 +104,9 @@ export default async function HomePage({
 
         {races.length === 0 ? (
           <div className="text-center py-20 text-gray-400 dark:text-gray-500">
-            <p className="text-lg mb-2">Ingen V85-data inladdad ännu.</p>
+            <p className="text-lg mb-2">Ingen data inladdad ännu.</p>
             <p className="text-sm">
-              Välj ett datum och klicka &quot;Hämta V85&quot; för att ladda en omgång från ATG.
+              Välj ett datum och klicka på ett spel för att ladda en omgång från ATG.
             </p>
           </div>
         ) : (

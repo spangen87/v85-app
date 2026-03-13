@@ -6,6 +6,7 @@ interface Game {
   id: string;
   date: string;
   track: string;
+  game_type: string;
 }
 
 interface GameSelectorProps {
@@ -26,7 +27,7 @@ export function GameSelector({ games, selectedId }: GameSelectorProps) {
     >
       {games.map((g) => (
         <option key={g.id} value={g.id}>
-          {g.date} — {g.track}
+          {g.date} — {g.game_type} — {g.track}
         </option>
       ))}
     </select>

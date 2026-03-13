@@ -57,6 +57,8 @@ interface Starter {
   last_5_results: { place: string; date: string; track: string; time: string }[];
   life_records: LifeRecord[] | null;
   formscore: number | null;
+  finish_position: number | null;
+  finish_time: string | null;
   horses: { name: string } | null;
 }
 

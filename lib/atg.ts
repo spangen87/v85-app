@@ -75,18 +75,74 @@ export interface AtgGame {
   races: AtgRace[];
 }
 
-async function findV85GameId(gameDate?: string): Promise<string> {
+const SUPPORTED_GAME_TYPES = ["V75", "V86", "V85", "V64", "V65"] as const;
+
+export interface AtgStarterResult {
+  race_index: number;        // 0-baserat, matchar races[]-arrayen
+  horse_id: string;
+  start_number: number;
+  finish_position: number | null;   // null = ej startat/diskvalificerat
+  finish_time: string | null;
+}
+
+export interface AtgGameResults {
+  game_id: string;
+  is_complete: boolean;      // true om minst en starter har finish_position
+  results: AtgStarterResult[];
+}
+
+export interface AvailableGame {
+  type: string;
+  id: string;
+  label: string;
+}
+
+export async function fetchAvailableGames(gameDate?: string): Promise<AvailableGame[]> {
   const url = gameDate
     ? `${ATG_BASE}/calendar/day/${gameDate}`
     : `${ATG_BASE}/calendar/day`;
 
-  const res = await fetch(url, { headers: HEADERS, next: { revalidate: 0 } });
+  const res = await fetch(url, { headers: HEADERS, next: { revalidate: 60 } });
   if (!res.ok) throw new Error(`ATG kalender svarade ${res.status}`);
 
   const cal = await res.json();
-  const v85List = cal?.games?.V85 ?? [];
-  if (v85List.length === 0) throw new Error(`Inget V85-spel hittades ${gameDate ?? "idag"}`);
-  return v85List[0].id as string;
+  const games = (cal?.games ?? {}) as Record<string, { id: string }[]>;
+
+  const result: AvailableGame[] = [];
+  for (const type of SUPPORTED_GAME_TYPES) {
+    const list = games[type] ?? [];
+    list.forEach((entry, i) => {
+      const suffix = list.length > 1 ? ` (${i + 1}/${list.length})` : "";
+      result.push({ type, id: entry.id, label: `${type}${suffix}` });
+    });
+  }
+  return result;
+}
+
+export async function fetchGame(gameType: string, gameId: string): Promise<AtgGame> {
+  const res = await fetch(`${ATG_BASE}/games/${gameId}`, {
+    headers: HEADERS,
+    next: { revalidate: 0 },
+  });
+  if (!res.ok) throw new Error(`ATG API svarade ${res.status} för ${gameId}`);
+
+  const raw = await res.json();
+  return parseGame(raw, gameType);
+}
+
+export async function fetchV85Game(gameDate?: string): Promise<AtgGame> {
+  const available = await fetchAvailableGames(gameDate);
+  const v85 = available.find((g) => g.type === "V85");
+  if (!v85) throw new Error(`Inget V85-spel hittades ${gameDate ?? "idag"}`);
+  return fetchGame("V85", v85.id);
+}
+
+function formatTime(timeObj: Record<string, number> | null | undefined): string {
+  if (!timeObj) return "";
+  const m = timeObj["minutes"] ?? 0;
+  const s = timeObj["seconds"] ?? 0;
+  const t = timeObj["tenths"] ?? 0;
+  return `${m}:${String(s).padStart(2, "0")},${t}`;
 }
 
 export async function fetchHorseStarts(
@@ -113,27 +169,6 @@ export async function fetchHorseStarts(
   } catch {
     return [];
   }
-}
-
-export async function fetchV85Game(gameDate?: string): Promise<AtgGame> {
-  const gameId = await findV85GameId(gameDate);
-
-  const res = await fetch(`${ATG_BASE}/games/${gameId}`, {
-    headers: HEADERS,
-    next: { revalidate: 0 },
-  });
-  if (!res.ok) throw new Error(`ATG API svarade ${res.status} för ${gameId}`);
-
-  const raw = await res.json();
-  return parseGame(raw);
-}
-
-function formatTime(timeObj: Record<string, number> | null | undefined): string {
-  if (!timeObj) return "";
-  const m = timeObj["minutes"] ?? 0;
-  const s = timeObj["seconds"] ?? 0;
-  const t = timeObj["tenths"] ?? 0;
-  return `${m}:${String(s).padStart(2, "0")},${t}`;
 }
 
 function bestRecord(records: Record<string, unknown>[]): string {
@@ -166,13 +201,58 @@ function winPct(
   return Math.round((wins / starts) * 1000) / 10; // en decimal
 }
 
-function parseGame(raw: Record<string, unknown>): AtgGame {
+function parseGameResults(raw: Record<string, unknown>): AtgGameResults {
+  const gameId = String(raw["id"] ?? "");
+  const rawRaces = (raw["races"] as Record<string, unknown>[]) ?? [];
+  const results: AtgStarterResult[] = [];
+  let hasAnyResult = false;
+
+  rawRaces.forEach((race, raceIndex) => {
+    const starts = (race["starts"] as Record<string, unknown>[]) ?? [];
+    starts.forEach((s) => {
+      const horse = (s["horse"] as Record<string, unknown>) ?? {};
+      const horseId = String(horse["id"] ?? "");
+      const startNumber = Number(s["number"] ?? 0);
+
+      // Prova result.finish → result.place → s.place (fallback)
+      const result = (s["result"] as Record<string, unknown>) ?? {};
+      const finishRaw = result["finish"] ?? result["place"] ?? s["place"];
+      const finishNum = finishRaw != null && finishRaw !== "" && finishRaw !== "–"
+        ? Number(finishRaw)
+        : NaN;
+      const finish_position = !isNaN(finishNum) && finishNum > 0 ? finishNum : null;
+
+      // Prova result.time → s.time
+      const timeObj = (result["time"] ?? s["time"]) as Record<string, number> | null | undefined;
+      const formatted = formatTime(timeObj);
+      const finish_time = formatted || null;
+
+      if (finish_position !== null) hasAnyResult = true;
+
+      results.push({ race_index: raceIndex, horse_id: horseId, start_number: startNumber, finish_position, finish_time });
+    });
+  });
+
+  return { game_id: gameId, is_complete: hasAnyResult, results };
+}
+
+export async function fetchGameResults(gameId: string): Promise<AtgGameResults> {
+  const res = await fetch(`${ATG_BASE}/games/${gameId}`, {
+    headers: HEADERS,
+    next: { revalidate: 0 },
+  });
+  if (!res.ok) throw new Error(`ATG API svarade ${res.status} för ${gameId}`);
+  const raw = await res.json();
+  return parseGameResults(raw);
+}
+
+function parseGame(raw: Record<string, unknown>, gameType: string): AtgGame {
   const currentYear = String(new Date().getFullYear());
   const prevYear = String(new Date().getFullYear() - 1);
 
   const rawRaces = (raw["races"] as Record<string, unknown>[]) ?? [];
 
-  const races: AtgRace[] = rawRaces.map((race) => {
+  const races: AtgRace[] = rawRaces.map((race, avdIndex) => {
     const starts = (race["starts"] as Record<string, unknown>[]) ?? [];
     const startMethod = String(race["startMethod"] ?? "auto");
 
@@ -188,7 +268,7 @@ function parseGame(raw: Record<string, unknown>): AtgGame {
       const platsPool = (pools["plats"] as Record<string, unknown>) ?? {};
       const pOddsRaw = platsPool["odds"];
       const pOdds = pOddsRaw != null ? Math.round(Number(pOddsRaw)) / 100 : null;
-      const betDistRaw = (pools["V85"] as Record<string, unknown>)?.["betDistribution"];
+      const betDistRaw = (pools[gameType] as Record<string, unknown>)?.["betDistribution"];
       const betDistribution = betDistRaw != null ? Math.round(Number(betDistRaw)) / 100 : 0;
 
       // Häststats
@@ -276,7 +356,7 @@ function parseGame(raw: Record<string, unknown>): AtgGame {
     });
 
     return {
-      race_number: Number(race["number"] ?? 0),
+      race_number: avdIndex + 1, // avdelningsnummer 1-N (inte banans interna löpnummer)
       race_name: String(race["name"] ?? ""),
       distance: Number(race["distance"] ?? 0),
       start_method: startMethod,
@@ -293,7 +373,7 @@ function parseGame(raw: Record<string, unknown>): AtgGame {
 
   return {
     game_id: gameId,
-    game_type: "V85",
+    game_type: gameType,
     date,
     track: firstRaceTrack,
     races,

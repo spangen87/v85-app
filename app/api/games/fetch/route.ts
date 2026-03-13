@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchV85Game, fetchHorseStarts } from "@/lib/atg";
+import { fetchGame, fetchHorseStarts } from "@/lib/atg";
 import { calculateFormscore } from "@/lib/formscore";
 import { createServiceClient } from "@/lib/supabase/server";
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
-  const gameDate: string | undefined = body.date;
+  const gameType: string = body.gameType ?? "V85";
+  const gameId: string = body.gameId;
+
+  if (!gameId) {
+    return NextResponse.json({ error: "gameId krävs" }, { status: 400 });
+  }
 
   try {
-    const game = await fetchV85Game(gameDate);
+    const game = await fetchGame(gameType, gameId);
 
     // Berika starters med senaste 5 lopp (lopp för lopp för att undvika rate-limiting)
     for (const race of game.races) {
@@ -28,6 +33,17 @@ export async function POST(request: NextRequest) {
       track: game.track,
     });
 
+    // Rensa gamla races/starters (kan ha fel ID från tidigare hämtning)
+    const { data: oldRaces } = await supabase
+      .from("races")
+      .select("id")
+      .eq("game_id", game.game_id);
+    if (oldRaces && oldRaces.length > 0) {
+      const oldIds = oldRaces.map((r) => r.id);
+      await supabase.from("starters").delete().in("race_id", oldIds);
+      await supabase.from("races").delete().eq("game_id", game.game_id);
+    }
+
     for (const race of game.races) {
       const raceId = `${game.game_id}_${race.race_number}`;
 
@@ -42,19 +58,27 @@ export async function POST(request: NextRequest) {
         track_surface: null,
       });
 
-      // Upsert horses (stable data — ignorera dubbletter, uppdatera ej)
-      const horseUpserts = race.starters.map((s) => ({
+      // Deduplicera — ATG kan ibland returnera samma häst två gånger i ett lopp
+      const seenHorseIds = new Set<string>();
+      const uniqueStarters = race.starters.filter((s) => {
+        if (seenHorseIds.has(s.horse_id)) return false;
+        seenHorseIds.add(s.horse_id);
+        return true;
+      });
+
+      // Upsert horses — uppdatera namn om det har ändrats
+      const horseUpserts = uniqueStarters.map((s) => ({
         id: s.horse_id,
         name: s.horse_name,
       }));
       if (horseUpserts.length > 0) {
-        await supabase.from("horses").upsert(horseUpserts, { ignoreDuplicates: true });
+        await supabase.from("horses").upsert(horseUpserts, { onConflict: "id" });
       }
 
-      const scores = calculateFormscore(race.starters);
+      const scores = calculateFormscore(uniqueStarters);
 
       await supabase.from("starters").delete().eq("race_id", raceId);
-      const starterRows = race.starters.map((s, i) => ({
+      const starterRows = uniqueStarters.map((s, i) => ({
         race_id: raceId,
         horse_id: s.horse_id,
         start_number: s.start_number,

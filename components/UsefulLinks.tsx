@@ -45,6 +45,11 @@ const LINK_GROUPS: LinkGroup[] = [
         label: "Trav.se – Systemförslag",
         desc: "Erbjuder konkreta systemförslag och rankningar för varje avdelning.",
       },
+      {
+        href: "https://travcash.se",
+        label: "Travcash – Tips & Analyser",
+        desc: "Tips, analyser och systemförslag inför V75, V86 och V85. Bra genomgångar med fokus på spelvärde.",
+      },
     ],
   },
   {
