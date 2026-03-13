@@ -48,19 +48,27 @@ export async function POST(request: NextRequest) {
         track_surface: null,
       });
 
-      // Upsert horses (stable data — ignorera dubbletter, uppdatera ej)
-      const horseUpserts = race.starters.map((s) => ({
+      // Deduplicera — ATG kan ibland returnera samma häst två gånger i ett lopp
+      const seenHorseIds = new Set<string>();
+      const uniqueStarters = race.starters.filter((s) => {
+        if (seenHorseIds.has(s.horse_id)) return false;
+        seenHorseIds.add(s.horse_id);
+        return true;
+      });
+
+      // Upsert horses — uppdatera namn om det har ändrats
+      const horseUpserts = uniqueStarters.map((s) => ({
         id: s.horse_id,
         name: s.horse_name,
       }));
       if (horseUpserts.length > 0) {
-        await supabase.from("horses").upsert(horseUpserts, { ignoreDuplicates: true });
+        await supabase.from("horses").upsert(horseUpserts, { onConflict: "id" });
       }
 
-      const scores = calculateFormscore(race.starters);
+      const scores = calculateFormscore(uniqueStarters);
 
       await supabase.from("starters").delete().eq("race_id", raceId);
-      const starterRows = race.starters.map((s, i) => ({
+      const starterRows = uniqueStarters.map((s, i) => ({
         race_id: raceId,
         horse_id: s.horse_id,
         start_number: s.start_number,

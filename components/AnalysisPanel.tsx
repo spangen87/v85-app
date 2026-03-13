@@ -153,7 +153,8 @@ function EnhancedAnalysisSection({ starters }: { starters: AnalysisStarter[] }) 
               <th className="text-left py-1 pr-2 font-medium min-w-[90px]">Konsistens</th>
               <th className="text-right py-1 pr-2 font-medium w-20">Tid</th>
               <th className="text-right py-1 pr-2 font-medium w-20">Värde</th>
-              <th className="text-right py-1 font-medium w-16">Poäng</th>
+              <th className="text-right py-1 pr-2 font-medium w-16">Poäng</th>
+              <th className="text-right py-1 font-medium w-20">Resultat</th>
             </tr>
           </thead>
           <tbody>
@@ -191,8 +192,27 @@ function EnhancedAnalysisSection({ starters }: { starters: AnalysisStarter[] }) 
                 <td className="py-1.5 pr-2 text-right">
                   <ValueIndexCell vi={r.valueIndex} />
                 </td>
-                <td className="py-1.5 text-right font-bold tabular-nums text-indigo-700 dark:text-indigo-300">
+                <td className="py-1.5 pr-2 text-right font-bold tabular-nums text-indigo-700 dark:text-indigo-300">
                   {r.compositeScore}
+                </td>
+                <td className="py-1.5 text-right">
+                  {r.finish_position != null ? (
+                    <span
+                      className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${
+                        r.finish_position === 1
+                          ? "bg-yellow-400 text-black"
+                          : r.finish_position === 2
+                          ? "bg-gray-300 text-black"
+                          : r.finish_position === 3
+                          ? "bg-amber-600 text-white"
+                          : "bg-gray-500 text-white"
+                      }`}
+                    >
+                      {r.finish_position}:a{r.finish_time ? ` ${r.finish_time}` : ""}
+                    </span>
+                  ) : (
+                    <span className="text-gray-400 dark:text-gray-600 text-xs">–</span>
+                  )}
                 </td>
               </tr>
             ))}
@@ -240,12 +260,14 @@ export function AnalysisPanel({ starters, raceMeters, raceStartMethod }: Analysi
               <th className="text-right py-1 pr-2 font-medium w-20">Streckning</th>
               <th className="text-right py-1 pr-2 font-medium w-16">Odds</th>
               <th className="text-left py-1 pr-2 font-medium min-w-[100px]">Distans</th>
-              <th className="text-right py-1 font-medium min-w-[100px]">Spelvärde</th>
+              <th className="text-right py-1 pr-2 font-medium min-w-[100px]">Spelvärde</th>
+              <th className="text-right py-1 font-medium w-20">Resultat</th>
             </tr>
           </thead>
           <tbody>
             {results.map((r) => {
               const isValue = r.streckning_loaded && r.value >= 2;
+              const starter = starters.find((s) => s.start_number === r.start_number);
               return (
                 <tr
                   key={r.start_number}
@@ -269,8 +291,27 @@ export function AnalysisPanel({ starters, raceMeters, raceStartMethod }: Analysi
                   <td className="py-1.5 pr-2">
                     <DistBadge factor={r.dist_signal.factor} label={r.dist_signal.label} />
                   </td>
-                  <td className="py-1.5 text-right">
+                  <td className="py-1.5 pr-2 text-right">
                     <ValueBadge value={r.value} active={r.streckning_loaded} />
+                  </td>
+                  <td className="py-1.5 text-right">
+                    {starter?.finish_position != null ? (
+                      <span
+                        className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${
+                          starter.finish_position === 1
+                            ? "bg-yellow-400 text-black"
+                            : starter.finish_position === 2
+                            ? "bg-gray-300 text-black"
+                            : starter.finish_position === 3
+                            ? "bg-amber-600 text-white"
+                            : "bg-gray-500 text-white"
+                        }`}
+                      >
+                        {starter.finish_position}:a{starter.finish_time ? ` ${starter.finish_time}` : ""}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400 dark:text-gray-600 text-xs">–</span>
+                    )}
                   </td>
                 </tr>
               );

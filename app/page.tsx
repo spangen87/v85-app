@@ -32,7 +32,7 @@ async function getRaces(supabase: Awaited<ReturnType<typeof createClient>>, game
         starts_total, wins_total, places_2nd, places_3rd, earnings_total,
         starts_current_year, wins_current_year, places_2nd_current_year, places_3rd_current_year,
         starts_prev_year, wins_prev_year, places_2nd_prev_year, places_3rd_prev_year,
-        best_time, last_5_results, life_records, formscore, finish_position,
+        best_time, last_5_results, life_records, formscore, finish_position, finish_time,
         horses ( name )
       )
     `)
