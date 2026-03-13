@@ -145,6 +145,32 @@ function formatTime(timeObj: Record<string, number> | null | undefined): string 
   return `${m}:${String(s).padStart(2, "0")},${t}`;
 }
 
+export async function fetchHorseStarts(
+  horseId: string
+): Promise<{ place: string; date: string; track: string; time: string }[]> {
+  try {
+    const res = await fetch(`${ATG_BASE}/horses/${horseId}`, {
+      headers: HEADERS,
+      next: { revalidate: 0 },
+    });
+    if (!res.ok) return [];
+    const raw = await res.json();
+    const startsRaw = (raw["starts"] as Record<string, unknown>[]) ?? [];
+    return startsRaw.slice(0, 5).map((s) => {
+      const race = (s["race"] as Record<string, unknown>) ?? {};
+      const track = (race["track"] as Record<string, unknown>) ?? {};
+      return {
+        date: String(race["date"] ?? s["date"] ?? ""),
+        track: String(track["name"] ?? race["name"] ?? ""),
+        place: String(s["place"] ?? "–"),
+        time: formatTime(s["time"] as Record<string, number> | null | undefined),
+      };
+    });
+  } catch {
+    return [];
+  }
+}
+
 function bestRecord(records: Record<string, unknown>[]): string {
   if (!records?.length) return "";
   const priority: [string, string][] = [
