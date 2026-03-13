@@ -19,6 +19,8 @@ interface RankedHorse {
   estimatedWinPct: number;
   odds: number | null;
   isValue: boolean;
+  finish_position: number | null;
+  finish_time: string | null;
 }
 
 const MEDAL_COLORS = [
@@ -46,6 +48,8 @@ export function TopFiveRanking({ races }: { races: RaceForRanking[] }) {
         estimatedWinPct: h.estimatedWinPct,
         odds: oddsMap[h.startNumber] ?? null,
         isValue: h.isValue,
+        finish_position: h.finish_position ?? null,
+        finish_time: h.finish_time ?? null,
       });
     }
   }
@@ -96,6 +100,24 @@ export function TopFiveRanking({ races }: { races: RaceForRanking[] }) {
                 {horse.odds ? ` \u00B7 Odds ${horse.odds}` : ""}
               </span>
             </div>
+
+            {/* Resultat */}
+            {horse.finish_position != null && (
+              <span
+                className={`text-xs font-bold px-2 py-1 rounded-full shrink-0 ${
+                  horse.finish_position === 1
+                    ? "bg-yellow-400 text-black"
+                    : horse.finish_position === 2
+                    ? "bg-gray-300 text-black"
+                    : horse.finish_position === 3
+                    ? "bg-amber-600 text-white"
+                    : "bg-gray-500 text-white"
+                }`}
+                title={`Slutplacering: ${horse.finish_position}`}
+              >
+                {horse.finish_position}:a{horse.finish_time ? ` ${horse.finish_time}` : ""}
+              </span>
+            )}
 
             {/* Score */}
             <div className="text-right shrink-0">

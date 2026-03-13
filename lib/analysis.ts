@@ -99,6 +99,8 @@ export interface AnalysisStarter {
   places_3rd?: number | null;
   best_time?: string | null;
   last_5_results?: { place: string; date: string; track: string; time: string }[];
+  finish_position?: number | null;
+  finish_time?: string | null;
 }
 
 /**
@@ -265,6 +267,8 @@ export interface HorseAnalysis {
   impliedWinPct: number;
   isValue: boolean;
   rank: number;
+  finish_position?: number | null;
+  finish_time?: string | null;
 }
 
 function parsePlaceStr(place: string): number {
@@ -372,6 +376,8 @@ export function analyzeRaceEnhanced(starters: AnalysisStarter[]): HorseAnalysis[
       impliedWinPct: Math.round(d.impliedProb * 1000) / 10,
       isValue: cs > 55 && d.vi > 0,
       rank: 0,
+      finish_position: d.s.finish_position ?? null,
+      finish_time: d.s.finish_time ?? null,
     };
   });
 

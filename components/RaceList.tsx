@@ -58,6 +58,7 @@ interface Starter {
   life_records: LifeRecord[] | null;
   formscore: number | null;
   finish_position: number | null;
+  finish_time: string | null;
   horses: { name: string } | null;
 }
 
