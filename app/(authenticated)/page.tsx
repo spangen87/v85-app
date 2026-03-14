@@ -6,6 +6,7 @@ import { GameSelector } from "@/components/GameSelector";
 import { UserMenu } from "@/components/groups/UserMenu";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { UsefulLinks } from "@/components/UsefulLinks";
+import { CollapsibleControls } from "@/components/CollapsibleControls";
 import { getProfile, getMyGroups } from "@/lib/actions/groups";
 import { redirect } from "next/navigation";
 
@@ -83,12 +84,12 @@ export default async function HomePage({
             />
           </div>
         </div>
-        {/* Rad 2: spelkontroller (alltid synliga) */}
-        <div className="flex items-center gap-2 flex-wrap mt-2">
+        {/* Rad 2: spelkontroller – kollapsibara på mobil, alltid synliga på desktop */}
+        <CollapsibleControls>
           <GameSelector games={games} selectedId={selectedId} />
           <ResultsButton gameId={selectedId} />
           <FetchButton />
-        </div>
+        </CollapsibleControls>
       </header>
 
       {selectedGame && (
