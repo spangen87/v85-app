@@ -5,24 +5,34 @@
 1. [Introduktion](#1-introduktion)
 2. [Komma igång](#2-komma-igång)
    - [Registrering och inloggning](#21-registrering-och-inloggning)
-3. [Hämta V85-omgång](#3-hämta-v85-omgång)
+3. [Hämta omgång](#3-hämta-omgång)
 4. [Navigera bland omgångar](#4-navigera-bland-omgångar)
+   - [Top 5 spelvärda hästar](#41-top-5-spelvärda-hästar)
+   - [Sortering, filtrering och sökning](#42-sortering-filtrering-och-sökning)
 5. [Hästarnas informationskort](#5-hästarnas-informationskort)
+   - [Expanderad detaljvy](#51-expanderad-detaljvy)
+   - [Formscore (FS) och Composite Score (CS)](#52-formscore-fs-och-composite-score-cs)
 6. [Analysverktyget](#6-analysverktyget)
-7. [Grupper och samarbete](#7-grupper-och-samarbete)
-   - [Skapa en grupp](#71-skapa-en-grupp)
-   - [Gå med i en grupp](#72-gå-med-i-en-grupp)
-   - [Hantera din grupp (admin)](#73-hantera-din-grupp-admin)
+   - [Matematisk analys – beräknad vinstchans](#61-matematisk-analys--beräknad-vinstchans)
+   - [Utökad analys – sammansatt poäng](#62-utökad-analys--sammansatt-poäng)
+7. [Sällskap och samarbete](#7-sällskap-och-samarbete)
+   - [Skapa ett sällskap](#71-skapa-ett-sällskap)
+   - [Gå med i ett sällskap](#72-gå-med-i-ett-sällskap)
+   - [Flikar i sällskapet](#73-flikar-i-sällskapet)
+   - [Hantera sällskapet (skaparen)](#74-hantera-sällskapet-skaparen)
 8. [Anteckningar på hästar](#8-anteckningar-på-hästar)
-9. [Ordlista](#9-ordlista)
+9. [Utvärdering](#9-utvärdering)
+10. [Ordlista](#10-ordlista)
 
 ---
 
 ## 1. Introduktion
 
-**V85 Analys** är ett verktyg för dig som spelar V85 på ATG. Systemet hämtar aktuell tävlingsdata direkt från ATG, räknar ut sannolikheter baserat på form, odds och statistik, och låter dig dela anteckningar med dina spelvänner i en gemensam grupp.
+**V85 Analys** är ett verktyg för dig som spelar V85 (och liknande ATG-spel). Systemet hämtar aktuell tävlingsdata direkt från ATG, räknar ut sannolikheter baserat på form, odds, konsistens och tider, och låter dig dela anteckningar och diskutera med dina spelvänner i ett gemensamt sällskap.
 
 Appen är byggd för att ge dig ett bättre beslutsunderlag – den ersätter inte din egen bedömning, men hjälper dig hitta hästar vars oddsvärde kan vara bättre än marknadens.
+
+> **Tips:** Appen kan installeras som en app på din telefon eller dator via webbläsarens "Installera"-funktion (PWA).
 
 ---
 
@@ -36,21 +46,21 @@ Appen är byggd för att ge dig ett bättre beslutsunderlag – den ersätter in
 4. **Redan registrerad?** Ange dina uppgifter och klicka på **Logga in**.
 5. Efter lyckad inloggning hamnar du på huvudsidan.
 
-> **Tips:** Ditt visningsnamn kan ändras i profilinställningarna och syns för övriga medlemmar i dina grupper.
+> **Tips:** Ditt visningsnamn kan ändras i profilinställningarna och syns för övriga medlemmar i dina sällskap.
 
 ---
 
-## 3. Hämta V85-omgång
+## 3. Hämta omgång
 
 Innan du kan analysera en omgång måste du hämta data från ATG.
 
-1. Klicka på knappen **Hämta V85** högst upp på sidan.
-2. En datumväljare visas. Du kan välja datum upp till **14 dagar bakåt eller framåt** från dagens datum.
-3. Välj det datum då V85-omgången körs.
-4. Klicka på **Hämta** för att ladda ner alla lopp och hästar.
-5. Om hämtningen lyckas dyker omgången upp i listan omedelbart.
+1. Välj ett **datum** i datumväljaren högst upp på sidan.
+2. Tillgängliga spel för det datumet laddas automatiskt och visas som knappar (t.ex. **Hämta V85**, **Hämta V75**).
+3. Om inga spel finns för valt datum visas texten "Inga spel".
+4. Klicka på knappen för det spel du vill hämta.
+5. Om hämtningen lyckas läggs omgången till i listan och du navigeras dit automatiskt.
 
-> **Obs!** Om ingen omgång finns för valt datum visas ett felmeddelande. Kontrollera att du valt rätt datum och att V85 körs den dagen.
+> **Obs!** Du kan välja datum upp till **14 dagar bakåt eller framåt** från dagens datum.
 
 ---
 
@@ -59,152 +69,284 @@ Innan du kan analysera en omgång måste du hämta data från ATG.
 På huvudsidan ser du en lista med alla hämtade omgångar.
 
 - Välj omgång via **rullgardinsmenyn** (GameSelector) längst upp.
-- Omgångens **åtta lopp** visas under varandra.
-- Klicka på ett lopp för att **expandera** det och se alla startande hästar.
-- Klicka igen för att fälla ihop loppet.
+- Omgångens **avdelningar** visas under varandra med avdelningsnummer, starttid och distans.
+- Klicka på en avdelning för att **expandera** den och se alla startande hästar.
+- Klicka igen för att fälla ihop avdelningen.
+
+### 4.1 Top 5 spelvärda hästar
+
+Högst upp i listan visas en widget med de **5 hästar** som har högst sammansatt poäng (CS) i hela omgången. Varje häst visas med avdelning, startnummer, odds och eventuell slutplacering.
+
+### 4.2 Sortering, filtrering och sökning
+
+Ovanför härtlistan finns tre rader med kontroller:
+
+**Sortering** – välj hur hästar inom varje avdelning sorteras:
+
+| Knapp | Beskrivning |
+|-------|-------------|
+| **Nr** | Startnummer (standard ATG-ordning) |
+| **CS – sammansatt poäng** | Kombinerar form, värde, konsistens och tid (standardval) |
+| **FS – formscore** | Formpoäng baserat på vinstprocent, odds och tid |
+| **Odds** | Lägst odds först |
+| **Streck%** | Högst streckprocent i V85-poolen först |
+
+**Filtrering:**
+
+| Knapp | Beskrivning |
+|-------|-------------|
+| **Värde** | Visar bara hästar som systemet bedömer som undervärderade |
+| **Dölj >50x** | Döljer hästar med odds över 50 |
+
+**Sökning** – skriv namn på häst, kusk eller tränare för att filtrera.
+
+Klicka på **Rensa filter ✕** för att återställa alla filter.
 
 ---
 
 ## 5. Hästarnas informationskort
 
-När ett lopp är expanderat visas ett kort per häst. Varje kort innehåller:
+När en avdelning är expanderad visas ett kort per häst. Varje kort innehåller:
 
 | Fält | Förklaring |
 |------|-----------|
-| **Namn** | Hästens namn |
+| **Sorteringsrank (#)** | Hästens placering i aktuell sortering (visas ej vid sortering på Nr) |
+| **Slutplacering** | Visas om loppresultat hämtats (guldgul = 1:a, silver = 2:a, brons = 3:a) |
 | **Nr** | Startnummer |
-| **Förare** | Kusk/ryttare |
-| **Odds** | Aktuellt odds från ATG (uppdateras vid hämtning) |
-| **Formscore** | Sammansatt poäng 0–100 baserat på form, odds och tider (se nedan) |
+| **Namn** | Hästens namn |
+| **Kusk** | Kuskens namn |
+| **Streck%** | Hästens andel av V85-poolen (om tillgängligt) |
+| **Odds** | Aktuellt vinnarodds |
+| **Värdeindex (VI)** | Skillnad i % mellan beräknad chans och odds-implicit sannolikhet (grönt = undervärderad) |
+| **FS** | Formscore 0–100 (klickbar förklaring) |
+| **CS** | Composite Score 0–100 (klickbar förklaring) |
 | **Ålder / Kön / Färg** | Grundfakta om hästen |
-| **Ras / Hemmaplan** | Härstamning och hemmaträning |
-| **Skosättning** | Ev. ändring av skor inför loppet |
+| **Far** | Härstamning (fadershäst) |
+| **Hemmaplan** | Hästens hemmaträningsbana |
+| **Skosättning** | Sko fram/bak med ändringsstatus (amber = ändrad inför loppet) |
 | **Sulky** | Typ av vagn som används |
-| **Karriärstatistik** | Totalt antal starter, vinster och bästa tid |
-| **Vinst % per år** | Vinstprocent för innevarande och föregående år |
-| **Senaste 5 lopp** | Placeringar visas med färgkoder: 🥇 guld = 1:a, 🥈 silver = 2:a, 🥉 brons = 3:a |
+| **Livs** | Karriärstatistik: vinster-platser (2:a)-platser (3:a) / antal starter |
+| **År** | Vinstprocent innevarande år / antal starter |
+| **Rekord** | Bästa tid och plats-% totalt |
+| **Senaste starter** | Placeringar visas som färgade rutor: guldgul = 1:a, silver = 2:a, orange = 3:a, grå = övriga |
 
-### Formscore – hur räknas det?
+### 5.1 Expanderad detaljvy
 
-Formscoren är ett samlat mått (0–100) som väger ihop:
+Klicka på **▼ Visa detaljer** på ett hästkort för att se mer information:
 
-- **40 %** – Form från de senaste 5 loppen
-- **20 %** – Vinstprocent innevarande år
-- **20 %** – Oddsindex (hur hästen prissätts relativt fältet)
-- **20 %** – Bästa tid relativt fältet
+- **Bästa tider** – tabell med hästens rekord per distans (kort/medel/lång) och startmetod (auto/volt). Aktuellt lopps kombination markeras.
+- **Statistik** – detaljerad karriärstatistik: livs, innevarande år, föregående år, plats%, kr/start, total intjänat.
+- **Odds** – vinnarodds och platsodds.
+- **Kusk & Tränare** – namn med årets vinstprocent.
+- **Senaste starter** – klicka **Hämta från ATG** för att ladda en detaljerad starttabell med datum, bana, placering och tid.
 
-En häst med hög formscore är generellt i bra form och prissatt rimligt av marknaden.
+### 5.2 Formscore (FS) och Composite Score (CS)
+
+**FS – Formscore (0–100):** viktat index baserat på senaste form (40%), vinstprocent år (20%), odds (20%) och bästa tid (20%). Innevarande år prioriteras; föregående år kompletterar vid få starter.
+
+**CS – Composite Score (0–100):** bredare helhetsbedömning som kombinerar FS med värdeindex (odds vs beräknad chans) och konsistens.
+
+Färgkoder för båda poäng:
+- **Grön** (≥70) – stark häst
+- **Gul** (40–69) – medel
+- **Grå** (<40) – svag
 
 ---
 
 ## 6. Analysverktyget
 
-Klicka på knappen **Visa analys** inuti ett lopp för att öppna analyspanelen.
+Klicka på knappen **Visa analys** inuti en avdelning för att öppna analyspanelen. Panelen innehåller två delar.
 
-Analysen visar en tabell med samtliga hästar och följande kolumner:
+### 6.1 Matematisk analys – beräknad vinstchans
+
+En tabell med samtliga hästar och följande kolumner:
 
 | Kolumn | Förklaring |
 |--------|-----------|
-| **Häst** | Hästens namn och startnummer |
-| **Beräknad vinstchans** | Systemets estimerade sannolikhet att hästen vinner |
-| **Odds-impliserad chans** | Marknadens implicita sannolikhet (100 / odds) |
-| **Differens** | Skillnaden mellan beräknad och odds-impliserad chans |
-| **Värde?** | Indikator om hästen verkar undervärderad av marknaden |
+| **Nr** | Startnummer |
+| **Häst** | Hästens namn |
+| **Beräknad** | Systemets estimerade sannolikhet att hästen vinner |
+| **Streckning** | Hästens faktiska andel i V85-poolen (marknadens röst) |
+| **Odds** | Aktuellt vinnarodds |
+| **Distans** | Distanssignal baserat på hästens historik på aktuell distans och startmetod |
+| **Spelvärde** | Beräknad chans minus streckning (positiv = potentiellt värde) |
+| **Resultat** | Slutplacering om loppet är avslutat |
 
-### Hur beräknas vinstchansen?
+#### Hur beräknas vinstchansen?
 
-Systemet använder en viktad formel:
+Baspoäng viktas samman:
 
 ```
-Vinstchans = 40% × karriärvinstprocent
-           + 40% × senaste form-procent
-           + 20% × odds-impliserad sannolikhet
+Baspoäng = 40% × karriärvinstprocent
+         + 40% × senaste form-procent (innevar. + föreg. år)
+         + 20% × odds-implicit sannolikhet
 ```
 
-Resultatet justeras sedan med en **distansfaktor** baserad på hästens historiska prestation på aktuell distans och startmetod (voltstart / autostart).
+Baspoängen multipliceras sedan med en **distansfaktor** (×0.6–×1.35) baserat på hästens historik på aktuell distans och startmetod. Alla hästers råpoäng normaliseras slutligen till 100%.
 
-### Tolka resultatet
+#### Distansfaktor-symboler
 
-- **Positiv differens** (beräknad chans > marknadens chans) → hästen kan vara ett värdebet.
-- **Negativ differens** → hästen verkar övervärderad av marknaden.
-- Analysen är ett komplement till din egen bedömning – ta alltid hänsyn till faktorer som stallkänsla, tränarform och vädret.
+| Symbol | Faktor | Innebär |
+|--------|--------|---------|
+| ↑↑ | ×1.35 | Vunnit på distansen med samma startmetod |
+| ↑ | ×1.10 | Placerat (topp 3) med samma startmetod |
+| → | ×0.90 | Sprungit utan placering, samma startmetod |
+| ↓ | ×0.85–1.05 | Annan startmetod |
+| ↓↓ | ×0.60 | Aldrig sprungit på denna distans |
+
+#### Tolka spelvärdet
+
+- **Positiv** (beräknad chans > streckning) → hästen kan vara ett värdebet (★ = ≥5 pp).
+- **Negativ** → hästen är hårt streckad relativt systemets bedömning.
+
+> **Obs!** Streckningsdata saknas innan V85-poolen öppnat. Hämta om spelet senare för att se spelvärden.
+
+### 6.2 Utökad analys – sammansatt poäng
+
+En andra tabell med mer detaljerade komponenter:
+
+| Kolumn | Förklaring |
+|--------|-----------|
+| **Rank** | Plats i loppet enligt sammansatt poäng (🥇 = #1) |
+| **Häst** | Namn, med "Värde"-märke om CS>55 och positivt värdeindex |
+| **Form** | Formscore 0–100 |
+| **Konsistens** | Andel topp-3 placeringar av totala starter (progressionsbar) |
+| **Tid** | Tidsjustering i sekunder relativt fältets median (negativt = snabbare) |
+| **Värde** | Värdeindex: beräknad chans minus odds-implicit sannolikhet |
+| **Poäng** | Sammansatt poäng (CS) |
+| **Resultat** | Slutplacering om loppet är avslutat |
+
+#### Formel för sammansatt poäng (CS)
+
+```
+CS = 35% × form
+   + 25% × värdeindex
+   + 25% × konsistens
+   + 15% × tidsjustering
+```
 
 ---
 
-## 7. Grupper och samarbete
+## 7. Sällskap och samarbete
 
-Grupper låter dig och dina spelvänner dela anteckningar och analyser om enskilda hästar.
+Sällskap låter dig och dina spelvänner diskutera hästar, dela anteckningar och följa varandras synpunkter inför spelet.
 
-### 7.1 Skapa en grupp
+### 7.1 Skapa ett sällskap
 
-1. Klicka på **Grupper** i navigeringen.
-2. Välj **Skapa ny grupp**.
-3. Ange ett namn på gruppen.
+1. Klicka på **Sällskap** i menyn.
+2. Välj **Skapa nytt sällskap**.
+3. Ange ett namn på sällskapet.
 4. Klicka på **Skapa**.
-5. Du blir automatiskt gruppens **admin** och ett unikt **inbjudningskod** genereras.
-6. Dela inbjudningskoden med de du vill bjuda in.
+5. Du blir automatiskt sällskapets **skapare** och ett unikt **inbjudningskod** genereras.
+6. Dela inbjudningskoden eller inbjudningslänken med de du vill bjuda in.
 
-### 7.2 Gå med i en grupp
+### 7.2 Gå med i ett sällskap
 
-1. Klicka på **Grupper** i navigeringen.
-2. Välj **Gå med i grupp**.
-3. Ange den **inbjudningskod** du fått av gruppens admin.
+1. Klicka på **Sällskap** i menyn.
+2. Välj **Gå med i sällskap**.
+3. Ange den **inbjudningskod** du fått av sällskapets skapare (eller öppna inbjudningslänken direkt).
 4. Klicka på **Gå med**.
-5. Du är nu medlem och kan se och skriva anteckningar i gruppen.
+5. Du är nu medlem och kan se och skriva i sällskapet.
 
-### 7.3 Hantera din grupp (admin)
+### 7.3 Flikar i sällskapet
 
-Som admin kan du:
+Inne i ett sällskap finns tre flikar:
 
-- Se alla **medlemmar** i gruppen.
-- **Ta bort medlemmar** om det behövs.
-- Se den aktiva **inbjudningskoden** och dela den vidare.
+**Forum**
+- Diskutera hästar och omgångar i ett chattliknande format.
+- Välj vilken omgång forumet gäller via rullgardinsmenyn.
+- Skriv inlägg och svara på andras inlägg.
+- Du kan ta bort dina egna inlägg.
+
+**Anteckningar**
+- Visar alla hästanteckningar från sällskapets medlemmar, grupperade per omgång.
+- Anteckningar skrivs direkt på hästkorten på huvudsidan (se avsnitt 8).
+
+**Sällskap**
+- Administrera sällskapets inställningar (se avsnitt 7.4).
+
+### 7.4 Hantera sällskapet (skaparen)
+
+Skaparen kan:
+
+- **Ändra sällskapets namn** via namnformuläret.
+- **Lägga till ATG-lag-URL** för att koppla sällskapet till ett ATG-lag.
+- Se den aktiva **inbjudningskoden** och kopiera den eller länken.
+- Se alla **medlemmar** med deras visningsnamn och när de gick med.
+
+Alla medlemmar (inklusive skaparen) kan **lämna sällskapet** via knappen längst ner. Om skaparen lämnar kvarstår sällskapet för övriga.
 
 ---
 
 ## 8. Anteckningar på hästar
 
-Anteckningar är kopplade till en specifik häst (inte ett lopp) och visas för alla i gruppen oavsett vilket lopp hästen startar i.
+Anteckningar är kopplade till en specifik häst och visas för alla i de sällskap du tillhör.
 
 ### Skriva en anteckning
 
-1. Öppna ett lopp och hitta hästen du vill kommentera.
-2. Klicka på **Lägg till anteckning** på hästkortet.
-3. Välj en **etikett** (färgkod) för att kategorisera din notering, t.ex.:
-   - 🟢 **Grön** – Favorit / stark chans
-   - 🟡 **Gul** – Intressant / osäker
-   - 🔴 **Röd** – Tveksam / stryk
-   - ⚪ **Grå** – Neutral notering
-4. Skriv din text och klicka på **Spara**.
+1. Öppna en avdelning och hitta hästen du vill kommentera.
+2. Klicka på **▼ Anteckningar** längst ner på hästkortet.
+3. Skriv din text i textfältet.
+4. Välj en **etikett** (färgkod) för att kategorisera din notering:
+   - 🔴 **Röd**
+   - 🟠 **Orange**
+   - 🟡 **Gul**
+   - 🟢 **Grön**
+   - 🔵 **Blå**
+   - 🟣 **Lila**
+5. Välj om anteckningen ska tillhöra ett **sällskap** eller vara **Personlig**.
+6. Klicka på **Lägg till**.
 
 ### Svara på en anteckning
 
 - Klicka på **Svara** under en befintlig anteckning för att skriva ett svar i tråden.
-- Svar visas indragna under originalanteckningen.
+- Svar visas indragna under originalanteckningen och ärver sällskapstillhörigheten.
 
 ### Viktigt att veta
 
-- Anteckningar är synliga för **alla i din grupp**.
-- En anteckning på en häst följer med om samma häst dyker upp i en annan omgång.
-- Du kan bara redigera/ta bort dina **egna** anteckningar.
+- Sällskapsanteckningar är synliga för **alla i det valda sällskapet**.
+- Personliga anteckningar syns bara för dig.
+- En anteckning på en häst visas oavsett vilket lopp hästen startar i.
+- Du kan bara ta bort dina **egna** anteckningar.
 
 ---
 
-## 9. Ordlista
+## 9. Utvärdering
+
+Navigera till **Utvärdering** (i BottomNav på mobil, eller via menyn) för att se hur väl systemets toppval har presterat historiskt.
+
+Sidan visar:
+
+- **Övergripande träffsäkerhet** – andel omgångar och lopp där systemets toppval (högst CS) verkligen vann.
+- **Topp-3-täckning** – hur ofta vinnaren återfanns bland de tre bäst rankade hästarna.
+- **Per omgång** – detaljerad genomgång för varje sparad omgång med resultat per lopp.
+
+> Utvärderingen kräver att loppresultat har hämtats. Hämta om en omgång efter att loppen körts för att uppdatera resultaten.
+
+---
+
+## 10. Ordlista
 
 | Term | Förklaring |
 |------|-----------|
 | **V85** | Spelform på ATG där du ska pricka vinnaren i 8 lopp |
 | **ATG** | AB Trav och Galopp – den svenska speloperatören för travsport |
-| **Streckning / Odds** | ATG:s odds på hästen att vinna loppet |
-| **Formscore** | Systemets samlade formpoäng (0–100) |
-| **Värdebet** | En häst vars verkliga chanser bedöms vara högre än vad oddset indikerar |
-| **Voltstart** | Loppet startas bakom en bil, alla hästar startar på samma gång |
-| **Autostart** | Hästar startar från banden med individuella startnummer |
-| **Distansfaktor** | Justering baserad på hur hästen historiskt presterat på aktuell distans |
-| **Inbjudningskod** | Unik kod för att gå med i en grupp |
-| **Admin** | Gruppens skapare med extra rättigheter att hantera medlemmar |
+| **Odds** | ATG:s vinnarodds på hästen |
+| **Streckning / Streck%** | Hästens procentuella andel av V85-poolens insatser |
+| **Formscore (FS)** | Systemets samlade formpoäng (0–100) baserat på senaste form, vinstprocent, odds och tid |
+| **Composite Score (CS)** | Bredare helhetsbedömning (0–100) som väger in form, värdeindex, konsistens och tid |
+| **Värdeindex (VI)** | Skillnad i procentenheter mellan systemets beräknade vinstchans och odds-implicit sannolikhet |
+| **Spelvärde** | Beräknad chans minus streckprocent – positivt värde indikerar potentiellt värdebet |
+| **Värdebet** | En häst vars verkliga chanser bedöms vara högre än vad marknaden prissätter |
+| **Distansfaktor** | Multiplikator (×0.6–×1.35) baserat på hästens historik på aktuell distans och startmetod |
+| **Voltstart** | Loppet startas bakom ett rörligt startfordon, alla hästar startar på samma gång |
+| **Autostart** | Hästar startar från startbanden med individuella startnummer |
+| **Life records** | Hästens bästa tider per distanskategori och startmetod |
+| **Sällskap** | En grupp spelare som delar anteckningar och diskuterar i ett gemensamt forum |
+| **Inbjudningskod** | Unik kod för att gå med i ett sällskap |
+| **Skapare** | Sällskapets grundare med rätt att ändra namn och ATG-lag-URL |
+| **PWA** | Progressive Web App – appen kan installeras på din enhet som en vanlig app |
 
 ---
 
-*Manual version 1.0 – V85 Analys*
+*Manual version 2.0 – V85 Analys*
