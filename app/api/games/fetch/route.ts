@@ -80,13 +80,23 @@ export async function POST(request: NextRequest) {
         track_surface: null,
       });
 
+      // Filtrera bort starters utan giltigt horse_id (saknas i ATG-svaret)
+      const validStarters = race.starters.filter((s) => {
+        if (!s.horse_id) {
+          console.warn(`[fetch] Avd ${race.race_number}: starter saknar horse_id (nr=${s.start_number}, namn=${s.horse_name}) — hoppas över`);
+        }
+        return !!s.horse_id;
+      });
+
       // Deduplicera — ATG kan ibland returnera samma häst två gånger i ett lopp
       const seenHorseIds = new Set<string>();
-      const uniqueStarters = race.starters.filter((s) => {
+      const uniqueStarters = validStarters.filter((s) => {
         if (seenHorseIds.has(s.horse_id)) return false;
         seenHorseIds.add(s.horse_id);
         return true;
       });
+
+      console.log(`[fetch] Avd ${race.race_number}: ATG=${race.starters.length}, giltiga=${validStarters.length}, unika=${uniqueStarters.length}`);
 
       // Upsert horses — uppdatera namn om det har ändrats
       const horseUpserts = uniqueStarters.map((s) => ({
@@ -94,7 +104,8 @@ export async function POST(request: NextRequest) {
         name: s.horse_name,
       }));
       if (horseUpserts.length > 0) {
-        await supabase.from("horses").upsert(horseUpserts, { onConflict: "id" });
+        const { error: horseErr } = await supabase.from("horses").upsert(horseUpserts, { onConflict: "id" });
+        if (horseErr) console.error(`[fetch] horses.upsert fel avd ${race.race_number}:`, horseErr.message);
       }
 
       // Formscore beräknas med merged last_5_results (inkl. fallback från DB)
@@ -151,10 +162,12 @@ export async function POST(request: NextRequest) {
           finish_time: existing?.finish_time ?? null,
         };
       });
-      await supabase.from("starters").insert(starterRows);
+      const { error: insertErr } = await supabase.from("starters").insert(starterRows);
+      if (insertErr) console.error(`[fetch] starters.insert fel avd ${race.race_number}:`, insertErr.message);
     }
 
-    return NextResponse.json({ success: true, game_id: game.game_id, races: game.races.length });
+    const totalStarters = game.races.reduce((sum, r) => sum + r.starters.length, 0);
+    return NextResponse.json({ success: true, game_id: game.game_id, races: game.races.length, starters: totalStarters });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Okänt fel";
     return NextResponse.json({ error: message }, { status: 500 });
