@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { EvaluationPanel } from "@/components/EvaluationPanel";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 interface StarterRow {
@@ -161,16 +160,8 @@ export default async function EvaluationPage() {
 
   return (
     <main className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white">
-      <header className="border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Link
-            href="/"
-            className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white text-sm transition"
-          >
-            ← Tillbaka
-          </Link>
-          <h1 className="text-xl font-bold">Modell-utvärdering</h1>
-        </div>
+      <header className="sticky top-0 z-30 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center justify-between gap-4">
+        <h1 className="text-lg font-bold">Modell-utvärdering</h1>
         <ThemeToggle />
       </header>
 

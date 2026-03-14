@@ -80,16 +80,31 @@ const DIST_LABEL: Record<string, string> = {
   long: "Lång",
 };
 
-function FormBadge({ score, title, label }: { score: number | null; title?: string; label?: string }) {
+const FS_EXPLANATION =
+  "FS – Formscore (0–100): viktat index baserat på senaste form (40%), vinstprocent år (20%), odds (20%) och bästa tid (20%). Innevarande år prioriteras; föregående år kompletterar vid få starter.";
+const CS_EXPLANATION =
+  "CS – Composite Score (0–100): kombinerar FS med värdeindex (odds vs beräknad chans) och konsistens. Ger en bredare helhetsbedömning.";
+
+function FormBadge({ score, label }: { score: number | null; label?: string }) {
+  const [open, setOpen] = useState(false);
   if (score == null) return null;
+  const isCS = label === "CS";
   const color =
     score >= 70 ? "bg-green-600" : score >= 40 ? "bg-yellow-600" : "bg-gray-600";
   return (
-    <span
-      className={`${color} text-white text-xs font-bold px-2 py-1 rounded-full`}
-      title={title ?? "Formscore (0–100): viktat index baserat på senaste form, vinstprocent (år), odds och bästa tid. Inte samma som streckprocent."}
-    >
-      {label ?? "FS"} {score}
+    <span className="relative inline-block">
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
+        className={`${color} text-white text-xs font-bold px-2 py-1 rounded-full cursor-pointer select-none`}
+      >
+        {label ?? "FS"} {score}
+      </button>
+      {open && (
+        <span className="absolute right-0 top-full mt-1 z-20 w-64 bg-gray-900 text-gray-100 text-xs rounded shadow-lg p-2 leading-relaxed">
+          {isCS ? CS_EXPLANATION : FS_EXPLANATION}
+        </span>
+      )}
     </span>
   );
 }
@@ -261,6 +276,7 @@ export function HorseCard({
   compositeScore: compScore,
   valueIndex: vi,
   isValue,
+  sortRank,
 }: {
   starter: Starter;
   notesSection?: ReactNode;
@@ -269,6 +285,7 @@ export function HorseCard({
   compositeScore?: number;
   valueIndex?: number;
   isValue?: boolean;
+  sortRank?: number;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [fetchedStarts, setFetchedStarts] = useState<FetchedStart[] | null>(null);
@@ -321,8 +338,16 @@ export function HorseCard({
     <div className={`bg-gray-100 dark:bg-gray-800 rounded-lg p-4 flex flex-col gap-3 ${isValue ? "ring-2 ring-green-500 ring-inset" : ""}`}>
       {/* Huvud: nummer, namn, driver, streck, odds, FS */}
       <div className="flex flex-col gap-1">
-        {/* Rad 1: resultat (om finns), startnummer, namn */}
+        {/* Rad 1: sorteringsrank (om aktiv), resultat (om finns), startnummer, namn */}
         <div className="flex items-center gap-2 flex-wrap">
+          {sortRank != null && (
+            <span
+              className="text-xs font-bold text-indigo-400 dark:text-indigo-300 shrink-0 w-5 text-center"
+              title="Placering i aktuell sortering"
+            >
+              #{sortRank}
+            </span>
+          )}
           {starter.finish_position != null && (
             <span
               className={`text-sm font-bold px-2.5 py-1 rounded-full shrink-0 ${
@@ -346,10 +371,10 @@ export function HorseCard({
             {starter.horses?.name ?? "–"}
           </span>
         </div>
-        {/* Rad 2: driver + stats */}
+        {/* Rad 2: driver + odds + streck */}
         <div className="flex items-center justify-between gap-2">
-          <p className="text-gray-500 dark:text-gray-400 text-xs">{starter.driver}</p>
-          <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+          <p className="text-gray-500 dark:text-gray-400 text-xs truncate">{starter.driver}</p>
+          <div className="flex items-center gap-2 shrink-0">
             {starter.bet_distribution != null && starter.bet_distribution > 0 && (
               <span
                 className="text-blue-700 dark:text-blue-400 text-xs font-semibold"
@@ -371,13 +396,15 @@ export function HorseCard({
                 )}
               </span>
             )}
-            {compScore != null ? (
-              <FormBadge score={compScore} title="Sammansatt poäng (0–100): form, värde, konsistens och tid" label="CS" />
-            ) : (
-              <FormBadge score={starter.formscore} />
-            )}
           </div>
         </div>
+        {/* Rad 3: FS + CS badges */}
+        {(starter.formscore != null || compScore != null) && (
+          <div className="flex items-center gap-2">
+            <FormBadge score={starter.formscore} />
+            {compScore != null && <FormBadge score={compScore} label="CS" />}
+          </div>
+        )}
       </div>
 
       {/* Häst-info: ålder, kön, färg, far, hemmaplan */}

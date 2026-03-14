@@ -25,21 +25,41 @@ export interface FormscoreInput {
 
 export function calculateFormscore(starters: AtgStarter[]): number[] {
   // --- Komponent 1: Senaste form (40%) ---
+  // ATG:s horses-API returnerar inte individuella starter, så last_5_results är tom.
+  // Fallback: beräknad form från vinstprocent (år + karriär).
   const formComponents = starters.map((s) => {
     const results = s.last_5_results;
-    if (results.length === 0) return 0;
-    const score = results.reduce((sum, r, i) => {
-      const w = FORM_WEIGHTS[i] ?? 0;
-      return sum + w * placeScore(r.place);
-    }, 0);
-    // Max möjlig poäng = 10 * sum(weights) = 10
-    return score / 10;
+    if (results.length > 0) {
+      const score = results.reduce((sum, r, i) => {
+        const w = FORM_WEIGHTS[i] ?? 0;
+        return sum + w * placeScore(r.place);
+      }, 0);
+      // Max möjlig poäng = 10 * sum(weights) = 10
+      return score / 10;
+    }
+    // Fallback: prioritera innevarande år, komplettera med föregående vid < 2 starter
+    const currentStarts = Number(s.starts_current_year) || 0;
+    const currentWins = Number(s.wins_current_year) || 0;
+    if (currentStarts >= 2) return currentWins / currentStarts;
+    const prevStarts = Number(s.starts_prev_year) || 0;
+    const prevWins = Number(s.wins_prev_year) || 0;
+    const combinedStarts = currentStarts + prevStarts;
+    const combinedWins = currentWins + prevWins;
+    if (combinedStarts > 0) return combinedWins / combinedStarts;
+    const lifeStarts = Number(s.starts_total) || 0;
+    const lifeWins = Number(s.wins_total) || 0;
+    return lifeStarts > 0 ? lifeWins / lifeStarts : 0;
   });
 
-  // --- Komponent 2: Vinstprocent innevarande år (20%) ---
+  // --- Komponent 2: Vinstprocent (20%) — innevarande år, kompletteras med föregående vid < 2 starter ---
   const winRates = starters.map((s) => {
-    if (!s.starts_current_year || s.starts_current_year === 0) return 0;
-    return (s.wins_current_year ?? 0) / s.starts_current_year;
+    const currentStarts = Number(s.starts_current_year) || 0;
+    const currentWins = Number(s.wins_current_year) || 0;
+    if (currentStarts >= 2) return currentWins / currentStarts;
+    const prevStarts = Number(s.starts_prev_year) || 0;
+    const prevWins = Number(s.wins_prev_year) || 0;
+    const combined = currentStarts + prevStarts;
+    return combined > 0 ? (currentWins + prevWins) / combined : 0;
   });
 
   // --- Komponent 3: Odds-index (20%) — lägre odds = bättre ---
