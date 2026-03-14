@@ -83,17 +83,17 @@ export function RaceList({
 }) {
   const [openRace, setOpenRace] = useState<string | null>(races[0]?.id ?? null);
   const [analysisRace, setAnalysisRace] = useState<string | null>(null);
-  const [sortKey, setSortKey] = useState<SortKey>("formscore");
+  const [sortKey, setSortKey] = useState<SortKey>("composite");
   const [filterValue, setFilterValue] = useState(false);
   const [hideOutsiders, setHideOutsiders] = useState(false);
   const [search, setSearch] = useState("");
 
-  const SORT_OPTIONS: { key: SortKey; label: string }[] = [
-    { key: "number", label: "Nr" },
-    { key: "formscore", label: "Formscore" },
-    { key: "odds", label: "Odds" },
-    { key: "bet", label: "Streck" },
-    { key: "composite", label: "Poäng" },
+  const SORT_OPTIONS: { key: SortKey; label: string; title: string }[] = [
+    { key: "number", label: "Nr", title: "Startnummer" },
+    { key: "composite", label: "CS — sammansatt poäng", title: "Sammansatt poäng (CS): form, värde, konsistens och tid" },
+    { key: "formscore", label: "FS — formscore", title: "Formscore (FS): vinstprocent, odds och tid" },
+    { key: "odds", label: "Odds", title: "Vinnarodds (lägst först)" },
+    { key: "bet", label: "Streck%", title: "Streckprocent (högst först)" },
   ];
 
   function sortStarters(
@@ -138,6 +138,7 @@ export function RaceList({
             <button
               key={opt.key}
               onClick={() => setSortKey(opt.key)}
+              title={opt.title}
               className={`text-xs px-3 py-1 rounded-lg border transition font-medium ${
                 sortKey === opt.key
                   ? "bg-indigo-700 border-indigo-600 text-white"
@@ -149,7 +150,7 @@ export function RaceList({
           ))}
         </div>
 
-        {/* Rad 2: Filter + sök */}
+        {/* Rad 2: Filter */}
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0">Filtrera:</span>
           <button
@@ -180,12 +181,15 @@ export function RaceList({
               Rensa filter ✕
             </button>
           )}
+        </div>
+        {/* Rad 3: Sök (hel bredd på mobil) */}
+        <div>
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Sök häst, kusk, tränare…"
-            className="ml-auto text-xs px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-400 w-48"
+            className="text-xs px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-400 w-full sm:w-56"
           />
         </div>
       </div>
@@ -275,7 +279,7 @@ export function RaceList({
                 )}
 
                 <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 mt-3">
-                  {sorted.map((s) => {
+                  {sorted.map((s, idx) => {
                     const enh = enhancedMap[s.start_number];
                     return (
                       <HorseCard
@@ -286,6 +290,7 @@ export function RaceList({
                         compositeScore={enh?.compositeScore}
                         valueIndex={enh?.valueIndex}
                         isValue={enh?.isValue}
+                        sortRank={sortKey !== "number" ? idx + 1 : undefined}
                         notesSection={
                           <HorseNotes
                             horseId={s.horse_id}

@@ -1,16 +1,8 @@
-import Link from "next/link";
-
 export default function ManualPage() {
   return (
     <main className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white">
-      <header className="border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center gap-4">
-        <Link
-          href="/"
-          className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition text-sm flex items-center gap-1"
-        >
-          ← Tillbaka
-        </Link>
-        <h1 className="text-xl font-bold">V85 Analys – Användarmanual</h1>
+      <header className="sticky top-0 z-30 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-4 py-3">
+        <h1 className="text-lg font-bold">Användarmanual</h1>
       </header>
 
       <div className="max-w-3xl mx-auto px-4 py-10 space-y-12">

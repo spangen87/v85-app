@@ -8,7 +8,6 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { UsefulLinks } from "@/components/UsefulLinks";
 import { getProfile, getMyGroups } from "@/lib/actions/groups";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 
 async function getAllGames(supabase: Awaited<ReturnType<typeof createClient>>) {
   const { data } = await supabase
@@ -70,29 +69,30 @@ export default async function HomePage({
 
   return (
     <main className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white">
-      <header className="border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between gap-4">
-        <h1 className="text-xl font-bold shrink-0">Streckspel Analys</h1>
-        <div className="flex items-center gap-3 flex-wrap justify-end">
-          <Link
-            href="/evaluation"
-            className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition shrink-0"
-          >
-            Utvärdering
-          </Link>
+      {/* Header: mobilanpassad med 2 rader på små skärmar */}
+      <header className="sticky top-0 z-30 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-4 py-3">
+        {/* Rad 1: titel + avatar/tema */}
+        <div className="flex items-center justify-between">
+          <h1 className="text-lg font-bold shrink-0">Streckspel Analys</h1>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <UserMenu
+              profile={profile}
+              groups={userGroups}
+              userEmail={user.email ?? ""}
+            />
+          </div>
+        </div>
+        {/* Rad 2: spelkontroller (alltid synliga) */}
+        <div className="flex items-center gap-2 flex-wrap mt-2">
           <GameSelector games={games} selectedId={selectedId} />
           <ResultsButton gameId={selectedId} />
           <FetchButton />
-          <ThemeToggle />
-          <UserMenu
-            profile={profile}
-            groups={userGroups}
-            userEmail={user.email ?? ""}
-          />
         </div>
       </header>
 
       {selectedGame && (
-        <div className="px-6 py-2 text-sm text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-800">
+        <div className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-800">
           {selectedGame.date} &middot; {selectedGame.game_type} &middot; {selectedGame.track}
         </div>
       )}

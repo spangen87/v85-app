@@ -1,7 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchGame, fetchHorseStarts } from "@/lib/atg";
+import { fetchGame } from "@/lib/atg";
 import { calculateFormscore } from "@/lib/formscore";
 import { createServiceClient } from "@/lib/supabase/server";
+
+type Last5Result = { place: string; date: string; track: string; time: string };
+
+type ExistingStarter = {
+  horse_id: string;
+  last_5_results: Last5Result[] | null;
+  formscore: number | null;
+  finish_position: number | null;
+  finish_time: string | null;
+};
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
@@ -15,15 +25,6 @@ export async function POST(request: NextRequest) {
   try {
     const game = await fetchGame(gameType, gameId);
 
-    // Berika starters med senaste 5 lopp (lopp för lopp för att undvika rate-limiting)
-    for (const race of game.races) {
-      await Promise.all(
-        race.starters.map(async (starter) => {
-          starter.last_5_results = await fetchHorseStarts(starter.horse_id);
-        })
-      );
-    }
-
     const supabase = createServiceClient();
 
     await supabase.from("games").upsert({
@@ -33,15 +34,36 @@ export async function POST(request: NextRequest) {
       track: game.track,
     });
 
-    // Rensa gamla races/starters (kan ha fel ID från tidigare hämtning)
+    // Hämta befintliga starters INNAN vi raderar — bevara last_5_results, finish_position och finish_time
     const { data: oldRaces } = await supabase
       .from("races")
       .select("id")
       .eq("game_id", game.game_id);
+
+    const existingMap = new Map<string, ExistingStarter>();
     if (oldRaces && oldRaces.length > 0) {
-      const oldIds = oldRaces.map((r) => r.id);
+      const oldIds = oldRaces.map((r: { id: string }) => r.id);
+      const { data: existingStarterData } = await supabase
+        .from("starters")
+        .select("horse_id, last_5_results, formscore, finish_position, finish_time")
+        .in("race_id", oldIds);
+      for (const s of (existingStarterData ?? []) as ExistingStarter[]) {
+        existingMap.set(s.horse_id, s);
+      }
       await supabase.from("starters").delete().in("race_id", oldIds);
       await supabase.from("races").delete().eq("game_id", game.game_id);
+    }
+
+    // Fyll i last_5_results från DB om ATG-anropet returnerade tomt (rate-limiting etc.)
+    for (const race of game.races) {
+      for (const starter of race.starters) {
+        if (starter.last_5_results.length === 0) {
+          const existing = existingMap.get(starter.horse_id);
+          if (existing?.last_5_results && existing.last_5_results.length > 0) {
+            starter.last_5_results = existing.last_5_results;
+          }
+        }
+      }
     }
 
     for (const race of game.races) {
@@ -75,53 +97,60 @@ export async function POST(request: NextRequest) {
         await supabase.from("horses").upsert(horseUpserts, { onConflict: "id" });
       }
 
+      // Formscore beräknas med merged last_5_results (inkl. fallback från DB)
       const scores = calculateFormscore(uniqueStarters);
 
       await supabase.from("starters").delete().eq("race_id", raceId);
-      const starterRows = uniqueStarters.map((s, i) => ({
-        race_id: raceId,
-        horse_id: s.horse_id,
-        start_number: s.start_number,
-        post_position: s.post_position,
-        driver: s.driver,
-        driver_win_pct: s.driver_win_pct,
-        trainer: s.trainer,
-        trainer_win_pct: s.trainer_win_pct,
-        odds: s.odds,
-        bet_distribution: s.bet_distribution,
-        // Skoinfo
-        shoes_reported: s.shoes_reported,
-        shoes_front: s.shoes_front,
-        shoes_back: s.shoes_back,
-        shoes_front_changed: s.shoes_front_changed,
-        shoes_back_changed: s.shoes_back_changed,
-        sulky_type: s.sulky_type,
-        // Häststats
-        horse_age: s.horse_age,
-        horse_sex: s.horse_sex,
-        horse_color: s.horse_color,
-        pedigree_father: s.pedigree_father,
-        home_track: s.home_track,
-        // Karriär
-        starts_total: s.starts_total,
-        wins_total: s.wins_total,
-        places_2nd: s.places_2nd,
-        places_3rd: s.places_3rd,
-        earnings_total: s.earnings_total,
-        starts_current_year: s.starts_current_year,
-        wins_current_year: s.wins_current_year,
-        places_2nd_current_year: s.places_2nd_current_year,
-        places_3rd_current_year: s.places_3rd_current_year,
-        starts_prev_year: s.starts_prev_year,
-        wins_prev_year: s.wins_prev_year,
-        places_2nd_prev_year: s.places_2nd_prev_year,
-        places_3rd_prev_year: s.places_3rd_prev_year,
-        p_odds: s.p_odds,
-        best_time: s.best_time,
-        life_records: s.life_records,
-        last_5_results: s.last_5_results,
-        formscore: scores[i],
-      }));
+      const starterRows = uniqueStarters.map((s, i) => {
+        const existing = existingMap.get(s.horse_id);
+        return {
+          race_id: raceId,
+          horse_id: s.horse_id,
+          start_number: s.start_number,
+          post_position: s.post_position,
+          driver: s.driver,
+          driver_win_pct: s.driver_win_pct,
+          trainer: s.trainer,
+          trainer_win_pct: s.trainer_win_pct,
+          odds: s.odds,
+          bet_distribution: s.bet_distribution,
+          // Skoinfo
+          shoes_reported: s.shoes_reported,
+          shoes_front: s.shoes_front,
+          shoes_back: s.shoes_back,
+          shoes_front_changed: s.shoes_front_changed,
+          shoes_back_changed: s.shoes_back_changed,
+          sulky_type: s.sulky_type,
+          // Häststats
+          horse_age: s.horse_age,
+          horse_sex: s.horse_sex,
+          horse_color: s.horse_color,
+          pedigree_father: s.pedigree_father,
+          home_track: s.home_track,
+          // Karriär
+          starts_total: s.starts_total,
+          wins_total: s.wins_total,
+          places_2nd: s.places_2nd,
+          places_3rd: s.places_3rd,
+          earnings_total: s.earnings_total,
+          starts_current_year: s.starts_current_year,
+          wins_current_year: s.wins_current_year,
+          places_2nd_current_year: s.places_2nd_current_year,
+          places_3rd_current_year: s.places_3rd_current_year,
+          starts_prev_year: s.starts_prev_year,
+          wins_prev_year: s.wins_prev_year,
+          places_2nd_prev_year: s.places_2nd_prev_year,
+          places_3rd_prev_year: s.places_3rd_prev_year,
+          p_odds: s.p_odds,
+          best_time: s.best_time,
+          life_records: s.life_records,
+          last_5_results: s.last_5_results,
+          formscore: scores[i],
+          // Bevara resultat från tidigare hämtning
+          finish_position: existing?.finish_position ?? null,
+          finish_time: existing?.finish_time ?? null,
+        };
+      });
       await supabase.from("starters").insert(starterRows);
     }
 
