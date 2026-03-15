@@ -1,12 +1,12 @@
-CREATE TABLE game_systems (
+CREATE TABLE IF NOT EXISTS game_systems (
   id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id    UUID        NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   group_id   UUID        REFERENCES groups(id) ON DELETE CASCADE,
   game_id    TEXT        NOT NULL REFERENCES games(id) ON DELETE CASCADE,
-  name       TEXT        NOT NULL DEFAULT 'Mitt system',
+  name       TEXT        NOT NULL DEFAULT 'Mitt system' CHECK (char_length(name) BETWEEN 1 AND 100),
   selections JSONB       NOT NULL DEFAULT '[]',
-  total_rows INTEGER     NOT NULL DEFAULT 1,
-  score      INTEGER,
+  total_rows INTEGER     NOT NULL DEFAULT 1 CHECK (total_rows >= 1),
+  score      INTEGER     CHECK (score IS NULL OR (score >= 0 AND score <= 8)),
   is_graded  BOOLEAN     NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   CONSTRAINT selections_is_array CHECK (jsonb_typeof(selections) = 'array')
@@ -38,4 +38,5 @@ CREATE POLICY "Users can delete own systems"
 
 CREATE POLICY "Users can update own systems"
   ON game_systems FOR UPDATE
-  USING (auth.uid() = user_id);
+  USING     (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
