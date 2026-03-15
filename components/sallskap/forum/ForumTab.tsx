@@ -73,7 +73,7 @@ export function ForumTab({ groupId, games, initialPosts, initialGameId, currentU
 
       {games.length === 0 && (
         <p className="text-sm text-gray-500 dark:text-gray-400 italic">
-          Ingen omgång inladdad ännu. Hämta en V85-omgång på startsidan först.
+          Ingen omgång inladdad ännu. Hämta ett spel på startsidan först.
         </p>
       )}
 

@@ -73,10 +73,10 @@ export function calculateFormscore(starters: AtgStarter[]): number[] {
   });
 
   // --- Komponent 4: Tidindex (20%) — bästa tid relativt loppet ---
-  // Tolka "1.12,3" som sekunder/km
+  // Tolka "1:12,3" (eller "1.12,3") som minuter:sekunder,tiondels
   function parseTime(t: string | null): number | null {
     if (!t) return null;
-    const match = t.match(/(\d+)\.(\d+),(\d+)/);
+    const match = t.match(/(\d+)[.:](\d+),(\d+)/);
     if (!match) return null;
     const min = parseInt(match[1]);
     const sec = parseInt(match[2]);

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { getGroupById } from "@/lib/actions/groups";
-import { getGroupMembers } from "@/lib/actions/sallskap";
+import { getGroupMembers, getRecentGroupActivity } from "@/lib/actions/sallskap";
 import { getGroupPosts } from "@/lib/actions/posts";
 import { getGroupNotesForGame } from "@/lib/actions/notes";
 import { SallskapPageClient } from "./SallskapPageClient";
@@ -46,10 +46,14 @@ export default async function SallskapPage({ params }: Props) {
 
   const defaultGameId = games[0]?.id ?? null;
 
-  const [initialPosts, initialNotes] = await Promise.all([
+  const [initialPosts, initialNotes, initialActivity] = await Promise.all([
     defaultGameId ? getGroupPosts(groupId, defaultGameId) : Promise.resolve([]),
     defaultGameId ? getGroupNotesForGame(groupId, defaultGameId) : Promise.resolve([]),
+    getRecentGroupActivity(groupId),
   ]);
+
+  // Senaste aktivitetstidstämpel för badge-logik
+  const latestActivityAt = initialActivity[0]?.created_at ?? null;
 
   return (
     <SallskapPageClient
@@ -58,8 +62,10 @@ export default async function SallskapPage({ params }: Props) {
       games={games}
       initialPosts={initialPosts}
       initialNotes={initialNotes}
+      initialActivity={initialActivity}
       defaultGameId={defaultGameId}
       currentUserId={user.id}
+      latestActivityAt={latestActivityAt}
     />
   );
 }

@@ -32,6 +32,28 @@ export interface Profile {
 
 export type NoteLabel = "red" | "orange" | "yellow" | "green" | "blue" | "purple";
 
+export type ActivityItem =
+  | {
+      kind: "post";
+      id: string;
+      author: string;
+      content: string;
+      created_at: string;
+      game_id: string;
+      game_date: string;
+      game_type: string;
+    }
+  | {
+      kind: "note";
+      id: string;
+      author: string;
+      content: string;
+      created_at: string;
+      horse_id: string;
+      horse_name: string;
+      label: NoteLabel | null;
+    };
+
 export interface HorseNote {
   id: string;
   horse_id: string;

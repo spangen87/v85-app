@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { RaceList } from "@/components/RaceList";
 import { FetchButton } from "@/components/FetchButton";
 import { ResultsButton } from "@/components/ResultsButton";
@@ -7,15 +7,49 @@ import { UserMenu } from "@/components/groups/UserMenu";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { UsefulLinks } from "@/components/UsefulLinks";
 import { CollapsibleControls } from "@/components/CollapsibleControls";
+import { StartCountdown } from "@/components/StartCountdown";
 import { getProfile, getMyGroups } from "@/lib/actions/groups";
 import { redirect } from "next/navigation";
 
-async function getAllGames(supabase: Awaited<ReturnType<typeof createClient>>) {
+interface GameRow {
+  id: string;
+  date: string;
+  track: string;
+  game_type: string;
+  has_results: boolean;
+}
+
+async function getAllGames(
+  supabase: Awaited<ReturnType<typeof createClient>>
+): Promise<GameRow[]> {
   const { data } = await supabase
     .from("games")
     .select("id, date, track, game_type")
     .order("date", { ascending: false });
-  return data ?? [];
+  if (!data || data.length === 0) return [];
+
+  // Kolla vilka spel som har resultat (minst en finish_position satt)
+  const db = createServiceClient();
+  const { data: withResults } = await db
+    .from("starters")
+    .select("races!inner(game_id)")
+    .not("finish_position", "is", null);
+
+  const gameIdsWithResults = new Set(
+    (withResults ?? []).map(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (row: any) => (row.races as { game_id: string }).game_id
+    )
+  );
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data as any[]).map((g) => ({
+    id: g.id as string,
+    date: g.date as string,
+    track: g.track as string,
+    game_type: g.game_type as string,
+    has_results: gameIdsWithResults.has(g.id as string),
+  }));
 }
 
 async function getRaces(supabase: Awaited<ReturnType<typeof createClient>>, gameId: string) {
@@ -61,12 +95,16 @@ export default async function HomePage({
   ]);
 
   // Välj spel: URL-param → senaste sparade
-  const selectedId = params.game && games.find((g) => g.id === params.game)
-    ? params.game
-    : games[0]?.id ?? null;
+  const selectedId =
+    params.game && games.find((g) => g.id === params.game)
+      ? params.game
+      : games[0]?.id ?? null;
 
   const selectedGame = games.find((g) => g.id === selectedId) ?? null;
   const races = selectedId ? await getRaces(supabase, selectedId) : [];
+
+  // Starttid för countdown (hämta från första avdelningen)
+  const firstStartTime = (races[0] as { start_time?: string } | undefined)?.start_time ?? null;
 
   return (
     <main className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white">
@@ -93,8 +131,11 @@ export default async function HomePage({
       </header>
 
       {selectedGame && (
-        <div className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-800">
-          {selectedGame.date} &middot; {selectedGame.game_type} &middot; {selectedGame.track}
+        <div className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-800 flex items-center gap-2">
+          <span>
+            {selectedGame.date} &middot; {selectedGame.game_type} &middot; {selectedGame.track}
+          </span>
+          <StartCountdown startTime={firstStartTime} />
         </div>
       )}
 
@@ -105,10 +146,16 @@ export default async function HomePage({
 
         {races.length === 0 ? (
           <div className="text-center py-20 text-gray-400 dark:text-gray-500">
-            <p className="text-lg mb-2">Ingen data inladdad ännu.</p>
-            <p className="text-sm">
-              Välj ett datum och klicka på ett spel för att ladda en omgång från ATG.
+            <div className="text-4xl mb-4">🏇</div>
+            <p className="text-lg mb-2 font-medium">Ingen omgång inladdad.</p>
+            <p className="text-sm mb-6">
+              Välj datum och klicka på ett spel ovan för att ladda analysen.
             </p>
+            {games.length === 0 && (
+              <p className="text-xs text-gray-400 dark:text-gray-600">
+                Inga tidigare sparade spel hittades.
+              </p>
+            )}
           </div>
         ) : (
           // eslint-disable-next-line @typescript-eslint/no-explicit-any

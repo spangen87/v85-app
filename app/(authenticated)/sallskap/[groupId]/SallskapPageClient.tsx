@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { TabBar, type SallskapTab } from "@/components/sallskap/TabBar";
 import { ForumTab } from "@/components/sallskap/forum/ForumTab";
 import { NotesTab } from "@/components/sallskap/notes/NotesTab";
 import { AdminTab } from "@/components/sallskap/admin/AdminTab";
-import type { Group, GroupMember, GroupPost } from "@/lib/types";
+import { ActivityTab } from "@/components/sallskap/activity/ActivityTab";
+import type { ActivityItem, Group, GroupMember, GroupPost } from "@/lib/types";
 import type { RaceWithNotes } from "@/lib/actions/notes";
 
 type Game = { id: string; date: string; track: string | null };
@@ -18,8 +19,10 @@ interface SallskapPageClientProps {
   games: Game[];
   initialPosts: GroupPost[];
   initialNotes: RaceWithNotes[];
+  initialActivity: ActivityItem[];
   defaultGameId: string | null;
   currentUserId: string;
+  latestActivityAt: string | null;
 }
 
 export function SallskapPageClient({
@@ -28,10 +31,24 @@ export function SallskapPageClient({
   games,
   initialPosts,
   initialNotes,
+  initialActivity,
   defaultGameId,
   currentUserId,
+  latestActivityAt,
 }: SallskapPageClientProps) {
   const [activeTab, setActiveTab] = useState<SallskapTab>("forum");
+  const [hasNewActivity, setHasNewActivity] = useState(false);
+
+  useEffect(() => {
+    function check() {
+      if (!latestActivityAt) return setHasNewActivity(false);
+      const lastSeen = localStorage.getItem(`sallskap_seen_${group.id}`);
+      setHasNewActivity(!lastSeen || lastSeen < latestActivityAt);
+    }
+    check();
+    window.addEventListener("storage", check);
+    return () => window.removeEventListener("storage", check);
+  }, [group.id, latestActivityAt]);
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white flex flex-col">
@@ -49,7 +66,7 @@ export function SallskapPageClient({
       </header>
 
       {/* Tab bar */}
-      <TabBar activeTab={activeTab} onChange={setActiveTab} />
+      <TabBar activeTab={activeTab} onChange={setActiveTab} hasNewActivity={hasNewActivity} />
 
       {/* Tab content — alltid monterade för att bevara state vid fliktbyte */}
       <div className="flex-1">
@@ -69,6 +86,9 @@ export function SallskapPageClient({
             initialGameId={defaultGameId}
             initialNotes={initialNotes}
           />
+        </div>
+        <div className={activeTab === "aktivitet" ? undefined : "hidden"}>
+          <ActivityTab items={initialActivity} groupId={group.id} />
         </div>
         <div className={activeTab === "sallskap" ? undefined : "hidden"}>
           <AdminTab

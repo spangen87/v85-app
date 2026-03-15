@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useRouter } from "next/navigation";
 
 interface Game {
@@ -7,6 +8,7 @@ interface Game {
   date: string;
   track: string;
   game_type: string;
+  has_results?: boolean;
 }
 
 interface GameSelectorProps {
@@ -22,12 +24,12 @@ export function GameSelector({ games, selectedId }: GameSelectorProps) {
   return (
     <select
       value={selectedId ?? ""}
-      onChange={(e) => router.push(`/?game=${encodeURIComponent(e.target.value)}`)}
+      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => router.push(`/?game=${encodeURIComponent(e.target.value)}`)}
       className="rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm px-3 py-2 focus:outline-none focus:border-blue-500"
     >
       {games.map((g) => (
         <option key={g.id} value={g.id}>
-          {g.date} — {g.game_type} — {g.track}
+          {g.has_results ? "✓ " : ""}{g.date} — {g.game_type} — {g.track}
         </option>
       ))}
     </select>
