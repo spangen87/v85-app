@@ -135,3 +135,23 @@ export async function deleteSystem(systemId: string): Promise<void> {
     .eq('user_id', user.id)
   if (error) throw error
 }
+
+export async function getWinnersForGame(
+  gameId: string
+): Promise<Record<number, string>> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('starters')
+    .select('horse_id, races!inner(race_number, game_id)')
+    .eq('races.game_id', gameId)
+    .eq('finish_position', 1)
+
+  if (error) throw error
+
+  const result: Record<number, string> = {}
+  for (const w of data ?? []) {
+    const race = w.races as unknown as { race_number: number }
+    result[race.race_number] = w.horse_id
+  }
+  return result
+}
