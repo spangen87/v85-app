@@ -52,6 +52,19 @@ export interface SystemHorse {
   horse_name: string;    // Visas om bara en häst är vald i en avd.
 }
 
+export interface ActivityItem {
+  id: string;
+  kind: 'post' | 'note';
+  created_at: string;
+  content: string;
+  author: string;
+  game_id: string;
+  game_type: string;
+  game_date: string | null;
+  label: string;
+  horse_name: string | null;
+}
+
 export interface SystemSelection {
   race_number: number;
   horses: SystemHorse[];
