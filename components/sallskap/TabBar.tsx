@@ -1,10 +1,11 @@
 "use client";
 
-export type SallskapTab = "forum" | "anteckningar" | "sallskap";
+export type SallskapTab = "forum" | "anteckningar" | "spel" | "sallskap";
 
 const TABS: { key: SallskapTab; label: string }[] = [
   { key: "forum", label: "Forum" },
-  { key: "anteckningar", label: "Anteckningar" },
+  { key: "anteckningar", label: "Anteckn." },
+  { key: "spel", label: "Spel" },
   { key: "sallskap", label: "Sällskap" },
 ];
 
