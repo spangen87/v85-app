@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { RaceList } from '@/components/RaceList'
+import { SaveSystemDialog } from '@/components/SaveSystemDialog'
 import type { SystemSelection, SystemHorse, Group } from '@/lib/types'
 
 // Beräkna totalt antal rader i ett system
@@ -16,6 +17,7 @@ interface MainPageClientProps {
   currentUserId: string
   initialSystemMode?: boolean
   initialGroupId?: string | null
+  gameId: string | null
 }
 
 export function MainPageClient({
@@ -24,10 +26,12 @@ export function MainPageClient({
   currentUserId,
   initialSystemMode = false,
   initialGroupId = null,
+  gameId,
 }: MainPageClientProps) {
   const [systemMode, setSystemMode] = useState(initialSystemMode)
   const [systemSelections, setSystemSelections] = useState<SystemSelection[]>([])
   const [targetGroupId, setTargetGroupId] = useState<string | null>(initialGroupId)
+  const [showSaveDialog, setShowSaveDialog] = useState(false)
 
   // Toggle en häst i/ur systemet för en given avdelning
   const handleToggleHorse = useCallback((raceNumber: number, horse: SystemHorse) => {
@@ -117,6 +121,7 @@ export function MainPageClient({
             </div>
           </div>
           <button
+            onClick={() => setShowSaveDialog(true)}
             className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-bold rounded-lg"
             disabled={systemSelections.length === 0}
           >
@@ -124,6 +129,21 @@ export function MainPageClient({
           </button>
         </div>
       )}
+
+      <SaveSystemDialog
+        open={showSaveDialog}
+        onClose={() => setShowSaveDialog(false)}
+        onSaved={() => {
+          setShowSaveDialog(false)
+          setSystemMode(false)
+          setSystemSelections([])
+        }}
+        gameId={gameId}
+        selections={systemSelections}
+        totalRows={totalRows}
+        userGroups={userGroups}
+        defaultGroupId={targetGroupId}
+      />
     </>
   )
 }

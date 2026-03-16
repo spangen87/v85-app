@@ -112,6 +112,7 @@ export default async function HomePage({
           currentUserId={user.id}
           initialSystemMode={initialSystemMode}
           initialGroupId={initialGroupId}
+          gameId={selectedId}
         />
       </div>
     </main>
