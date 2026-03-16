@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js'
-import { SystemSelection } from './types'
+import { SystemSelection } from '@/lib/types'
 
 export async function gradeSystemsForGame(
   supabase: SupabaseClient,
@@ -32,7 +32,7 @@ export async function gradeSystemsForGame(
   }
 
   // Rätta varje system
-  for (const system of systems) {
+  await Promise.all(systems.map(async (system) => {
     const selections = system.selections as SystemSelection[]
     let score = 0
     for (const sel of selections) {
@@ -45,5 +45,5 @@ export async function gradeSystemsForGame(
       .from('game_systems')
       .update({ score, is_graded: true })
       .eq('id', system.id)
-  }
+  }))
 }
