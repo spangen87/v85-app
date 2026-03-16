@@ -3,17 +3,18 @@
 import { useState, useTransition } from 'react'
 import { GameSystem } from '@/lib/types'
 import { deleteSystem } from '@/lib/actions/systems'
+import { isWinningHorse } from '@/lib/systemsHelpers'
 
 interface SystemCardProps {
   system: GameSystem
   currentUserId: string
   onDeleted?: (id: string) => void
+  winnersByRace?: Record<number, string>
 }
 
-export function SystemCard({ system, currentUserId, onDeleted }: SystemCardProps) {
+export function SystemCard({ system, currentUserId, onDeleted, winnersByRace }: SystemCardProps) {
   const isOwner = system.user_id === currentUserId
-  const [, startTransition] = useTransition()
-  const [isPending, setIsPending] = useState(false)
+  const [isPending, startTransition] = useTransition()
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
   function handleCopy() {
@@ -30,7 +31,6 @@ export function SystemCard({ system, currentUserId, onDeleted }: SystemCardProps
 
   function handleDelete() {
     if (!confirm('Ta bort systemet?')) return
-    setIsPending(true)
     setDeleteError(null)
     startTransition(async () => {
       try {
@@ -38,15 +38,12 @@ export function SystemCard({ system, currentUserId, onDeleted }: SystemCardProps
         onDeleted?.(system.id)
       } catch {
         setDeleteError('Kunde inte ta bort systemet. Försök igen.')
-      } finally {
-        setIsPending(false)
       }
     })
   }
 
-  // Bestäm score-badge-färg
   const scoreColor = system.score == null
-    ? null
+    ? ''
     : system.score >= 7
     ? 'bg-emerald-500 text-white'
     : system.score >= 5
@@ -63,7 +60,18 @@ export function SystemCard({ system, currentUserId, onDeleted }: SystemCardProps
             {system.author_display_name} · {system.total_rows} {system.total_rows === 1 ? 'rad' : 'rader'} · {system.total_rows * 10} kr
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          {/* Privat/sällskap-bricka */}
+          {system.group_name != null ? (
+            <span className="text-xs px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold whitespace-nowrap">
+              👥 {system.group_name}
+            </span>
+          ) : (
+            <span className="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 font-semibold">
+              🔒 Privat
+            </span>
+          )}
+          {/* Poängbadge */}
           {system.is_graded && system.score != null && (
             <span className={`text-lg font-black px-3 py-1 rounded-lg ${scoreColor}`}>
               {system.score}/8
@@ -84,15 +92,34 @@ export function SystemCard({ system, currentUserId, onDeleted }: SystemCardProps
           </tr>
         </thead>
         <tbody>
-          {system.selections.map(sel => {
-            const numbers = sel.horses.map(h => h.start_number).join('  ')
-            return (
-              <tr key={sel.race_number} className="border-b border-gray-100 dark:border-gray-800">
-                <td className="py-1.5 px-1 font-bold text-base text-gray-900 dark:text-white">{sel.race_number}</td>
-                <td className="py-1.5 px-1 font-semibold text-gray-900 dark:text-white tracking-wide">{numbers}</td>
-              </tr>
-            )
-          })}
+          {system.selections.map(sel => (
+            <tr key={sel.race_number} className="border-b border-gray-100 dark:border-gray-800">
+              <td className="py-1.5 px-1 font-bold text-base text-gray-900 dark:text-white">{sel.race_number}</td>
+              <td className="py-1.5 px-1">
+                <div className="flex gap-1.5 flex-wrap">
+                  {sel.horses.map(h => {
+                    const raceResultKnown = winnersByRace != null && sel.race_number in winnersByRace
+                    const won = system.is_graded && raceResultKnown && isWinningHorse(winnersByRace, sel.race_number, h.horse_id)
+                    const lost = system.is_graded && raceResultKnown && !won
+                    return (
+                      <span
+                        key={h.horse_id}
+                        className={`inline-flex items-center justify-center w-7 h-7 rounded-full font-bold text-sm transition-colors ${
+                          won
+                            ? 'border-2 border-green-600 text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950'
+                            : lost
+                            ? 'text-gray-400 dark:text-gray-600'
+                            : 'text-gray-900 dark:text-white'
+                        }`}
+                      >
+                        {h.start_number}
+                      </span>
+                    )
+                  })}
+                </div>
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
 

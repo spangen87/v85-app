@@ -1,7 +1,7 @@
 "use server";
 
 import { createServiceClient } from "@/lib/supabase/server";
-import type { GroupMember } from "@/lib/types";
+import type { GroupMember, ActivityItem } from "@/lib/types";
 
 export async function getGroupMembers(groupId: string): Promise<GroupMember[]> {
   const db = createServiceClient();
@@ -29,3 +29,10 @@ export async function getGroupMembers(groupId: string): Promise<GroupMember[]> {
     joined_at: row.joined_at as string,
   }));
 }
+
+export async function getRecentGroupActivity(
+  _groupId: string
+): Promise<ActivityItem[]> {
+  return []
+}
+

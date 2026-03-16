@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { Group, SystemSelection } from '@/lib/types'
 import { createSystem } from '@/lib/actions/systems'
 
@@ -25,10 +26,12 @@ export function SaveSystemDialog({
   userGroups,
   defaultGroupId = null,
 }: SaveSystemDialogProps) {
+  const router = useRouter()
   const [name, setName] = useState('Mitt system')
   const [groupId, setGroupId] = useState<string | null>(defaultGroupId)
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const [savedName, setSavedName] = useState<string | null>(null)
 
   if (!open) return null
 
@@ -45,7 +48,7 @@ export function SaveSystemDialog({
     startTransition(async () => {
       try {
         await createSystem(groupId, gameId, name.trim(), selections, totalRows)
-        onSaved()
+        setSavedName(name.trim())
       } catch (err) {
         setError('Kunde inte spara systemet. Försök igen.')
         console.error(err)
@@ -53,6 +56,43 @@ export function SaveSystemDialog({
     })
   }
 
+  function handleGoToSystem() {
+    onSaved()
+    router.push(`/system?game=${gameId}`)
+  }
+
+  // Success-vy
+  if (savedName !== null) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50">
+        <div className="bg-white dark:bg-gray-900 w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-6 shadow-xl">
+          <div className="text-center mb-5">
+            <div className="text-3xl mb-2">✅</div>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">System sparat!</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              &ldquo;{savedName}&rdquo; &mdash; {totalRows} {totalRows === 1 ? 'rad' : 'rader'} &middot; {totalRows * 10} kr
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={onSaved}
+              className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            >
+              Stäng
+            </button>
+            <button
+              onClick={handleGoToSystem}
+              className="flex-1 px-4 py-2 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors"
+            >
+              Se systemet →
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Sparavy
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50">
       <div className="bg-white dark:bg-gray-900 w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-6 shadow-xl">
