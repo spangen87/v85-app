@@ -94,6 +94,35 @@ export async function getUserSystemsForGame(
   return (data ?? []) as GameSystem[]
 }
 
+export async function getSystemsForUser(
+  gameId: string
+): Promise<GameSystem[]> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
+  // RLS-policyn "Users can view own and group systems" hanterar filtreringen:
+  // USING (auth.uid() = user_id OR group_id IN (SELECT group_id FROM group_members WHERE user_id = auth.uid()))
+  // Ingen explicit .or()-filter behövs — RLS returnerar exakt rätt rader.
+  const { data, error } = await supabase
+    .from('game_systems')
+    .select('*, groups(name)')
+    .eq('game_id', gameId)
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+
+  const rows = (data ?? []) as RawSystemWithGroup[]
+  const uniqueUserIds = [...new Set(rows.map((r) => r.user_id))]
+  const names = await fetchDisplayNames(supabase, uniqueUserIds)
+
+  return rows.map(({ groups, ...rest }) => ({
+    ...rest,
+    group_name: groups?.name ?? null,
+    author_display_name: names.get(rest.user_id) ?? 'Okänd',
+  }))
+}
+
 export async function deleteSystem(systemId: string): Promise<void> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
