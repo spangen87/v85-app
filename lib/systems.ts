@@ -5,17 +5,16 @@ export async function gradeSystemsForGame(
   supabase: SupabaseClient,
   gameId: string
 ): Promise<void> {
-  // Hämta alla ograttade system för detta game_id
-  const { data: systems, error: systemsError } = await supabase
-    .from('game_systems')
-    .select('id, selections')
+  // Hämta antalet avdelningar i spelet
+  const { data: races, error: racesError } = await supabase
+    .from('races')
+    .select('race_number')
     .eq('game_id', gameId)
-    .eq('is_graded', false)
 
-  if (systemsError || !systems?.length) return
+  if (racesError || !races?.length) return
+  const totalRaces = races.length
 
   // Hämta vinnare (finish_position = 1) per avdelning för detta spel
-  // Joins: starters → races WHERE races.game_id = gameId AND starters.finish_position = 1
   const { data: winners, error: winnersError } = await supabase
     .from('starters')
     .select('horse_id, races!inner(race_number, game_id)')
@@ -30,6 +29,18 @@ export async function gradeSystemsForGame(
     const race = w.races as unknown as { race_number: number; game_id: string }
     winnerMap.set(race.race_number, w.horse_id)
   }
+
+  // Rätta bara om alla avdelningar har en vinnare — annars otillräckliga data
+  if (winnerMap.size < totalRaces) return
+
+  // Hämta alla ograttade system för detta game_id
+  const { data: systems, error: systemsError } = await supabase
+    .from('game_systems')
+    .select('id, selections')
+    .eq('game_id', gameId)
+    .eq('is_graded', false)
+
+  if (systemsError || !systems?.length) return
 
   // Rätta varje system
   await Promise.all(systems.map(async (system) => {

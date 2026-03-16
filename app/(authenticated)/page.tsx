@@ -107,7 +107,8 @@ export default async function HomePage({
         </div>
 
         <MainPageClient
-          races={races}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          races={races as any}
           userGroups={userGroups}
           currentUserId={user.id}
           initialSystemMode={initialSystemMode}

@@ -1,7 +1,23 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { GameSystem, SystemSelection } from '@/lib/types'
+import type { GameSystem, SystemSelection } from '@/lib/types'
+
+type RawSystemRow = Omit<GameSystem, 'author_display_name'>
+
+async function fetchDisplayNames(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userIds: string[]
+): Promise<Map<string, string>> {
+  if (userIds.length === 0) return new Map()
+  const { data } = await supabase
+    .from('profiles')
+    .select('id, display_name')
+    .in('id', userIds)
+  const map = new Map<string, string>()
+  for (const p of data ?? []) map.set(p.id, p.display_name ?? 'Okänd')
+  return map
+}
 
 export async function createSystem(
   groupId: string | null,
@@ -31,10 +47,6 @@ export async function createSystem(
   return data as GameSystem
 }
 
-type RawSystemRow = Omit<GameSystem, 'author_display_name'> & {
-  profiles: { display_name: string } | null
-}
-
 export async function getGroupSystems(
   groupId: string,
   gameId: string
@@ -42,20 +54,21 @@ export async function getGroupSystems(
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('game_systems')
-    .select(`
-      *,
-      profiles!game_systems_user_id_fkey(display_name)
-    `)
+    .select('*')
     .eq('group_id', groupId)
     .eq('game_id', gameId)
     .order('created_at', { ascending: false })
 
   if (error) throw error
 
-  return (data ?? []).map((row: RawSystemRow) => ({
+  const rows = (data ?? []) as RawSystemRow[]
+  const uniqueUserIds = [...new Set(rows.map((r) => r.user_id))]
+  const names = await fetchDisplayNames(supabase, uniqueUserIds)
+
+  return rows.map((row) => ({
     ...row,
-    author_display_name: row.profiles?.display_name ?? '',
-  })) as GameSystem[]
+    author_display_name: names.get(row.user_id) ?? 'Okänd',
+  }))
 }
 
 export async function getUserSystemsForGame(

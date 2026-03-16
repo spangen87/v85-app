@@ -663,7 +663,7 @@ export function HorseCard({
             )}
             {fetchedStarts === null && !fetchingStarts && !startsError && (
               <p className="text-xs text-gray-400 dark:text-gray-500 italic">
-                Klicka "Hämta från ATG" för att visa senaste starter.
+                Klicka &quot;Hämta från ATG&quot; för att visa senaste starter.
               </p>
             )}
           </div>

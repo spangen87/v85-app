@@ -14,6 +14,7 @@ export function SystemCard({ system, currentUserId, onDeleted }: SystemCardProps
   const isOwner = system.user_id === currentUserId
   const [, startTransition] = useTransition()
   const [isPending, setIsPending] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   function handleCopy() {
     const lines = system.selections.map(s => {
@@ -30,10 +31,16 @@ export function SystemCard({ system, currentUserId, onDeleted }: SystemCardProps
   function handleDelete() {
     if (!confirm('Ta bort systemet?')) return
     setIsPending(true)
+    setDeleteError(null)
     startTransition(async () => {
-      await deleteSystem(system.id)
-      onDeleted?.(system.id)
-      setIsPending(false)
+      try {
+        await deleteSystem(system.id)
+        onDeleted?.(system.id)
+      } catch {
+        setDeleteError('Kunde inte ta bort systemet. Försök igen.')
+      } finally {
+        setIsPending(false)
+      }
     })
   }
 
@@ -74,9 +81,6 @@ export function SystemCard({ system, currentUserId, onDeleted }: SystemCardProps
           <tr className="border-b-2 border-gray-900 dark:border-gray-100">
             <th className="text-left py-1 px-1 text-xs font-semibold text-gray-500 uppercase tracking-wide w-9">Avd</th>
             <th className="text-left py-1 px-1 text-xs font-semibold text-gray-500 uppercase tracking-wide">Hästar</th>
-            {system.is_graded && (
-              <th className="text-right py-1 px-1 text-xs font-semibold text-gray-500 uppercase tracking-wide">Vinnare</th>
-            )}
           </tr>
         </thead>
         <tbody>
@@ -91,6 +95,10 @@ export function SystemCard({ system, currentUserId, onDeleted }: SystemCardProps
           })}
         </tbody>
       </table>
+
+      {deleteError && (
+        <p className="text-xs text-red-500 mb-2">{deleteError}</p>
+      )}
 
       {/* Åtgärder */}
       <div className="flex gap-2">

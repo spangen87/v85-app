@@ -1,9 +1,11 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, type ComponentProps } from 'react'
 import { RaceList } from '@/components/RaceList'
 import { SaveSystemDialog } from '@/components/SaveSystemDialog'
 import type { SystemSelection, SystemHorse, Group } from '@/lib/types'
+
+type RaceListRaces = ComponentProps<typeof RaceList>['races']
 
 // Beräkna totalt antal rader i ett system
 function computeTotalRows(selections: SystemSelection[]): number {
@@ -11,8 +13,7 @@ function computeTotalRows(selections: SystemSelection[]): number {
 }
 
 interface MainPageClientProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  races: any[]
+  races: RaceListRaces
   userGroups: Group[]
   currentUserId: string
   initialSystemMode?: boolean
@@ -30,7 +31,6 @@ export function MainPageClient({
 }: MainPageClientProps) {
   const [systemMode, setSystemMode] = useState(initialSystemMode)
   const [systemSelections, setSystemSelections] = useState<SystemSelection[]>([])
-  const [targetGroupId, setTargetGroupId] = useState<string | null>(initialGroupId)
   const [showSaveDialog, setShowSaveDialog] = useState(false)
 
   // Toggle en häst i/ur systemet för en given avdelning
@@ -107,8 +107,14 @@ export function MainPageClient({
           </p>
         </div>
       ) : (
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        <RaceList {...({ races, userGroups, currentUserId, systemMode, systemSelections, onToggleHorse: handleToggleHorse } as any)} />
+        <RaceList
+          races={races}
+          userGroups={userGroups}
+          currentUserId={currentUserId}
+          systemMode={systemMode}
+          systemSelections={systemSelections}
+          onToggleHorse={handleToggleHorse}
+        />
       )}
 
       {/* SystemStatusBar — visas i Steg 4 */}
@@ -142,7 +148,7 @@ export function MainPageClient({
         selections={systemSelections}
         totalRows={totalRows}
         userGroups={userGroups}
-        defaultGroupId={targetGroupId}
+        defaultGroupId={initialGroupId}
       />
     </>
   )
