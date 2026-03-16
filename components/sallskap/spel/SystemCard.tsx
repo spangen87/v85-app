@@ -14,8 +14,7 @@ interface SystemCardProps {
 
 export function SystemCard({ system, currentUserId, onDeleted, winnersByRace }: SystemCardProps) {
   const isOwner = system.user_id === currentUserId
-  const [, startTransition] = useTransition()
-  const [isPending, setIsPending] = useState(false)
+  const [isPending, startTransition] = useTransition()
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
   function handleCopy() {
@@ -32,7 +31,6 @@ export function SystemCard({ system, currentUserId, onDeleted, winnersByRace }: 
 
   function handleDelete() {
     if (!confirm('Ta bort systemet?')) return
-    setIsPending(true)
     setDeleteError(null)
     startTransition(async () => {
       try {
@@ -40,14 +38,12 @@ export function SystemCard({ system, currentUserId, onDeleted, winnersByRace }: 
         onDeleted?.(system.id)
       } catch {
         setDeleteError('Kunde inte ta bort systemet. Försök igen.')
-      } finally {
-        setIsPending(false)
       }
     })
   }
 
   const scoreColor = system.score == null
-    ? null
+    ? ''
     : system.score >= 7
     ? 'bg-emerald-500 text-white'
     : system.score >= 5
@@ -102,8 +98,9 @@ export function SystemCard({ system, currentUserId, onDeleted, winnersByRace }: 
               <td className="py-1.5 px-1">
                 <div className="flex gap-1.5 flex-wrap">
                   {sel.horses.map(h => {
-                    const won = system.is_graded && isWinningHorse(winnersByRace, sel.race_number, h.horse_id)
-                    const lost = system.is_graded && !won
+                    const raceResultKnown = winnersByRace != null && sel.race_number in winnersByRace
+                    const won = system.is_graded && raceResultKnown && isWinningHorse(winnersByRace, sel.race_number, h.horse_id)
+                    const lost = system.is_graded && raceResultKnown && !won
                     return (
                       <span
                         key={h.horse_id}
