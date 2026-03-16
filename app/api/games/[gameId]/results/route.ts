@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchGameResults } from "@/lib/atg";
 import { createServiceClient } from "@/lib/supabase/server";
+import { gradeSystemsForGame } from "@/lib/systems";
 
 export async function POST(
   _request: NextRequest,
@@ -74,6 +75,13 @@ export async function POST(
         updatedCount++;
         racesSeen.add(result.race_index);
       }
+    }
+
+    // Rätta sparade system (isolerat — fel här ska inte påverka svaret)
+    try {
+      await gradeSystemsForGame(supabase, gameId)
+    } catch (err) {
+      console.warn('[results] gradeSystemsForGame failed (non-fatal):', err)
     }
 
     return NextResponse.json({

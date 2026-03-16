@@ -277,6 +277,8 @@ export function HorseCard({
   valueIndex: vi,
   isValue,
   sortRank,
+  isSelected,
+  onSelect,
 }: {
   starter: Starter;
   notesSection?: ReactNode;
@@ -286,6 +288,8 @@ export function HorseCard({
   valueIndex?: number;
   isValue?: boolean;
   sortRank?: number;
+  isSelected?: boolean;
+  onSelect?: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [fetchedStarts, setFetchedStarts] = useState<FetchedStart[] | null>(null);
@@ -335,7 +339,13 @@ export function HorseCard({
   const currentMethod = raceStartMethod ?? "auto";
 
   return (
-    <div className={`bg-gray-100 dark:bg-gray-800 rounded-lg p-4 flex flex-col gap-3 ${isValue ? "ring-2 ring-green-500 ring-inset" : ""}`}>
+    <div className={`bg-gray-100 dark:bg-gray-800 rounded-lg p-4 flex flex-col gap-3 ${
+      isSelected
+        ? "ring-2 ring-emerald-500 ring-inset bg-emerald-50 dark:bg-emerald-950"
+        : isValue
+        ? "ring-2 ring-green-500 ring-inset"
+        : ""
+    }`}>
       {/* Huvud: nummer, namn, driver, streck, odds, FS */}
       <div className="flex flex-col gap-1">
         {/* Rad 1: sorteringsrank (om aktiv), resultat (om finns), startnummer, namn */}
@@ -364,9 +374,23 @@ export function HorseCard({
               {starter.finish_position}:a{starter.finish_time ? ` ${starter.finish_time}` : ""}
             </span>
           )}
-          <span className="text-gray-500 dark:text-gray-400 text-sm shrink-0 w-5 text-center">
-            {starter.start_number}
-          </span>
+          {onSelect != null ? (
+            <button
+              onClick={onSelect}
+              title={isSelected ? 'Ta bort från system' : 'Lägg till i system'}
+              className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold transition-colors shrink-0 ${
+                isSelected
+                  ? 'bg-emerald-500 text-white ring-2 ring-emerald-300'
+                  : 'bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-emerald-200 dark:hover:bg-emerald-800'
+              }`}
+            >
+              {starter.start_number}
+            </button>
+          ) : (
+            <span className="text-gray-500 dark:text-gray-400 text-sm shrink-0 w-5 text-center">
+              {starter.start_number}
+            </span>
+          )}
           <span className="text-gray-900 dark:text-white font-semibold">
             {starter.horses?.name ?? "–"}
           </span>
@@ -639,7 +663,7 @@ export function HorseCard({
             )}
             {fetchedStarts === null && !fetchingStarts && !startsError && (
               <p className="text-xs text-gray-400 dark:text-gray-500 italic">
-                Klicka "Hämta från ATG" för att visa senaste starter.
+                Klicka &quot;Hämta från ATG&quot; för att visa senaste starter.
               </p>
             )}
           </div>

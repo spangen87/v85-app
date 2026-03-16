@@ -45,3 +45,28 @@ export interface HorseNote {
   created_at: string;
   replies: HorseNote[];
 }
+
+export interface SystemHorse {
+  horse_id: string;      // ATG horse_id — används för grading-matchning
+  start_number: number;  // Visas i kvittoformat
+  horse_name: string;    // Visas om bara en häst är vald i en avd.
+}
+
+export interface SystemSelection {
+  race_number: number;
+  horses: SystemHorse[];
+}
+
+export interface GameSystem {
+  id: string;
+  user_id: string;
+  group_id: string | null;  // null = privat system
+  game_id: string;
+  name: string;
+  selections: SystemSelection[];
+  total_rows: number;
+  score: number | null;
+  is_graded: boolean;
+  created_at: string;
+  author_display_name?: string;
+}

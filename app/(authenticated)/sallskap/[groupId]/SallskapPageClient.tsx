@@ -7,8 +7,9 @@ import { TabBar, type SallskapTab } from "@/components/sallskap/TabBar";
 import { ForumTab } from "@/components/sallskap/forum/ForumTab";
 import { NotesTab } from "@/components/sallskap/notes/NotesTab";
 import { AdminTab } from "@/components/sallskap/admin/AdminTab";
-import type { Group, GroupMember, GroupPost } from "@/lib/types";
+import type { Group, GroupMember, GroupPost, GameSystem } from "@/lib/types";
 import type { RaceWithNotes } from "@/lib/actions/notes";
+import { SpelTab } from "@/components/sallskap/spel/SpelTab";
 
 type Game = { id: string; date: string; track: string | null };
 
@@ -18,6 +19,7 @@ interface SallskapPageClientProps {
   games: Game[];
   initialPosts: GroupPost[];
   initialNotes: RaceWithNotes[];
+  initialSystems: GameSystem[];
   defaultGameId: string | null;
   currentUserId: string;
 }
@@ -28,6 +30,7 @@ export function SallskapPageClient({
   games,
   initialPosts,
   initialNotes,
+  initialSystems,
   defaultGameId,
   currentUserId,
 }: SallskapPageClientProps) {
@@ -68,6 +71,15 @@ export function SallskapPageClient({
             games={games}
             initialGameId={defaultGameId}
             initialNotes={initialNotes}
+          />
+        </div>
+        <div className={activeTab === "spel" ? undefined : "hidden"}>
+          <SpelTab
+            groupId={group.id}
+            games={games}
+            initialGameId={defaultGameId}
+            initialSystems={initialSystems}
+            currentUserId={currentUserId}
           />
         </div>
         <div className={activeTab === "sallskap" ? undefined : "hidden"}>

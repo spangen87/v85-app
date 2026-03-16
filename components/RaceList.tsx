@@ -6,7 +6,7 @@ import { AnalysisPanel } from "./AnalysisPanel";
 import { HorseNotes } from "./notes/HorseNotes";
 import { TopFiveRanking } from "./TopFiveRanking";
 import { analyzeRaceEnhanced } from "@/lib/analysis";
-import type { Group } from "@/lib/types";
+import type { Group, SystemSelection, SystemHorse } from "@/lib/types";
 
 interface LifeRecord {
   start_method: string;
@@ -76,10 +76,16 @@ export function RaceList({
   races,
   userGroups,
   currentUserId,
+  systemMode,
+  systemSelections,
+  onToggleHorse,
 }: {
   races: Race[];
   userGroups: Group[];
   currentUserId: string;
+  systemMode?: boolean;
+  systemSelections?: SystemSelection[];
+  onToggleHorse?: (raceNumber: number, horse: SystemHorse) => void;
 }) {
   const [openRace, setOpenRace] = useState<string | null>(races[0]?.id ?? null);
   const [analysisRace, setAnalysisRace] = useState<string | null>(null);
@@ -222,6 +228,8 @@ export function RaceList({
         // Sortera
         const sorted = sortStarters(filtered, compositeMap);
 
+        const raceSelections = systemSelections?.find(s => s.race_number === race.race_number);
+
         return (
           <div key={race.id} className="bg-gray-50 dark:bg-gray-900 rounded-xl overflow-hidden">
             <button
@@ -291,6 +299,12 @@ export function RaceList({
                         valueIndex={enh?.valueIndex}
                         isValue={enh?.isValue}
                         sortRank={sortKey !== "number" ? idx + 1 : undefined}
+                        isSelected={systemMode ? raceSelections?.horses.some(h => h.horse_id === s.horse_id) ?? false : undefined}
+                        onSelect={systemMode && onToggleHorse ? () => onToggleHorse(race.race_number, {
+                          horse_id: s.horse_id,
+                          start_number: s.start_number,
+                          horse_name: s.horses?.name ?? '',
+                        }) : undefined}
                         notesSection={
                           <HorseNotes
                             horseId={s.horse_id}

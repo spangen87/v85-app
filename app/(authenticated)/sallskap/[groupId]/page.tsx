@@ -4,6 +4,7 @@ import { getGroupById } from "@/lib/actions/groups";
 import { getGroupMembers } from "@/lib/actions/sallskap";
 import { getGroupPosts } from "@/lib/actions/posts";
 import { getGroupNotesForGame } from "@/lib/actions/notes";
+import { getGroupSystems } from "@/lib/actions/systems";
 import { SallskapPageClient } from "./SallskapPageClient";
 
 interface Props {
@@ -46,9 +47,10 @@ export default async function SallskapPage({ params }: Props) {
 
   const defaultGameId = games[0]?.id ?? null;
 
-  const [initialPosts, initialNotes] = await Promise.all([
+  const [initialPosts, initialNotes, initialSystems] = await Promise.all([
     defaultGameId ? getGroupPosts(groupId, defaultGameId) : Promise.resolve([]),
     defaultGameId ? getGroupNotesForGame(groupId, defaultGameId) : Promise.resolve([]),
+    defaultGameId ? getGroupSystems(groupId, defaultGameId) : Promise.resolve([]),
   ]);
 
   return (
@@ -58,6 +60,7 @@ export default async function SallskapPage({ params }: Props) {
       games={games}
       initialPosts={initialPosts}
       initialNotes={initialNotes}
+      initialSystems={initialSystems}
       defaultGameId={defaultGameId}
       currentUserId={user.id}
     />
