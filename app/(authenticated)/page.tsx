@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { RaceList } from "@/components/RaceList";
+import { MainPageClient } from "@/components/MainPageClient";
 import { FetchButton } from "@/components/FetchButton";
 import { ResultsButton } from "@/components/ResultsButton";
 import { GameSelector } from "@/components/GameSelector";
@@ -45,7 +45,7 @@ async function getRaces(supabase: Awaited<ReturnType<typeof createClient>>, game
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ game?: string }>;
+  searchParams: Promise<{ game?: string; systemMode?: string; groupId?: string }>;
 }) {
   const supabase = await createClient();
   const {
@@ -67,6 +67,9 @@ export default async function HomePage({
 
   const selectedGame = games.find((g) => g.id === selectedId) ?? null;
   const races = selectedId ? await getRaces(supabase, selectedId) : [];
+
+  const initialSystemMode = params.systemMode === '1'
+  const initialGroupId = params.groupId ?? null
 
   return (
     <main className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white">
@@ -103,17 +106,13 @@ export default async function HomePage({
           <UsefulLinks />
         </div>
 
-        {races.length === 0 ? (
-          <div className="text-center py-20 text-gray-400 dark:text-gray-500">
-            <p className="text-lg mb-2">Ingen data inladdad ännu.</p>
-            <p className="text-sm">
-              Välj ett datum och klicka på ett spel för att ladda en omgång från ATG.
-            </p>
-          </div>
-        ) : (
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          <RaceList races={races as any} userGroups={userGroups} currentUserId={user.id} />
-        )}
+        <MainPageClient
+          races={races}
+          userGroups={userGroups}
+          currentUserId={user.id}
+          initialSystemMode={initialSystemMode}
+          initialGroupId={initialGroupId}
+        />
       </div>
     </main>
   );
