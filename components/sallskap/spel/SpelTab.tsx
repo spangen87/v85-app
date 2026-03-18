@@ -6,7 +6,7 @@ import { SystemCard } from './SystemCard'
 import { getGroupSystems } from '@/lib/actions/systems'
 import type { GameSystem } from '@/lib/types'
 
-type Game = { id: string; date: string; track: string | null }
+type Game = { id: string; date: string; track: string | null; game_type?: string }
 
 interface SpelTabProps {
   groupId: string
@@ -95,6 +95,7 @@ export function SpelTab({ groupId, games, initialGameId, initialSystems, current
               system={system}
               currentUserId={currentUserId}
               onDeleted={handleDeleted}
+              gameType={games.find(g => g.id === selectedGameId)?.game_type ?? ''}
             />
           ))}
         </div>

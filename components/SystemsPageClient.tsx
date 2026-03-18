@@ -93,6 +93,7 @@ export function SystemsPageClient({
               currentUserId={currentUserId}
               onDeleted={handleDeleted}
               winnersByRace={winners}
+              gameType={games.find(g => g.id === selectedGameId)?.game_type ?? ''}
             />
           ))}
         </div>

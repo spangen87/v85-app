@@ -4,6 +4,7 @@ import { useState, useCallback, type ComponentProps } from 'react'
 import { RaceList } from '@/components/RaceList'
 import { SaveSystemDialog } from '@/components/SaveSystemDialog'
 import type { SystemSelection, SystemHorse, Group } from '@/lib/types'
+import { formatRowCost } from '@/lib/atg'
 
 type RaceListRaces = ComponentProps<typeof RaceList>['races']
 
@@ -19,6 +20,7 @@ interface MainPageClientProps {
   initialSystemMode?: boolean
   initialGroupId?: string | null
   gameId: string | null
+  gameType: string | null
 }
 
 export function MainPageClient({
@@ -28,6 +30,7 @@ export function MainPageClient({
   initialSystemMode = false,
   initialGroupId = null,
   gameId,
+  gameType,
 }: MainPageClientProps) {
   const [systemMode, setSystemMode] = useState(initialSystemMode)
   const [systemSelections, setSystemSelections] = useState<SystemSelection[]>([])
@@ -123,7 +126,7 @@ export function MainPageClient({
           <div>
             <div className="text-xs text-gray-400">{completedRaces} avd. klara av 8</div>
             <div className="text-sm font-bold">
-              {totalRows} rader &middot; <span className="text-emerald-400">{totalRows * 10} kr</span>
+              {totalRows} rader &middot; <span className="text-emerald-400">{formatRowCost(totalRows, gameType ?? '')}</span>
             </div>
           </div>
           <button
@@ -145,6 +148,7 @@ export function MainPageClient({
           setSystemSelections([])
         }}
         gameId={gameId}
+        gameType={gameType}
         selections={systemSelections}
         totalRows={totalRows}
         userGroups={userGroups}

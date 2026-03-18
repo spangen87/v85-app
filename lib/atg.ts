@@ -1,4 +1,25 @@
 const ATG_BASE = "https://www.atg.se/services/racinginfo/v1/api";
+
+/** Pris per rad (kr) beroende på speltyp */
+export function getRowPrice(gameType: string): number {
+  switch (gameType.toUpperCase()) {
+    case 'V86': return 0.25
+    case 'V75': return 0.50
+    case 'V85': return 0.50
+    case 'V65': return 0.50
+    case 'V64': return 1.00
+    default:    return 1.00
+  }
+}
+
+/** Formaterar totalkostnad som t.ex. "12,50 kr" eller "50 kr" */
+export function formatRowCost(rows: number, gameType: string): string {
+  const price = rows * getRowPrice(gameType)
+  const formatted = price % 1 === 0
+    ? String(price)
+    : price.toFixed(2).replace('.', ',')
+  return `${formatted} kr`
+}
 const HEADERS = {
   "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
   Accept: "application/json",

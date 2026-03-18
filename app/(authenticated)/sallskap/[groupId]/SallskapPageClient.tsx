@@ -11,7 +11,7 @@ import type { Group, GroupMember, GroupPost, GameSystem } from "@/lib/types";
 import type { RaceWithNotes } from "@/lib/actions/notes";
 import { SpelTab } from "@/components/sallskap/spel/SpelTab";
 
-type Game = { id: string; date: string; track: string | null };
+type Game = { id: string; date: string; track: string | null; game_type?: string };
 
 interface SallskapPageClientProps {
   group: Group;

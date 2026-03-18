@@ -14,7 +14,7 @@ interface Props {
 async function getAllGames(supabase: Awaited<ReturnType<typeof createClient>>) {
   const { data } = await supabase
     .from("games")
-    .select("id, date, track")
+    .select("id, date, track, game_type")
     .order("date", { ascending: false });
   return data ?? [];
 }
