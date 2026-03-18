@@ -4,12 +4,14 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Group, SystemSelection } from '@/lib/types'
 import { createSystem } from '@/lib/actions/systems'
+import { formatRowCost } from '@/lib/atg'
 
 interface SaveSystemDialogProps {
   open: boolean
   onClose: () => void
   onSaved: () => void
   gameId: string | null
+  gameType: string | null
   selections: SystemSelection[]
   totalRows: number
   userGroups: Group[]
@@ -21,6 +23,7 @@ export function SaveSystemDialog({
   onClose,
   onSaved,
   gameId,
+  gameType,
   selections,
   totalRows,
   userGroups,
@@ -70,7 +73,7 @@ export function SaveSystemDialog({
             <div className="text-3xl mb-2">✅</div>
             <h2 className="text-lg font-bold text-gray-900 dark:text-white">System sparat!</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              &ldquo;{savedName}&rdquo; &mdash; {totalRows} {totalRows === 1 ? 'rad' : 'rader'} &middot; {totalRows * 10} kr
+              &ldquo;{savedName}&rdquo; &mdash; {totalRows} {totalRows === 1 ? 'rad' : 'rader'} &middot; {formatRowCost(totalRows, gameType ?? '')}
             </p>
           </div>
           <div className="flex gap-3">
@@ -134,7 +137,7 @@ export function SaveSystemDialog({
         </div>
 
         <div className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-          {totalRows} {totalRows === 1 ? 'rad' : 'rader'} &middot; {totalRows * 10} kr
+          {totalRows} {totalRows === 1 ? 'rad' : 'rader'} &middot; {formatRowCost(totalRows, gameType ?? '')}
         </div>
 
         {!gameId && (

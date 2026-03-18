@@ -4,15 +4,17 @@ import { useState, useTransition } from 'react'
 import { GameSystem } from '@/lib/types'
 import { deleteSystem } from '@/lib/actions/systems'
 import { isWinningHorse } from '@/lib/systemsHelpers'
+import { formatRowCost } from '@/lib/atg'
 
 interface SystemCardProps {
   system: GameSystem
   currentUserId: string
   onDeleted?: (id: string) => void
   winnersByRace?: Record<number, string>
+  gameType?: string
 }
 
-export function SystemCard({ system, currentUserId, onDeleted, winnersByRace }: SystemCardProps) {
+export function SystemCard({ system, currentUserId, onDeleted, winnersByRace, gameType = '' }: SystemCardProps) {
   const isOwner = system.user_id === currentUserId
   const [isPending, startTransition] = useTransition()
   const [deleteError, setDeleteError] = useState<string | null>(null)
@@ -23,7 +25,7 @@ export function SystemCard({ system, currentUserId, onDeleted, winnersByRace }: 
       return `Avd ${s.race_number}: ${numbers}`
     })
     const text = [
-      `${system.name} — ${system.total_rows} ${system.total_rows === 1 ? 'rad' : 'rader'} · ${system.total_rows * 10} kr`,
+      `${system.name} — ${system.total_rows} ${system.total_rows === 1 ? 'rad' : 'rader'} · ${formatRowCost(system.total_rows, gameType)}`,
       ...lines
     ].join('\n')
     navigator.clipboard.writeText(text).catch(() => {})
@@ -57,7 +59,7 @@ export function SystemCard({ system, currentUserId, onDeleted, winnersByRace }: 
         <div>
           <div className="font-bold text-gray-900 dark:text-white">{system.name}</div>
           <div className="text-xs text-gray-500 dark:text-gray-400">
-            {system.author_display_name} · {system.total_rows} {system.total_rows === 1 ? 'rad' : 'rader'} · {system.total_rows * 10} kr
+            {system.author_display_name} · {system.total_rows} {system.total_rows === 1 ? 'rad' : 'rader'} · {formatRowCost(system.total_rows, gameType)}
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
