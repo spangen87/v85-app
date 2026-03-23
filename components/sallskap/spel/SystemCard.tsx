@@ -20,8 +20,9 @@ export function SystemCard({ system, currentUserId, onDeleted, winnersByRace, ga
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
   function handleCopy() {
-    const lines = system.selections.map(s => {
-      const numbers = s.horses.map(h => h.start_number).join(' ')
+    const sortedSelections = [...system.selections].sort((a, b) => a.race_number - b.race_number)
+    const lines = sortedSelections.map(s => {
+      const numbers = [...s.horses].sort((a, b) => a.start_number - b.start_number).map(h => h.start_number).join(' ')
       return `Avd ${s.race_number}: ${numbers}`
     })
     const text = [
@@ -94,12 +95,12 @@ export function SystemCard({ system, currentUserId, onDeleted, winnersByRace, ga
           </tr>
         </thead>
         <tbody>
-          {system.selections.map(sel => (
+          {[...system.selections].sort((a, b) => a.race_number - b.race_number).map(sel => (
             <tr key={sel.race_number} className="border-b border-gray-100 dark:border-gray-800">
               <td className="py-1.5 px-1 font-bold text-base text-gray-900 dark:text-white">{sel.race_number}</td>
               <td className="py-1.5 px-1">
                 <div className="flex gap-1.5 flex-wrap">
-                  {sel.horses.map(h => {
+                  {[...sel.horses].sort((a, b) => a.start_number - b.start_number).map(h => {
                     const raceResultKnown = winnersByRace != null && sel.race_number in winnersByRace
                     const won = system.is_graded && raceResultKnown && isWinningHorse(winnersByRace, sel.race_number, h.horse_id)
                     const lost = system.is_graded && raceResultKnown && !won
