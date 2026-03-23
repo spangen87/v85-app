@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { SystemCard } from './SystemCard'
-import { getGroupSystems } from '@/lib/actions/systems'
+import { getGroupSystems, getWinnersForGame } from '@/lib/actions/systems'
 import type { GameSystem } from '@/lib/types'
 
 type Game = { id: string; date: string; track: string | null; game_type?: string }
@@ -20,15 +20,26 @@ export function SpelTab({ groupId, games, initialGameId, initialSystems, current
   const [selectedGameId, setSelectedGameId] = useState<string | null>(initialGameId)
   const [systems, setSystems] = useState<GameSystem[]>(initialSystems)
   const [loading, setLoading] = useState(false)
+  const [winnersByRace, setWinnersByRace] = useState<Record<number, string>>({})
+
+  useEffect(() => {
+    if (!initialGameId) return
+    getWinnersForGame(initialGameId).then(setWinnersByRace).catch(() => {})
+  }, [initialGameId])
 
   async function handleGameChange(gameId: string) {
     setSelectedGameId(gameId)
     setLoading(true)
     try {
-      const data = await getGroupSystems(groupId, gameId)
+      const [data, winners] = await Promise.all([
+        getGroupSystems(groupId, gameId),
+        getWinnersForGame(gameId),
+      ])
       setSystems(data)
+      setWinnersByRace(winners)
     } catch {
       setSystems([])
+      setWinnersByRace({})
     } finally {
       setLoading(false)
     }
@@ -95,6 +106,7 @@ export function SpelTab({ groupId, games, initialGameId, initialSystems, current
               system={system}
               currentUserId={currentUserId}
               onDeleted={handleDeleted}
+              winnersByRace={winnersByRace}
               gameType={games.find(g => g.id === selectedGameId)?.game_type ?? ''}
             />
           ))}
