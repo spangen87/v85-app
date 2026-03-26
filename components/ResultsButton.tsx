@@ -43,7 +43,7 @@ export function ResultsButton({ gameId }: Props) {
       <button
         onClick={handleFetch}
         disabled={!gameId || loading}
-        className="px-4 py-2 rounded-lg bg-green-700 hover:bg-green-600 text-white text-sm font-semibold disabled:opacity-40 transition"
+        className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold hover:border-indigo-500 dark:hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400 disabled:opacity-40 transition"
       >
         {loading ? "Hämtar..." : "Hämta resultat"}
       </button>
