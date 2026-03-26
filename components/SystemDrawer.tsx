@@ -58,7 +58,7 @@ export function SystemDrawer({
         onClick={onClose}
       />
       {/* Panel */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-gray-900 rounded-t-2xl max-h-[70vh] flex flex-col">
+      <div role="dialog" aria-modal="true" className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-gray-900 rounded-t-2xl max-h-[70vh] flex flex-col">
         {/* Drag handle */}
         <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
           <div className="w-8 h-1 rounded-full bg-gray-700" />
@@ -68,6 +68,7 @@ export function SystemDrawer({
           <span className="font-bold text-sm text-white">🎯 Din kupong</span>
           <button
             onClick={onClose}
+            aria-label="Stäng"
             className="text-gray-400 hover:text-white text-lg leading-none transition"
           >
             ✕
