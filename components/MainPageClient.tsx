@@ -3,12 +3,13 @@
 import { useState, useCallback, type ComponentProps } from 'react'
 import { RaceList } from '@/components/RaceList'
 import { SaveSystemDialog } from '@/components/SaveSystemDialog'
+import { SystemSidebar } from '@/components/SystemSidebar'
+import { SystemDrawer } from '@/components/SystemDrawer'
 import type { SystemSelection, SystemHorse, Group } from '@/lib/types'
 import { formatRowCost } from '@/lib/atg'
 
 type RaceListRaces = ComponentProps<typeof RaceList>['races']
 
-// Beräkna totalt antal rader i ett system
 function computeTotalRows(selections: SystemSelection[]): number {
   return selections.reduce((acc, s) => acc * Math.max(s.horses.length, 1), 1)
 }
@@ -35,26 +36,22 @@ export function MainPageClient({
   const [systemMode, setSystemMode] = useState(initialSystemMode)
   const [systemSelections, setSystemSelections] = useState<SystemSelection[]>([])
   const [showSaveDialog, setShowSaveDialog] = useState(false)
+  const [showDrawer, setShowDrawer] = useState(false)
 
-  // Toggle en häst i/ur systemet för en given avdelning
   const handleToggleHorse = useCallback((raceNumber: number, horse: SystemHorse) => {
     setSystemSelections(prev => {
       const existing = prev.find(s => s.race_number === raceNumber)
       if (!existing) {
-        // Ny avdelning — lägg till hästen
         return [...prev, { race_number: raceNumber, horses: [horse] }]
       }
       const alreadySelected = existing.horses.some(h => h.horse_id === horse.horse_id)
       if (alreadySelected) {
-        // Ta bort hästen
         const updatedHorses = existing.horses.filter(h => h.horse_id !== horse.horse_id)
         if (updatedHorses.length === 0) {
-          // Ta bort hela avdelningen om inga hästar kvar
           return prev.filter(s => s.race_number !== raceNumber)
         }
         return prev.map(s => s.race_number === raceNumber ? { ...s, horses: updatedHorses } : s)
       } else {
-        // Lägg till hästen i befintlig avdelning
         return prev.map(s => s.race_number === raceNumber ? { ...s, horses: [...s.horses, horse] } : s)
       }
     })
@@ -68,6 +65,12 @@ export function MainPageClient({
   const handleCancelSystemMode = useCallback(() => {
     setSystemMode(false)
     setSystemSelections([])
+    setShowDrawer(false)
+  }, [])
+
+  const handleOpenSaveDialog = useCallback(() => {
+    setShowDrawer(false)
+    setShowSaveDialog(true)
   }, [])
 
   const totalRows = computeTotalRows(systemSelections)
@@ -87,56 +90,71 @@ export function MainPageClient({
         </div>
       )}
 
-      {/* Systemläge-banner */}
-      {systemMode && (
-        <div className="flex items-center justify-between px-3 py-2 mb-4 bg-emerald-900 text-white rounded-lg text-sm">
-          <span>
-            🎯 Systemläge aktivt &middot; <strong>{completedRaces}/8 avd. klara</strong> &middot; {totalRows} {totalRows === 1 ? 'rad' : 'rader'}
-          </span>
-          <button
-            onClick={handleCancelSystemMode}
-            className="text-emerald-300 hover:text-white text-xs underline"
-          >
-            Avbryt
-          </button>
-        </div>
-      )}
-
-      {races.length === 0 ? (
-        <div className="text-center py-20 text-gray-400 dark:text-gray-500">
-          <p className="text-lg mb-2">Ingen data inladdad ännu.</p>
-          <p className="text-sm">
-            Välj ett datum och klicka på ett spel för att ladda en omgång från ATG.
-          </p>
-        </div>
-      ) : (
-        <RaceList
-          races={races}
-          userGroups={userGroups}
-          currentUserId={currentUserId}
-          systemMode={systemMode}
-          systemSelections={systemSelections}
-          onToggleHorse={handleToggleHorse}
-        />
-      )}
-
-      {/* SystemStatusBar — visas i Steg 4 */}
-      {systemMode && systemSelections.length > 0 && (
-        <div className="fixed bottom-16 left-0 right-0 z-50 flex items-center justify-between px-4 py-3 bg-gray-900 text-white shadow-lg">
-          <div>
-            <div className="text-xs text-gray-400">{completedRaces} avd. klara av 8</div>
-            <div className="text-sm font-bold">
-              {totalRows} rader &middot; <span className="text-emerald-400">{formatRowCost(totalRows, gameType ?? '')}</span>
+      {/* Flex-rad: listan + desktop-sidopanel */}
+      <div className={systemMode ? "flex items-start" : ""}>
+        <div className={systemMode ? "flex-1 min-w-0" : ""}>
+          {races.length === 0 ? (
+            <div className="text-center py-20 text-gray-400 dark:text-gray-500">
+              <p className="text-lg mb-2">Ingen data inladdad ännu.</p>
+              <p className="text-sm">
+                Välj ett datum och klicka på ett spel för att ladda en omgång från ATG.
+              </p>
             </div>
-          </div>
+          ) : (
+            <RaceList
+              races={races}
+              userGroups={userGroups}
+              currentUserId={currentUserId}
+              systemMode={systemMode}
+              systemSelections={systemSelections}
+              onToggleHorse={handleToggleHorse}
+            />
+          )}
+        </div>
+
+        {/* Desktop-sidopanel (dold på mobil) */}
+        {systemMode && (
+          <SystemSidebar
+            races={races}
+            selections={systemSelections}
+            onToggleHorse={handleToggleHorse}
+            onSave={handleOpenSaveDialog}
+            onCancel={handleCancelSystemMode}
+            totalRows={totalRows}
+            gameType={gameType}
+          />
+        )}
+      </div>
+
+      {/* Mobil: sticky banner längst ner (dold på desktop) */}
+      {systemMode && (
+        <div className="fixed bottom-16 left-0 right-0 z-50 md:hidden border-t border-gray-800 bg-gray-900 text-white shadow-lg">
           <button
-            onClick={() => setShowSaveDialog(true)}
-            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-bold rounded-lg"
-            disabled={systemSelections.length === 0}
+            className="flex-1 w-full text-left px-4 py-3"
+            onClick={() => setShowDrawer(true)}
           >
-            Spara system →
+            <div className="text-xs text-gray-400">{completedRaces} av {races.length} avd. klara</div>
+            <div className="text-sm font-bold">
+              {totalRows} {totalRows === 1 ? 'rad' : 'rader'}{totalRows > 0 && <> · <span className="text-emerald-400">{formatRowCost(totalRows, gameType ?? '')}</span></>}
+            </div>
+            <div className="text-xs text-emerald-400 mt-0.5">↑ Visa kupong</div>
           </button>
         </div>
+      )}
+
+      {/* Mobil: slide-up drawer */}
+      {systemMode && (
+        <SystemDrawer
+          open={showDrawer}
+          onClose={() => setShowDrawer(false)}
+          races={races}
+          selections={systemSelections}
+          onToggleHorse={handleToggleHorse}
+          onSave={handleOpenSaveDialog}
+          onCancel={handleCancelSystemMode}
+          totalRows={totalRows}
+          gameType={gameType}
+        />
       )}
 
       <SaveSystemDialog
