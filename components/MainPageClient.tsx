@@ -61,6 +61,7 @@ export function MainPageClient({
   const handleActivateSystemMode = useCallback(() => {
     setSystemMode(true)
     setSystemSelections([])
+    setShowDrawer(false)
   }, [])
 
   const handleCancelSystemMode = useCallback(() => {
@@ -131,6 +132,7 @@ export function MainPageClient({
       {systemMode && (
         <div className="fixed bottom-16 left-0 right-0 z-50 md:hidden border-t border-gray-800 bg-gray-900 text-white shadow-lg">
           <button
+            aria-label="Öppna kupong"
             className="flex-1 w-full text-left px-4 py-3"
             onClick={() => setShowDrawer(true)}
           >
