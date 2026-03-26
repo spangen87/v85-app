@@ -96,7 +96,7 @@ function FormBadge({ score, label }: { score: number | null; label?: string }) {
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
-        className={`${color} text-white text-xs font-bold px-2 py-1 rounded-full cursor-pointer select-none`}
+        className={`${color} text-white text-xs font-bold font-mono px-2 py-1 rounded-md cursor-pointer select-none`}
       >
         {label ?? "FS"} {score}
       </button>
@@ -339,12 +339,12 @@ export function HorseCard({
   const currentMethod = raceStartMethod ?? "auto";
 
   return (
-    <div className={`bg-gray-100 dark:bg-gray-800 rounded-lg p-4 flex flex-col gap-3 ${
+    <div className={`rounded-lg p-4 flex flex-col gap-3 border ${
       isSelected
-        ? "ring-2 ring-emerald-500 ring-inset bg-emerald-50 dark:bg-emerald-950"
+        ? "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 border-l-4 border-l-emerald-500"
         : isValue
-        ? "ring-2 ring-green-500 ring-inset"
-        : ""
+        ? "bg-white dark:bg-gray-900 border-green-400 dark:border-green-600"
+        : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800"
     }`}>
       {/* Huvud: nummer, namn, driver, streck, odds, FS */}
       <div className="flex flex-col gap-1">
@@ -391,7 +391,7 @@ export function HorseCard({
               {starter.start_number}
             </span>
           )}
-          <span className="text-gray-900 dark:text-white font-semibold">
+          <span className="text-gray-900 dark:text-white font-bold text-[15px] tracking-tight">
             {starter.horses?.name ?? "–"}
           </span>
         </div>
@@ -401,7 +401,7 @@ export function HorseCard({
           <div className="flex items-center gap-2 shrink-0">
             {starter.bet_distribution != null && starter.bet_distribution > 0 && (
               <span
-                className="text-blue-700 dark:text-blue-400 text-xs font-semibold"
+                className="text-indigo-600 dark:text-indigo-400 text-xs font-semibold"
                 title="Streckprocent i V85-poolen"
               >
                 {starter.bet_distribution.toFixed(1)}%
@@ -455,10 +455,10 @@ export function HorseCard({
       {/* Skoinfo + sulky */}
       {starter.shoes_reported && (
         <div
-          className={`rounded p-2 text-xs ${
+          className={`rounded p-2 text-xs border ${
             shoesChanged
-              ? "bg-amber-50 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700/50"
-              : "bg-gray-200 dark:bg-gray-700/50"
+              ? "border-amber-300 dark:border-amber-700/60 bg-amber-50/50 dark:bg-amber-900/20"
+              : "border-gray-200 dark:border-gray-700/50"
           }`}
         >
           <div className="flex items-center justify-between gap-2">
@@ -474,24 +474,24 @@ export function HorseCard({
       )}
 
       {/* Snabbstatistik: karriär */}
-      <div className="grid grid-cols-3 gap-2 text-center text-xs">
-        <div className="bg-gray-200 dark:bg-gray-700 rounded p-2">
-          <p className="text-gray-500 dark:text-gray-400">Livs</p>
-          <p className="text-gray-900 dark:text-white font-medium">
+      <div className="grid grid-cols-3 text-center text-xs border border-gray-200 dark:border-gray-700 rounded-lg divide-x divide-gray-200 dark:divide-gray-700">
+        <div className="p-2">
+          <p className="text-[10px] uppercase tracking-wide text-gray-400 dark:text-gray-500">Livs</p>
+          <p className="text-gray-900 dark:text-white font-semibold">
             {starter.wins_total ?? "–"}-{starter.places_2nd ?? "–"}-{starter.places_3rd ?? "–"}
           </p>
           <p className="text-gray-400 dark:text-gray-500 text-[10px]">{starter.starts_total ?? "–"} st</p>
         </div>
-        <div className="bg-gray-200 dark:bg-gray-700 rounded p-2">
-          <p className="text-gray-500 dark:text-gray-400">År</p>
-          <p className="text-gray-900 dark:text-white font-medium">
+        <div className="p-2">
+          <p className="text-[10px] uppercase tracking-wide text-gray-400 dark:text-gray-500">År</p>
+          <p className="text-gray-900 dark:text-white font-semibold">
             {winRateYear != null ? `${winRateYear}%` : "–"}
           </p>
           <p className="text-gray-400 dark:text-gray-500 text-[10px]">{starter.starts_current_year ?? "–"} st</p>
         </div>
-        <div className="bg-gray-200 dark:bg-gray-700 rounded p-2">
-          <p className="text-gray-500 dark:text-gray-400">Rekord</p>
-          <p className="text-gray-900 dark:text-white font-medium">{starter.best_time || "–"}</p>
+        <div className="p-2">
+          <p className="text-[10px] uppercase tracking-wide text-gray-400 dark:text-gray-500">Rekord</p>
+          <p className="text-gray-900 dark:text-white font-semibold">{starter.best_time || "–"}</p>
           <p className="text-gray-400 dark:text-gray-500 text-[10px]">
             {platsRate != null ? `Plats ${platsRate}%` : ""}
           </p>
@@ -550,7 +550,7 @@ export function HorseCard({
           {/* Karriärstatistik detaljerad */}
           <div>
             <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Statistik</p>
-            <div className="bg-gray-200 dark:bg-gray-700/60 rounded p-2 space-y-0.5">
+            <div className="border border-gray-200 dark:border-gray-700 rounded p-2 space-y-0.5">
               <StatRow
                 label="Starter livs"
                 value={PlacementStr(starter.starts_total, starter.wins_total, starter.places_2nd, starter.places_3rd)}
@@ -579,7 +579,7 @@ export function HorseCard({
           {(starter.odds != null || starter.p_odds != null) && (
             <div>
               <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Odds</p>
-              <div className="bg-gray-200 dark:bg-gray-700/60 rounded p-2 space-y-0.5">
+              <div className="border border-gray-200 dark:border-gray-700 rounded p-2 space-y-0.5">
                 {starter.odds != null && (
                   <StatRow label="Vinnarodds" value={`${starter.odds.toFixed(2)}x`} />
                 )}

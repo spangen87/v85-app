@@ -74,29 +74,31 @@ export default async function HomePage({
   return (
     <main className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white">
       {/* Header: mobilanpassad med 2 rader på små skärmar */}
-      <header className="sticky top-0 z-30 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-4 py-3">
-        {/* Rad 1: titel + avatar/tema */}
-        <div className="flex items-center justify-between">
-          <h1 className="text-lg font-bold shrink-0">Streckspel Analys</h1>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <UserMenu
-              profile={profile}
-              groups={userGroups}
-              userEmail={user.email ?? ""}
-            />
+      <header className="sticky top-0 z-30 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800">
+        <div className="max-w-5xl mx-auto px-4 py-4">
+          {/* Rad 1: titel + avatar/tema */}
+          <div className="flex items-center justify-between">
+            <h1 className="text-base font-semibold tracking-tight shrink-0">Streckspel Analys</h1>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <UserMenu
+                profile={profile}
+                groups={userGroups}
+                userEmail={user.email ?? ""}
+              />
+            </div>
           </div>
+          {/* Rad 2: spelkontroller – kollapsibara på mobil, alltid synliga på desktop */}
+          <CollapsibleControls>
+            <GameSelector games={games} selectedId={selectedId} />
+            <ResultsButton gameId={selectedId} />
+            <FetchButton />
+          </CollapsibleControls>
         </div>
-        {/* Rad 2: spelkontroller – kollapsibara på mobil, alltid synliga på desktop */}
-        <CollapsibleControls>
-          <GameSelector games={games} selectedId={selectedId} />
-          <ResultsButton gameId={selectedId} />
-          <FetchButton />
-        </CollapsibleControls>
       </header>
 
       {selectedGame && (
-        <div className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-800">
+        <div className="max-w-5xl mx-auto px-4 py-2 text-xs text-gray-400 dark:text-gray-500 border-b border-gray-200 dark:border-gray-800 tracking-wide">
           {selectedGame.date} &middot; {selectedGame.game_type} &middot; {selectedGame.track}
         </div>
       )}
