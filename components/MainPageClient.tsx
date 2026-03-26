@@ -11,6 +11,7 @@ import { formatRowCost } from '@/lib/atg'
 type RaceListRaces = ComponentProps<typeof RaceList>['races']
 
 function computeTotalRows(selections: SystemSelection[]): number {
+  if (selections.length === 0) return 0
   return selections.reduce((acc, s) => acc * Math.max(s.horses.length, 1), 1)
 }
 
