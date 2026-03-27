@@ -17,6 +17,7 @@ function computeTotalRows(selections: SystemSelection[]): number {
 
 interface MainPageClientProps {
   races: RaceListRaces
+  activeRaceNumber: number
   userGroups: Group[]
   currentUserId: string
   initialSystemMode?: boolean
@@ -27,6 +28,7 @@ interface MainPageClientProps {
 
 export function MainPageClient({
   races,
+  activeRaceNumber,
   userGroups,
   currentUserId,
   initialSystemMode = false,
@@ -104,6 +106,7 @@ export function MainPageClient({
         ) : (
           <RaceList
             races={races}
+            activeRaceNumber={activeRaceNumber}
             userGroups={userGroups}
             currentUserId={currentUserId}
             systemMode={systemMode}

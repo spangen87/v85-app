@@ -7,8 +7,10 @@ import { UserMenu } from "@/components/groups/UserMenu";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { UsefulLinks } from "@/components/UsefulLinks";
 import { CollapsibleControls } from "@/components/CollapsibleControls";
+import { RaceTabBar } from "@/components/RaceTabBar";
 import { getProfile, getMyGroups } from "@/lib/actions/groups";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
 async function getAllGames(supabase: Awaited<ReturnType<typeof createClient>>) {
   const { data } = await supabase
@@ -45,7 +47,7 @@ async function getRaces(supabase: Awaited<ReturnType<typeof createClient>>, game
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ game?: string; systemMode?: string; groupId?: string }>;
+  searchParams: Promise<{ game?: string; systemMode?: string; groupId?: string; avd?: string }>;
 }) {
   const supabase = await createClient();
   const {
@@ -71,6 +73,11 @@ export default async function HomePage({
   const initialSystemMode = params.systemMode === '1'
   const initialGroupId = params.groupId ?? null
 
+  const avdParam = params.avd ? parseInt(params.avd, 10) : NaN;
+  const activeRaceNumber = (!isNaN(avdParam) && races.some((r) => r.race_number === avdParam))
+    ? avdParam
+    : (races[0]?.race_number ?? 1);
+
   return (
     <main className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white">
       {/* Header: mobilanpassad med 2 rader på små skärmar */}
@@ -95,6 +102,14 @@ export default async function HomePage({
             <FetchButton />
           </CollapsibleControls>
         </div>
+        {races.length > 0 && (
+          <Suspense fallback={<div className="h-10 border-t border-gray-200 dark:border-gray-800" />}>
+            <RaceTabBar
+              races={races.map((r) => ({ race_number: r.race_number, start_time: r.start_time }))}
+              activeRaceNumber={activeRaceNumber}
+            />
+          </Suspense>
+        )}
       </header>
 
       {selectedGame && (
@@ -111,6 +126,7 @@ export default async function HomePage({
         <MainPageClient
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           races={races as any}
+          activeRaceNumber={activeRaceNumber}
           userGroups={userGroups}
           currentUserId={user.id}
           initialSystemMode={initialSystemMode}
