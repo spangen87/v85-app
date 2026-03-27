@@ -92,41 +92,39 @@ export function MainPageClient({
         </div>
       )}
 
-      {/* Flex-rad: listan + desktop-sidopanel */}
-      <div className={systemMode ? "flex items-start" : ""}>
-        <div className={systemMode ? "flex-1 min-w-0" : ""}>
-          {races.length === 0 ? (
-            <div className="text-center py-20 text-gray-400 dark:text-gray-500">
-              <p className="text-lg mb-2">Ingen data inladdad ännu.</p>
-              <p className="text-sm">
-                Välj ett datum och klicka på ett spel för att ladda en omgång från ATG.
-              </p>
-            </div>
-          ) : (
-            <RaceList
-              races={races}
-              userGroups={userGroups}
-              currentUserId={currentUserId}
-              systemMode={systemMode}
-              systemSelections={systemSelections}
-              onToggleHorse={handleToggleHorse}
-            />
-          )}
-        </div>
-
-        {/* Desktop-sidopanel (dold på mobil) */}
-        {systemMode && (
-          <SystemSidebar
+      {/* Innehåll: får högerpadding på desktop när sidopanelen är öppen */}
+      <div className={systemMode ? "md:pr-[320px]" : ""}>
+        {races.length === 0 ? (
+          <div className="text-center py-20 text-gray-400 dark:text-gray-500">
+            <p className="text-lg mb-2">Ingen data inladdad ännu.</p>
+            <p className="text-sm">
+              Välj ett datum och klicka på ett spel för att ladda en omgång från ATG.
+            </p>
+          </div>
+        ) : (
+          <RaceList
             races={races}
-            selections={systemSelections}
+            userGroups={userGroups}
+            currentUserId={currentUserId}
+            systemMode={systemMode}
+            systemSelections={systemSelections}
             onToggleHorse={handleToggleHorse}
-            onSave={handleOpenSaveDialog}
-            onCancel={handleCancelSystemMode}
-            totalRows={totalRows}
-            gameType={gameType}
           />
         )}
       </div>
+
+      {/* Desktop-sidopanel: fast till högerkanten (dold på mobil) */}
+      {systemMode && (
+        <SystemSidebar
+          races={races}
+          selections={systemSelections}
+          onToggleHorse={handleToggleHorse}
+          onSave={handleOpenSaveDialog}
+          onCancel={handleCancelSystemMode}
+          totalRows={totalRows}
+          gameType={gameType}
+        />
+      )}
 
       {/* Mobil: sticky banner längst ner (dold på desktop) */}
       {systemMode && (
