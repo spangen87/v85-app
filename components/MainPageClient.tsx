@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useCallback, type ComponentProps } from 'react'
+import { useState, useCallback, useEffect, useRef, type ComponentProps } from 'react'
 import { RaceList } from '@/components/RaceList'
 import { SaveSystemDialog } from '@/components/SaveSystemDialog'
 import { SystemSidebar } from '@/components/SystemSidebar'
 import { SystemDrawer } from '@/components/SystemDrawer'
 import type { SystemSelection, SystemHorse, Group } from '@/lib/types'
 import { formatRowCost } from '@/lib/atg'
+import { createSystem, updateDraft } from '@/lib/actions/systems'
 
 type RaceListRaces = ComponentProps<typeof RaceList>['races']
 
@@ -24,6 +25,10 @@ interface MainPageClientProps {
   initialGroupId?: string | null
   gameId: string | null
   gameType: string | null
+  /** Befintligt utkast-ID att fortsätta redigera */
+  draftId?: string | null
+  /** Förvalda hästar från ett utkast */
+  initialSelections?: SystemSelection[]
 }
 
 export function MainPageClient({
@@ -35,11 +40,53 @@ export function MainPageClient({
   initialGroupId = null,
   gameId,
   gameType,
+  draftId = null,
+  initialSelections = [],
 }: MainPageClientProps) {
   const [systemMode, setSystemMode] = useState(initialSystemMode)
-  const [systemSelections, setSystemSelections] = useState<SystemSelection[]>([])
+  const [systemSelections, setSystemSelections] = useState<SystemSelection[]>(initialSelections)
   const [showSaveDialog, setShowSaveDialog] = useState(false)
   const [showDrawer, setShowDrawer] = useState(false)
+  const [activeDraftId, setActiveDraftId] = useState<string | null>(draftId)
+  const [draftSaveStatus, setDraftSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
+
+  // Auto-spara utkast (debounce 3 s) när systemMode är aktivt och val ändras
+  const draftTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isFirstRender = useRef(true)
+
+  useEffect(() => {
+    // Hoppa över triggern vid initial render
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
+    }
+    if (!systemMode || !gameId) return
+
+    if (draftTimerRef.current) clearTimeout(draftTimerRef.current)
+    setDraftSaveStatus('idle')
+
+    draftTimerRef.current = setTimeout(async () => {
+      setDraftSaveStatus('saving')
+      try {
+        const totalRows = computeTotalRows(systemSelections)
+        if (activeDraftId) {
+          await updateDraft(activeDraftId, systemSelections, totalRows)
+        } else {
+          // Spara utkastet med group_id om vi är i sällskapsläge
+          const draft = await createSystem(initialGroupId, gameId, 'Utkast', systemSelections, totalRows, true)
+          setActiveDraftId(draft.id)
+        }
+        setDraftSaveStatus('saved')
+      } catch {
+        setDraftSaveStatus('idle')
+      }
+    }, 3000)
+
+    return () => {
+      if (draftTimerRef.current) clearTimeout(draftTimerRef.current)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [systemSelections, systemMode])
 
   const handleToggleHorse = useCallback((raceNumber: number, horse: SystemHorse) => {
     setSystemSelections(prev => {
@@ -63,13 +110,17 @@ export function MainPageClient({
   const handleActivateSystemMode = useCallback(() => {
     setSystemMode(true)
     setSystemSelections([])
+    setActiveDraftId(null)
     setShowDrawer(false)
+    isFirstRender.current = true
   }, [])
 
   const handleCancelSystemMode = useCallback(() => {
     setSystemMode(false)
     setSystemSelections([])
+    setActiveDraftId(null)
     setShowDrawer(false)
+    setDraftSaveStatus('idle')
   }, [])
 
   const handleOpenSaveDialog = useCallback(() => {
@@ -126,6 +177,7 @@ export function MainPageClient({
           onCancel={handleCancelSystemMode}
           totalRows={totalRows}
           gameType={gameType}
+          draftSaveStatus={draftSaveStatus}
         />
       )}
 
@@ -137,11 +189,21 @@ export function MainPageClient({
             className="flex-1 w-full text-left px-4 py-3"
             onClick={() => setShowDrawer(true)}
           >
-            <div className="text-xs text-gray-400">{completedRaces} av {races.length} avd. klara</div>
-            <div className="text-sm font-bold">
-              {totalRows} {totalRows === 1 ? 'rad' : 'rader'}{totalRows > 0 && <> · <span className="text-emerald-400">{formatRowCost(totalRows, gameType ?? '')}</span></>}
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-xs text-gray-400">{completedRaces} av {races.length} avd. klara</div>
+                <div className="text-sm font-bold">
+                  {totalRows} {totalRows === 1 ? 'rad' : 'rader'}{totalRows > 0 && <> · <span className="text-emerald-400">{formatRowCost(totalRows, gameType ?? '')}</span></>}
+                </div>
+                <div className="text-xs text-emerald-400 mt-0.5">↑ Visa kupong</div>
+              </div>
+              {draftSaveStatus === 'saving' && (
+                <span className="text-xs text-gray-500">Sparar utkast...</span>
+              )}
+              {draftSaveStatus === 'saved' && (
+                <span className="text-xs text-gray-500">Utkast sparat</span>
+              )}
             </div>
-            <div className="text-xs text-emerald-400 mt-0.5">↑ Visa kupong</div>
           </button>
         </div>
       )}
@@ -168,6 +230,7 @@ export function MainPageClient({
           setShowSaveDialog(false)
           setSystemMode(false)
           setSystemSelections([])
+          setActiveDraftId(null)
         }}
         gameId={gameId}
         gameType={gameType}
@@ -175,6 +238,7 @@ export function MainPageClient({
         totalRows={totalRows}
         userGroups={userGroups}
         defaultGroupId={initialGroupId}
+        existingDraftId={activeDraftId}
       />
     </>
   )

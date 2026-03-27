@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Group, SystemSelection } from '@/lib/types'
-import { createSystem } from '@/lib/actions/systems'
+import { createSystem, publishDraft } from '@/lib/actions/systems'
 import { formatRowCost } from '@/lib/atg'
 
 interface SaveSystemDialogProps {
@@ -16,6 +16,8 @@ interface SaveSystemDialogProps {
   totalRows: number
   userGroups: Group[]
   defaultGroupId?: string | null
+  /** Om ett utkast redan finns — publicera det istället för att skapa nytt */
+  existingDraftId?: string | null
 }
 
 export function SaveSystemDialog({
@@ -28,6 +30,7 @@ export function SaveSystemDialog({
   totalRows,
   userGroups,
   defaultGroupId = null,
+  existingDraftId = null,
 }: SaveSystemDialogProps) {
   const router = useRouter()
   const [name, setName] = useState('Mitt system')
@@ -50,7 +53,12 @@ export function SaveSystemDialog({
     setError(null)
     startTransition(async () => {
       try {
-        await createSystem(groupId, gameId, name.trim(), selections, totalRows)
+        if (existingDraftId) {
+          // Publicera befintligt utkast
+          await publishDraft(existingDraftId, name.trim(), groupId)
+        } else {
+          await createSystem(groupId, gameId, name.trim(), selections, totalRows)
+        }
         setSavedName(name.trim())
       } catch (err) {
         setError('Kunde inte spara systemet. Försök igen.')

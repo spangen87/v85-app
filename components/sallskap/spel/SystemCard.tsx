@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import Link from 'next/link'
 import { GameSystem } from '@/lib/types'
 import { deleteSystem } from '@/lib/actions/systems'
 import { isWinningHorse } from '@/lib/systemsHelpers'
@@ -12,9 +13,11 @@ interface SystemCardProps {
   onDeleted?: (id: string) => void
   winnersByRace?: Record<number, string>
   gameType?: string
+  /** Spel-ID behövs för "Fortsätt"-länken på utkast */
+  gameId?: string | null
 }
 
-export function SystemCard({ system, currentUserId, onDeleted, winnersByRace, gameType = '' }: SystemCardProps) {
+export function SystemCard({ system, currentUserId, onDeleted, winnersByRace, gameType = '', gameId }: SystemCardProps) {
   const isOwner = system.user_id === currentUserId
   const [isPending, startTransition] = useTransition()
   const [deleteError, setDeleteError] = useState<string | null>(null)
@@ -53,34 +56,52 @@ export function SystemCard({ system, currentUserId, onDeleted, winnersByRace, ga
     ? 'bg-amber-400 text-black'
     : 'bg-gray-300 text-gray-800 dark:bg-gray-600 dark:text-white'
 
+  // URL för att fortsätta ett utkast
+  const continueHref = gameId
+    ? `/?game=${encodeURIComponent(gameId)}&systemMode=1`
+    : null
+
   return (
-    <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 bg-white dark:bg-gray-900">
+    <div className={`border rounded-xl p-4 bg-white dark:bg-gray-900 ${
+      system.is_draft
+        ? 'border-amber-300 dark:border-amber-700'
+        : 'border-gray-200 dark:border-gray-700'
+    }`}>
       {/* Systemhuvud */}
       <div className="flex items-start justify-between mb-3">
         <div>
-          <div className="font-bold text-gray-900 dark:text-white">{system.name}</div>
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-gray-900 dark:text-white">{system.name}</span>
+            {system.is_draft && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 font-semibold">
+                ✏️ Utkast
+              </span>
+            )}
+          </div>
           <div className="text-xs text-gray-500 dark:text-gray-400">
             {system.author_display_name} · {system.total_rows} {system.total_rows === 1 ? 'rad' : 'rader'} · {formatRowCost(system.total_rows, gameType)}
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
           {/* Privat/sällskap-bricka */}
-          {system.group_name != null ? (
-            <span className="text-xs px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold whitespace-nowrap">
-              👥 {system.group_name}
-            </span>
-          ) : (
-            <span className="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 font-semibold">
-              🔒 Privat
-            </span>
+          {!system.is_draft && (
+            system.group_name != null ? (
+              <span className="text-xs px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold whitespace-nowrap">
+                👥 {system.group_name}
+              </span>
+            ) : (
+              <span className="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 font-semibold">
+                🔒 Privat
+              </span>
+            )
           )}
           {/* Poängbadge */}
-          {system.is_graded && system.score != null && (
+          {!system.is_draft && system.is_graded && system.score != null && (
             <span className={`text-lg font-black px-3 py-1 rounded-lg ${scoreColor}`}>
               {system.score}/8
             </span>
           )}
-          {!system.is_graded && (
+          {!system.is_draft && !system.is_graded && (
             <span className="text-xs px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-500">Pågår</span>
           )}
         </div>
@@ -102,8 +123,8 @@ export function SystemCard({ system, currentUserId, onDeleted, winnersByRace, ga
                 <div className="flex gap-1.5 flex-wrap">
                   {[...sel.horses].sort((a, b) => a.start_number - b.start_number).map(h => {
                     const raceResultKnown = winnersByRace != null && sel.race_number in winnersByRace
-                    const won = system.is_graded && raceResultKnown && isWinningHorse(winnersByRace, sel.race_number, h.horse_id)
-                    const lost = system.is_graded && raceResultKnown && !won
+                    const won = !system.is_draft && system.is_graded && raceResultKnown && isWinningHorse(winnersByRace, sel.race_number, h.horse_id)
+                    const lost = !system.is_draft && system.is_graded && raceResultKnown && !won
                     return (
                       <span
                         key={h.horse_id}
@@ -112,6 +133,8 @@ export function SystemCard({ system, currentUserId, onDeleted, winnersByRace, ga
                             ? 'border-2 border-green-600 text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950'
                             : lost
                             ? 'text-gray-400 dark:text-gray-600'
+                            : system.is_draft
+                            ? 'text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950'
                             : 'text-gray-900 dark:text-white'
                         }`}
                       >
@@ -123,6 +146,13 @@ export function SystemCard({ system, currentUserId, onDeleted, winnersByRace, ga
               </td>
             </tr>
           ))}
+          {system.selections.length === 0 && (
+            <tr>
+              <td colSpan={2} className="py-2 px-1 text-xs text-gray-400 dark:text-gray-500 italic">
+                Inga hästar valda ännu
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
 
@@ -131,13 +161,24 @@ export function SystemCard({ system, currentUserId, onDeleted, winnersByRace, ga
       )}
 
       {/* Åtgärder */}
-      <div className="flex gap-2">
-        <button
-          onClick={handleCopy}
-          className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-        >
-          Kopiera system
-        </button>
+      <div className="flex gap-2 flex-wrap">
+        {/* Fortsätt-knapp för utkast */}
+        {system.is_draft && isOwner && continueHref && (
+          <Link
+            href={continueHref}
+            className="text-xs px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-white font-semibold transition"
+          >
+            ✏️ Fortsätt utkast
+          </Link>
+        )}
+        {!system.is_draft && (
+          <button
+            onClick={handleCopy}
+            className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+          >
+            Kopiera system
+          </button>
+        )}
         {isOwner && (
           <button
             onClick={handleDelete}

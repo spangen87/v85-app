@@ -49,8 +49,12 @@ export function SystemsPageClient({
     setSystems(prev => prev.filter(s => s.id !== id))
   }
 
-  // Sortering: egna system först, sedan per sällskapsnamn A-Ö, sedan created_at desc
-  const sorted = [...systems].sort((a, b) => {
+  // Dela upp i utkast och sparade system
+  const myDrafts = systems.filter(s => s.is_draft && s.user_id === currentUserId)
+  const savedSystems = systems.filter(s => !s.is_draft)
+
+  // Sortering sparade: egna först, sedan per sällskapsnamn A-Ö, sedan created_at desc
+  const sortedSaved = [...savedSystems].sort((a, b) => {
     if (a.user_id === currentUserId && b.user_id !== currentUserId) return -1
     if (a.user_id !== currentUserId && b.user_id === currentUserId) return 1
     const groupA = a.group_name ?? ''
@@ -59,10 +63,12 @@ export function SystemsPageClient({
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   })
 
+  const gameType = games.find(g => g.id === selectedGameId)?.game_type ?? ''
+
   return (
     <div className="px-4 py-4 max-w-2xl mx-auto">
       {/* Omgångsväljare */}
-      <div className="mb-4">
+      <div className="mb-6">
         <select
           value={selectedGameId ?? ''}
           onChange={e => handleGameChange(e.target.value)}
@@ -76,27 +82,64 @@ export function SystemsPageClient({
         </select>
       </div>
 
-      {/* Systemlista */}
       {loading ? (
         <div className="text-center py-10 text-gray-400 text-sm">Laddar system...</div>
-      ) : sorted.length === 0 ? (
-        <div className="text-center py-16 text-gray-400 dark:text-gray-500">
-          <p className="text-base mb-1">Inga system sparade för denna omgång.</p>
-          <p className="text-sm">Gå till Analys-fliken och klicka &ldquo;Bygg system&rdquo;.</p>
-        </div>
       ) : (
-        <div className="flex flex-col gap-4">
-          {sorted.map(system => (
-            <SystemCard
-              key={system.id}
-              system={system}
-              currentUserId={currentUserId}
-              onDeleted={handleDeleted}
-              winnersByRace={winners}
-              gameType={games.find(g => g.id === selectedGameId)?.game_type ?? ''}
-            />
-          ))}
-        </div>
+        <>
+          {/* Mina utkast */}
+          {myDrafts.length > 0 && (
+            <section className="mb-8">
+              <h2 className="text-sm font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide mb-3 flex items-center gap-2">
+                <span>✏️</span> Mina utkast
+              </h2>
+              <div className="flex flex-col gap-4">
+                {myDrafts.map(system => (
+                  <SystemCard
+                    key={system.id}
+                    system={system}
+                    currentUserId={currentUserId}
+                    onDeleted={handleDeleted}
+                    winnersByRace={winners}
+                    gameType={gameType}
+                    gameId={selectedGameId}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Sparade system */}
+          {sortedSaved.length > 0 && (
+            <section>
+              {myDrafts.length > 0 && (
+                <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+                  Sparade system
+                </h2>
+              )}
+              <div className="flex flex-col gap-4">
+                {sortedSaved.map(system => (
+                  <SystemCard
+                    key={system.id}
+                    system={system}
+                    currentUserId={currentUserId}
+                    onDeleted={handleDeleted}
+                    winnersByRace={winners}
+                    gameType={gameType}
+                    gameId={selectedGameId}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Tomt tillstånd */}
+          {myDrafts.length === 0 && sortedSaved.length === 0 && (
+            <div className="text-center py-16 text-gray-400 dark:text-gray-500">
+              <p className="text-base mb-1">Inga system sparade för denna omgång.</p>
+              <p className="text-sm">Gå till Analys-fliken och klicka &ldquo;Bygg system&rdquo;.</p>
+            </div>
+          )}
+        </>
       )}
     </div>
   )

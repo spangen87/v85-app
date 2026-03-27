@@ -28,7 +28,8 @@ export async function createSystem(
   gameId: string,
   name: string,
   selections: SystemSelection[],
-  totalRows: number
+  totalRows: number,
+  isDraft = false
 ): Promise<GameSystem> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -43,7 +44,70 @@ export async function createSystem(
       name,
       selections,
       total_rows: totalRows,
+      is_draft: isDraft,
     })
+    .select()
+    .single()
+
+  if (error) throw error
+  return data as GameSystem
+}
+
+/** Hämtar användarens utkast för ett visst spel (max ett per spel och användare) */
+export async function getDraftForGame(gameId: string): Promise<GameSystem | null> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+
+  const { data, error } = await supabase
+    .from('game_systems')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('game_id', gameId)
+    .eq('is_draft', true)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error) return null
+  return data as GameSystem | null
+}
+
+/** Uppdaterar ett utkasts vald hästar och radantal */
+export async function updateDraft(
+  draftId: string,
+  selections: SystemSelection[],
+  totalRows: number
+): Promise<void> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
+
+  const { error } = await supabase
+    .from('game_systems')
+    .update({ selections, total_rows: totalRows })
+    .eq('id', draftId)
+    .eq('user_id', user.id)
+    .eq('is_draft', true)
+
+  if (error) throw error
+}
+
+/** Gör om ett utkast till ett sparat system (is_draft → false) */
+export async function publishDraft(
+  draftId: string,
+  name: string,
+  groupId: string | null
+): Promise<GameSystem> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
+
+  const { data, error } = await supabase
+    .from('game_systems')
+    .update({ is_draft: false, name, group_id: groupId })
+    .eq('id', draftId)
+    .eq('user_id', user.id)
     .select()
     .single()
 
