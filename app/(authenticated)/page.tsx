@@ -103,7 +103,7 @@ export default async function HomePage({
           {/* Rad 1: titel + avatar/tema */}
           <div className="flex items-center justify-between">
             <h1 className="text-base font-semibold tracking-tight shrink-0">Streckspel Analys</h1>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 md:hidden">
               <ThemeToggle />
               <UserMenu
                 profile={profile}
