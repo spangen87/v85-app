@@ -33,11 +33,11 @@ export interface LifeRecord {
 }
 
 export interface HorseStart {
-  place: string
-  date: string
-  track: string
-  time: string
-  post_position: number | null
+  place: string;
+  date: string;
+  track: string;
+  time: string;
+  post_position: number | null;
 }
 
 export interface AtgStarter {
@@ -84,6 +84,7 @@ export interface AtgStarter {
   best_time: string;
   life_records: LifeRecord[];
   last_5_results: HorseStart[];
+  /** Populeras av fetch/route.ts efter att omgång hämtats – används för spårfaktoranalys */
   horse_starts_history?: HorseStart[];
 }
 
@@ -189,7 +190,7 @@ export async function fetchHorseStarts(
     return startsRaw.slice(0, 20).map((s) => {
       const race = (s["race"] as Record<string, unknown>) ?? {};
       const track = (race["track"] as Record<string, unknown>) ?? {};
-      const postPos = s["postPosition"] ?? s["number"];
+      const postPos = s["postPosition"] ?? null;
       return {
         date: String(race["date"] ?? s["date"] ?? ""),
         track: String(track["name"] ?? race["name"] ?? ""),
