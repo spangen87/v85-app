@@ -23,6 +23,7 @@ interface SystemSidebarProps {
   onCancel: () => void;
   totalRows: number;
   gameType: string | null;
+  draftSaveStatus?: 'idle' | 'saving' | 'saved';
 }
 
 export function SystemSidebar({
@@ -33,6 +34,7 @@ export function SystemSidebar({
   onCancel,
   totalRows,
   gameType,
+  draftSaveStatus = 'idle',
 }: SystemSidebarProps) {
   function isSelected(raceNumber: number, horseId: string): boolean {
     return (
@@ -105,8 +107,16 @@ export function SystemSidebar({
             {totalRows > 0 ? formatRowCost(totalRows, gameType ?? "") : "–"}
           </span>
         </div>
-        <div className="text-xs text-gray-400 dark:text-gray-500 mb-2">
-          {completedRaces} av {races.length} avd. klara
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs text-gray-400 dark:text-gray-500">
+            {completedRaces} av {races.length} avd. klara
+          </span>
+          {draftSaveStatus === 'saving' && (
+            <span className="text-xs text-gray-500">Sparar utkast...</span>
+          )}
+          {draftSaveStatus === 'saved' && (
+            <span className="text-xs text-emerald-500">Utkast sparat</span>
+          )}
         </div>
         <button
           onClick={onSave}

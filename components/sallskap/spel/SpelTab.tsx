@@ -50,13 +50,22 @@ export function SpelTab({ groupId, games, initialGameId, initialSystems, current
   }
 
   const selectedGame = games.find(g => g.id === selectedGameId)
+  const gameType = selectedGame?.game_type ?? ''
 
-  // Sortera: egna system först, sedan andras
-  const sorted = [...systems].sort((a, b) => {
+  // Dela upp: utkast (egna) och sparade system (hela gruppen)
+  const myDrafts = systems.filter(s => s.is_draft && s.user_id === currentUserId)
+  const groupDrafts = systems.filter(s => s.is_draft && s.user_id !== currentUserId)
+  const savedSystems = systems.filter(s => !s.is_draft)
+
+  // Sortera sparade: egna system först, sedan andras
+  const sortedSaved = [...savedSystems].sort((a, b) => {
     if (a.user_id === currentUserId && b.user_id !== currentUserId) return -1
     if (a.user_id !== currentUserId && b.user_id === currentUserId) return 1
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   })
+
+  const allDrafts = [...myDrafts, ...groupDrafts]
+  const isEmpty = allDrafts.length === 0 && sortedSaved.length === 0
 
   return (
     <div className="px-4 py-4 max-w-2xl mx-auto">
@@ -86,7 +95,7 @@ export function SpelTab({ groupId, games, initialGameId, initialSystems, current
       {/* Systemlista */}
       {loading ? (
         <div className="text-center py-10 text-gray-400 text-sm">Laddar system...</div>
-      ) : sorted.length === 0 ? (
+      ) : isEmpty ? (
         <div className="text-center py-10 text-gray-400 dark:text-gray-500">
           <p className="mb-2">Inga system sparade för denna omgång ännu.</p>
           {selectedGame && (
@@ -99,17 +108,52 @@ export function SpelTab({ groupId, games, initialGameId, initialSystems, current
           )}
         </div>
       ) : (
-        <div className="flex flex-col gap-4">
-          {sorted.map(system => (
-            <SystemCard
-              key={system.id}
-              system={system}
-              currentUserId={currentUserId}
-              onDeleted={handleDeleted}
-              winnersByRace={winnersByRace}
-              gameType={games.find(g => g.id === selectedGameId)?.game_type ?? ''}
-            />
-          ))}
+        <div className="flex flex-col gap-6">
+          {/* Utkast */}
+          {allDrafts.length > 0 && (
+            <section>
+              <h2 className="text-sm font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide mb-3 flex items-center gap-2">
+                <span>✏️</span> Utkast
+              </h2>
+              <div className="flex flex-col gap-4">
+                {allDrafts.map(system => (
+                  <SystemCard
+                    key={system.id}
+                    system={system}
+                    currentUserId={currentUserId}
+                    onDeleted={handleDeleted}
+                    winnersByRace={winnersByRace}
+                    gameType={gameType}
+                    gameId={selectedGameId}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Sparade system */}
+          {sortedSaved.length > 0 && (
+            <section>
+              {allDrafts.length > 0 && (
+                <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+                  Sparade system
+                </h2>
+              )}
+              <div className="flex flex-col gap-4">
+                {sortedSaved.map(system => (
+                  <SystemCard
+                    key={system.id}
+                    system={system}
+                    currentUserId={currentUserId}
+                    onDeleted={handleDeleted}
+                    winnersByRace={winnersByRace}
+                    gameType={gameType}
+                    gameId={selectedGameId}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       )}
     </div>

@@ -80,6 +80,7 @@ export interface GameSystem {
   total_rows: number;
   score: number | null;
   is_graded: boolean;
+  is_draft: boolean;        // true = utkast (ej färdigspelat)
   group_name?: string | null;        // null = privat system
   created_at: string;
   author_display_name?: string;

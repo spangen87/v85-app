@@ -1,16 +1,18 @@
 import { createClient } from "@/lib/supabase/server";
 import { MainPageClient } from "@/components/MainPageClient";
-import { FetchButton } from "@/components/FetchButton";
 import { ResultsButton } from "@/components/ResultsButton";
-import { GameSelector } from "@/components/GameSelector";
+import { GamePickerBar } from "@/components/GamePickerBar";
+import { AutoLoadUpcoming } from "@/components/AutoLoadUpcoming";
 import { UserMenu } from "@/components/groups/UserMenu";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { UsefulLinks } from "@/components/UsefulLinks";
 import { CollapsibleControls } from "@/components/CollapsibleControls";
 import { RaceTabBar } from "@/components/RaceTabBar";
 import { getProfile, getMyGroups } from "@/lib/actions/groups";
+import { getDraftForGame } from "@/lib/actions/systems";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import type { SystemSelection } from "@/lib/types";
 
 async function getAllGames(supabase: Awaited<ReturnType<typeof createClient>>) {
   const { data } = await supabase
@@ -47,7 +49,7 @@ async function getRaces(supabase: Awaited<ReturnType<typeof createClient>>, game
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ game?: string; systemMode?: string; groupId?: string; avd?: string }>;
+  searchParams: Promise<{ game?: string; systemMode?: string; groupId?: string; avd?: string; draft?: string }>;
 }) {
   const supabase = await createClient();
   const {
@@ -73,6 +75,19 @@ export default async function HomePage({
   const initialSystemMode = params.systemMode === '1'
   const initialGroupId = params.groupId ?? null
 
+  // Ladda utkast om draft-param finns, eller det senaste utkastet för spelet
+  let draftId: string | null = null
+  let initialSelections: SystemSelection[] = []
+
+  if (selectedId) {
+    // Om draft-ID angavs explicit i URL, eller leta upp senaste utkast
+    const existingDraft = await getDraftForGame(selectedId)
+    if (existingDraft) {
+      draftId = existingDraft.id
+      initialSelections = existingDraft.selections ?? []
+    }
+  }
+
   const avdParam = params.avd ? parseInt(params.avd, 10) : NaN;
   const activeRaceNumber = (!isNaN(avdParam) && races.some((r) => r.race_number === avdParam))
     ? avdParam
@@ -95,11 +110,10 @@ export default async function HomePage({
               />
             </div>
           </div>
-          {/* Rad 2: spelkontroller – kollapsibara på mobil, alltid synliga på desktop */}
+          {/* Rad 2: spelkontroller */}
           <CollapsibleControls>
-            <GameSelector games={games} selectedId={selectedId} />
+            <GamePickerBar savedGames={games} selectedId={selectedId} />
             <ResultsButton gameId={selectedId} />
-            <FetchButton />
           </CollapsibleControls>
         </div>
         {races.length > 0 && (
@@ -123,6 +137,9 @@ export default async function HomePage({
           <UsefulLinks />
         </div>
 
+        {/* Auto-ladda nästkommande V85/V86 om inga spel finns */}
+        {games.length === 0 && <AutoLoadUpcoming />}
+
         <MainPageClient
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           races={races as any}
@@ -133,6 +150,8 @@ export default async function HomePage({
           initialGroupId={initialGroupId}
           gameId={selectedId}
           gameType={selectedGame?.game_type ?? null}
+          draftId={draftId}
+          initialSelections={initialSelections}
         />
       </div>
     </main>
