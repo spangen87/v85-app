@@ -132,7 +132,7 @@ export default async function HomePage({
         </div>
       )}
 
-      <div className="px-4 py-6">
+      <div className="px-4 lg:px-[5%] xl:px-[8%] py-6">
         <div className="mb-6">
           <UsefulLinks />
         </div>
