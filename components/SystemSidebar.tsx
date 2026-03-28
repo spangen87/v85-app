@@ -1,6 +1,6 @@
 "use client";
 
-import type { SystemSelection, SystemHorse } from "@/lib/types";
+import type { SystemSelection, SystemHorse, GameSystem } from "@/lib/types";
 import { formatRowCost } from "@/lib/atg";
 
 interface RaceInfo {
@@ -23,7 +23,11 @@ interface SystemSidebarProps {
   onCancel: () => void;
   totalRows: number;
   gameType: string | null;
-  draftSaveStatus?: 'idle' | 'saving' | 'saved';
+  draftSaveStatus?: "idle" | "saving" | "saved";
+  draftName: string;
+  onDraftNameChange: (name: string) => void;
+  savedDrafts?: GameSystem[];
+  onLoadDraft?: (draft: GameSystem) => void;
 }
 
 export function SystemSidebar({
@@ -34,7 +38,11 @@ export function SystemSidebar({
   onCancel,
   totalRows,
   gameType,
-  draftSaveStatus = 'idle',
+  draftSaveStatus = "idle",
+  draftName,
+  onDraftNameChange,
+  savedDrafts = [],
+  onLoadDraft,
 }: SystemSidebarProps) {
   function isSelected(raceNumber: number, horseId: string): boolean {
     return (
@@ -50,10 +58,17 @@ export function SystemSidebar({
     <aside className="hidden md:flex flex-col fixed right-0 top-[170px] bottom-0 z-40 w-[320px] border-l border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
       {/* Header */}
       <div className="px-3 py-3 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
-        <div className="font-bold text-sm text-gray-900 dark:text-white">🎯 Din kupong</div>
-        <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-          Klicka för att lägga till / ta bort
+        <div className="font-bold text-sm text-gray-900 dark:text-white">
+          🎯 Din kupong
         </div>
+        <input
+          type="text"
+          value={draftName}
+          onChange={(e) => onDraftNameChange(e.target.value)}
+          placeholder="Namnge utkast..."
+          maxLength={80}
+          className="mt-1.5 w-full px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-gray-700 dark:text-gray-300 focus:outline-none focus:border-indigo-400"
+        />
       </div>
 
       {/* Races */}
@@ -95,6 +110,28 @@ export function SystemSidebar({
             </div>
           );
         })}
+
+        {/* Sparade utkast */}
+        {savedDrafts.length > 0 && (
+          <div className="border-t border-gray-200 dark:border-gray-800 pt-3 mt-2">
+            <p className="text-[10px] uppercase tracking-wide font-semibold text-gray-400 dark:text-gray-500 mb-2">
+              Mina utkast
+            </p>
+            {savedDrafts.map((draft) => (
+              <button
+                key={draft.id}
+                onClick={() => onLoadDraft?.(draft)}
+                className="w-full text-left px-2 py-1.5 rounded text-xs text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition mb-1"
+              >
+                <span className="font-semibold">{draft.name}</span>
+                <span className="text-gray-400 dark:text-gray-500 ml-2">
+                  {draft.total_rows} rader ·{" "}
+                  {new Date(draft.created_at).toLocaleDateString("sv-SE")}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Footer */}
@@ -111,11 +148,11 @@ export function SystemSidebar({
           <span className="text-xs text-gray-400 dark:text-gray-500">
             {completedRaces} av {races.length} avd. klara
           </span>
-          {draftSaveStatus === 'saving' && (
+          {draftSaveStatus === "saving" && (
             <span className="text-xs text-gray-500">Sparar utkast...</span>
           )}
-          {draftSaveStatus === 'saved' && (
-            <span className="text-xs text-emerald-500">Utkast sparat</span>
+          {draftSaveStatus === "saved" && (
+            <span className="text-xs text-emerald-500">Utkast sparat ✓</span>
           )}
         </div>
         <button
