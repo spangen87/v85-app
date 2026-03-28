@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchGame, HorseStart } from "@/lib/atg";
+import { fetchGame, fetchHorseStarts, HorseStart } from "@/lib/atg";
 import { calculateFormscore } from "@/lib/formscore";
 import { createServiceClient } from "@/lib/supabase/server";
 
@@ -95,6 +95,17 @@ export async function POST(request: NextRequest) {
       });
 
       console.log(`[fetch] Avd ${race.race_number}: ATG=${race.starters.length}, giltiga=${validStarters.length}, unika=${uniqueStarters.length}`);
+
+      // Hämta starterhistorik (last_5_results + spårdata) per häst
+      await Promise.all(
+        uniqueStarters.map(async (starter) => {
+          const starts = await fetchHorseStarts(starter.horse_id);
+          if (starts.length > 0) {
+            starter.last_5_results = starts.slice(0, 5);
+            starter.horse_starts_history = starts;
+          }
+        })
+      );
 
       // Upsert horses — uppdatera namn om det har ändrats
       const horseUpserts = uniqueStarters.map((s) => ({
