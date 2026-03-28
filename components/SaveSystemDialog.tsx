@@ -76,7 +76,7 @@ export function SaveSystemDialog({
   if (savedName !== null) {
     return (
       <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50">
-        <div className="bg-white dark:bg-gray-900 w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-6 shadow-xl">
+        <div className="bg-white dark:bg-gray-900 w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-6 pb-[calc(1.5rem+4rem)] sm:pb-6 shadow-xl">
           <div className="text-center mb-5">
             <div className="text-3xl mb-2">✅</div>
             <h2 className="text-lg font-bold text-gray-900 dark:text-white">System sparat!</h2>
@@ -106,7 +106,7 @@ export function SaveSystemDialog({
   // Sparavy
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50">
-      <div className="bg-white dark:bg-gray-900 w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-6 shadow-xl">
+      <div className="bg-white dark:bg-gray-900 w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-6 pb-[calc(1.5rem+4rem)] sm:pb-6 shadow-xl">
         <h2 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">Spara system</h2>
 
         <div className="mb-4">
