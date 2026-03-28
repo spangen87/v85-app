@@ -47,7 +47,7 @@ export function SystemSidebar({
   const completedRaces = selections.length;
 
   return (
-    <aside className="hidden md:flex flex-col fixed right-0 top-[120px] bottom-0 z-20 w-[320px] border-l border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+    <aside className="hidden md:flex flex-col fixed right-0 top-[170px] bottom-0 z-40 w-[320px] border-l border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
       {/* Header */}
       <div className="px-3 py-3 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
         <div className="font-bold text-sm text-gray-900 dark:text-white">🎯 Din kupong</div>
