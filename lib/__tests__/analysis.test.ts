@@ -5,7 +5,9 @@ import {
   parseTimeToSeconds,
   timeAdjustment,
   compositeScore,
+  computeTrackFactor,
 } from "../analysis";
+import type { HorseStart } from "../atg";
 
 describe("weightedFormScore", () => {
   it("ger 100 för häst som vunnit alla senaste 5 i fält om 10", () => {
@@ -139,5 +141,93 @@ describe("compositeScore", () => {
     });
     expect(score).toBeGreaterThanOrEqual(0);
     expect(score).toBeLessThanOrEqual(100);
+  });
+});
+
+describe("computeTrackFactor", () => {
+  it("returnerar högre faktor för inre spår i voltstart", () => {
+    const spår1 = computeTrackFactor(1, "volte", []);
+    const spår8 = computeTrackFactor(8, "volte", []);
+    expect(spår1).toBeGreaterThan(spår8);
+  });
+
+  it("returnerar högre faktor för spår 1 än spår 12", () => {
+    const inner = computeTrackFactor(1, "volte", []);
+    const outer = computeTrackFactor(12, "volte", []);
+    expect(inner).toBeGreaterThan(outer);
+  });
+
+  it("planar ut faktorn mer för autostart", () => {
+    const volteDiff = computeTrackFactor(1, "volte", []) - computeTrackFactor(10, "volte", []);
+    const autoDiff = computeTrackFactor(1, "auto", []) - computeTrackFactor(10, "auto", []);
+    expect(autoDiff).toBeLessThan(volteDiff);
+  });
+
+  it("returnerar värde i intervallet 0–1", () => {
+    for (const spår of [1, 4, 8, 12, 16]) {
+      const f = computeTrackFactor(spår, "volte", []);
+      expect(f).toBeGreaterThanOrEqual(0);
+      expect(f).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it("använder dynamisk faktor vid ≥5 starter med spårdata", () => {
+    const goodHistory: HorseStart[] = Array.from({ length: 6 }, (_, i) => ({
+      place: "1",
+      date: `2025-01-0${i + 1}`,
+      track: "Solvalla",
+      time: "1:14,5",
+      post_position: 2,
+    }));
+    const noHistory: HorseStart[] = [];
+    const withHistory = computeTrackFactor(2, "volte", goodHistory);
+    const withoutHistory = computeTrackFactor(2, "volte", noHistory);
+    expect(withHistory).toBeGreaterThanOrEqual(withoutHistory);
+  });
+
+  it("faller tillbaka på statisk faktor vid <5 starter med spårdata", () => {
+    const fewStarts: HorseStart[] = [
+      { place: "1", date: "2025-01-01", track: "Solvalla", time: "1:14,5", post_position: 3 },
+      { place: "2", date: "2025-01-08", track: "Solvalla", time: "1:15,0", post_position: 3 },
+    ];
+    const staticOnly = computeTrackFactor(3, "volte", []);
+    const fewData = computeTrackFactor(3, "volte", fewStarts);
+    expect(fewData).toBeCloseTo(staticOnly, 5);
+  });
+
+  it("använder dynamisk faktor vid exakt 5 starter (gränsfall)", () => {
+    const boundary5: HorseStart[] = [
+      { place: "1", date: "2025-01-01", track: "Test", time: "1:12,0", post_position: 5 },
+      { place: "1", date: "2025-01-02", track: "Test", time: "1:12,0", post_position: 5 },
+      { place: "2", date: "2025-01-03", track: "Test", time: "1:12,0", post_position: 5 },
+      { place: "2", date: "2025-01-04", track: "Test", time: "1:12,0", post_position: 5 },
+      { place: "5", date: "2025-01-05", track: "Test", time: "1:12,0", post_position: 5 },
+    ];
+    const factor = computeTrackFactor(5, "volte", boundary5);
+    expect(factor).toBeGreaterThanOrEqual(0);
+    expect(factor).toBeLessThanOrEqual(1.0);
+  });
+
+  it("klipper dynamisk faktor till max 1.0 vid perfekt vinstrate", () => {
+    const perfect: HorseStart[] = Array.from({ length: 6 }, () => ({
+      place: "1", date: "2025-01-01", track: "Test", time: "1:12,0", post_position: 1
+    }));
+    const factor = computeTrackFactor(1, "volte", perfect);
+    expect(factor).toBeLessThanOrEqual(1.0);
+    expect(factor).toBeGreaterThanOrEqual(0);
+  });
+
+  it("exkluderar starter med null post_position från dynamisk beräkning", () => {
+    const mixed: HorseStart[] = [
+      { place: "1", date: "2025-01-01", track: "Test", time: "1:12,0", post_position: 3 },
+      { place: "2", date: "2025-01-02", track: "Test", time: "1:12,0", post_position: null },
+      { place: "1", date: "2025-01-03", track: "Test", time: "1:12,0", post_position: 3 },
+      { place: "3", date: "2025-01-04", track: "Test", time: "1:12,0", post_position: null },
+      { place: "1", date: "2025-01-05", track: "Test", time: "1:12,0", post_position: 3 },
+    ];
+    // Bara 3 starter har post_position → ska falla tillbaka på statisk faktor
+    const factor = computeTrackFactor(3, "volte", mixed);
+    const staticOnly = computeTrackFactor(3, "volte", []);
+    expect(factor).toBeCloseTo(staticOnly, 5);
   });
 });

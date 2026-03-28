@@ -15,6 +15,7 @@
 6. [Analysverktyget](#6-analysverktyget)
    - [Matematisk analys – beräknad vinstchans](#61-matematisk-analys--beräknad-vinstchans)
    - [Utökad analys – sammansatt poäng](#62-utökad-analys--sammansatt-poäng)
+   - [Systembyggaren](#63-systembyggaren)
 7. [Sällskap och samarbete](#7-sällskap-och-samarbete)
    - [Skapa ett sällskap](#71-skapa-ett-sällskap)
    - [Gå med i ett sällskap](#72-gå-med-i-ett-sällskap)
@@ -28,7 +29,7 @@
 
 ## 1. Introduktion
 
-**V85 Analys** är ett verktyg för dig som spelar V85 (och liknande ATG-spel). Systemet hämtar aktuell tävlingsdata direkt från ATG, räknar ut sannolikheter baserat på form, odds, konsistens och tider, och låter dig dela anteckningar och diskutera med dina spelvänner i ett gemensamt sällskap.
+**V85 Analys** är ett verktyg för dig som spelar V85 (och liknande ATG-spel). Systemet hämtar aktuell tävlingsdata direkt från ATG, räknar ut sannolikheter baserat på form, odds, konsistens, tider och startspår, och låter dig dela anteckningar och diskutera med dina spelvänner i ett gemensamt sällskap.
 
 Appen är byggd för att ge dig ett bättre beslutsunderlag – den ersätter inte din egen bedömning, men hjälper dig hitta hästar vars oddsvärde kan vara bättre än marknadens.
 
@@ -69,13 +70,15 @@ Innan du kan analysera en omgång måste du hämta data från ATG.
 På huvudsidan ser du en lista med alla hämtade omgångar.
 
 - Välj omgång via **rullgardinsmenyn** (GameSelector) längst upp.
-- Omgångens **avdelningar** visas under varandra med avdelningsnummer, starttid och distans.
-- Klicka på en avdelning för att **expandera** den och se alla startande hästar.
-- Klicka igen för att fälla ihop avdelningen.
+- Omgångens **avdelningar** visas som klickbara flikar. Klicka på en avdelning för att visa den – bytet sker direkt utan sidladdning.
+- Hästar i aktiv avdelning visas som **en häst per rad** (ATG-stil).
 
 ### 4.1 Top 5 spelvärda hästar
 
-Högst upp i listan visas en widget med de **5 hästar** som har högst sammansatt poäng (CS) i hela omgången. Varje häst visas med avdelning, startnummer, odds och eventuell slutplacering.
+Högst upp visas en widget med de **5 hästar** som har högst sammansatt poäng (CS) i hela omgången. Varje häst visas med avdelning, startnummer, odds och eventuell slutplacering.
+
+- Klicka på **▼ / ▲**-knappen för att minimera/expandera widgeten.
+- Klicka på en häst i listan för att hoppa direkt till hästkortet i rätt avdelning.
 
 ### 4.2 Sortering, filtrering och sökning
 
@@ -86,7 +89,7 @@ Ovanför härtlistan finns tre rader med kontroller:
 | Knapp | Beskrivning |
 |-------|-------------|
 | **Nr** | Startnummer (standard ATG-ordning) |
-| **CS – sammansatt poäng** | Kombinerar form, värde, konsistens och tid (standardval) |
+| **CS – sammansatt poäng** | Kombinerar form, värde, konsistens, tid och spårfaktor (standardval) |
 | **FS – formscore** | Formpoäng baserat på vinstprocent, odds och tid |
 | **Odds** | Lägst odds först |
 | **Streck%** | Högst streckprocent i V85-poolen först |
@@ -144,7 +147,7 @@ Klicka på **▼ Visa detaljer** på ett hästkort för att se mer information:
 
 **FS – Formscore (0–100):** viktat index baserat på senaste form (40%), vinstprocent år (20%), odds (20%) och bästa tid (20%). Innevarande år prioriteras; föregående år kompletterar vid få starter.
 
-**CS – Composite Score (0–100):** bredare helhetsbedömning som kombinerar FS med värdeindex (odds vs beräknad chans) och konsistens.
+**CS – Composite Score (0–100):** bredare helhetsbedömning som kombinerar form, värdeindex, konsistens, tid och spårfaktor. Se sektion 6.2 för viktning.
 
 Färgkoder för båda poäng:
 - **Grön** (≥70) – stark häst
@@ -222,8 +225,33 @@ En andra tabell med mer detaljerade komponenter:
 CS = 35% × form
    + 25% × värdeindex
    + 25% × konsistens
-   + 15% × tidsjustering
+   + 10% × tidsjustering
+   +  5% × spårfaktor
 ```
+
+**Spårfaktor** väger in hästens startspår. Inre spår (1–3) ger fördel i voltstart, yttre spår (8+) ger nackdel. Vid autostart är effekten lägre. Om hästen har ≥5 historiska starter med spårdata används en dynamisk faktor baserad på hästens egna resultat.
+
+---
+
+## 6.3 Systembyggaren
+
+Klicka på **Bygg system** (kugghjuls-knappen) för att öppna systemläget. I systemläget kan du markera hästar per avdelning och bygga ett spelkupong-system.
+
+### Skapa och spara system
+
+1. Klicka på hästar du vill ha med – de markeras med en bock.
+2. Systemet auto-sparas som ett **utkast** var tredje sekund.
+3. Ge utkastet ett namn via namnfältet i sidopanelen (höger på desktop, panel längst ner på mobil).
+4. Välj om systemet ska tillhöra ett **sällskap** eller vara **privat**.
+5. Klicka **Spara system** för att publicera det färdigt.
+
+### Ladda ett utkast
+
+Om du redan har sparade utkast för den aktuella omgången visas de i sidopanelen under **Sparade utkast**. Klicka på ett utkast för att ladda in dina tidigare val.
+
+### Se dina system
+
+Klicka på **Se systemet →** direkt efter sparning, eller gå till **Mina system** i menyn.
 
 ---
 

@@ -1,3 +1,5 @@
+import type { HorseStart } from "./atg";
+
 export interface LifeRecord {
   start_method: string; // "auto" | "volte"
   distance: string;     // "short" | "medium" | "long"
@@ -82,6 +84,52 @@ export function computeDistanceSignal(
   return { factor: 0.85, label: `Sprungit men ej placerat på ${catLabel} (annan startmetod)` };
 }
 
+/** Statisk spårfaktor för voltstart (spår 1 = bäst). */
+const TRACK_BIAS_VOLTE: Record<number, number> = {
+  1: 1.00, 2: 0.95, 3: 0.88, 4: 0.80, 5: 0.72,
+  6: 0.65, 7: 0.58, 8: 0.52, 9: 0.46, 10: 0.40,
+  11: 0.35, 12: 0.30,
+};
+
+function staticTrackFactor(postPosition: number, startMethod: string): number {
+  const pos = Math.max(1, postPosition);
+  const baseVolte = pos <= 12 ? (TRACK_BIAS_VOLTE[pos] ?? 0.25) : 0.25;
+  if (startMethod === "auto") {
+    return 0.5 + (baseVolte - 0.5) * 0.4;
+  }
+  return baseVolte;
+}
+
+/**
+ * Beräknar spårfaktor (0–1) för en häst baserat på post_position.
+ * Hybrid: statisk tabell + dynamisk om ≥5 starter med spårdata finns.
+ */
+export function computeTrackFactor(
+  postPosition: number,
+  startMethod: string,
+  horseHistory: HorseStart[]
+): number {
+  const staticF = staticTrackFactor(postPosition, startMethod);
+
+  const startsWithPos = horseHistory.filter((s) => s.post_position != null);
+  if (startsWithPos.length < 5) {
+    return staticF;
+  }
+
+  const wins = startsWithPos.filter((s) => s.place === "1").length;
+  const top3 = startsWithPos.filter((s) => {
+    const p = parseInt(s.place);
+    return !isNaN(p) && p <= 3;
+  }).length;
+  const total = startsWithPos.length;
+  const dynamicRaw = 0.6 * (wins / total) + 0.4 * (top3 / total);
+  // 2.5 = 1/0.4: normaliserar max dynamicRaw (0.4 vid alla top-3, 0 vinster) till 1.0
+  const dynamicF = Math.min(Math.max(dynamicRaw * 2.5, 0), 1);
+
+  // 50/50: balanserar statistisk tabell (reliabel) mot hästspecifik historik (relevant)
+  return 0.5 * staticF + 0.5 * dynamicF;
+}
+
 export interface AnalysisStarter {
   start_number: number;
   horses: { name: string } | null;
@@ -101,6 +149,9 @@ export interface AnalysisStarter {
   last_5_results?: { place: string; date: string; track: string; time: string }[];
   finish_position?: number | null;
   finish_time?: string | null;
+  post_position?: number | null;
+  horse_starts_history?: HorseStart[];
+  start_method?: string | null;
 }
 
 /**
@@ -243,14 +294,15 @@ export function compositeScore(params: {
   valueIndex: number;
   consistencyScore: number;
   timeAdj: number;
+  trackFactor?: number; // normaliserat 0–1, default 0.5 (neutral)
 }): number {
-  const { formScore, valueIndex: vi, consistencyScore: cs, timeAdj } = params;
+  const { formScore, valueIndex: vi, consistencyScore: cs, timeAdj, trackFactor = 0.5 } = params;
   const formNorm = formScore / 100;
   const valueNorm = Math.min(Math.max(vi / 20 + 0.5, 0), 1);
   const consistNorm = cs / 100;
   const timeNorm = Math.min(Math.max((-timeAdj + 3) / 6, 0), 1);
   return Math.round(
-    (formNorm * 0.35 + valueNorm * 0.25 + consistNorm * 0.25 + timeNorm * 0.15) * 100
+    (formNorm * 0.35 + valueNorm * 0.25 + consistNorm * 0.25 + timeNorm * 0.10 + trackFactor * 0.05) * 100
   );
 }
 
@@ -353,15 +405,31 @@ export function analyzeRaceEnhanced(starters: AnalysisStarter[]): HorseAnalysis[
 
     const vi = valueIndex(estimated, oddsNum && oddsNum > 0 ? oddsNum : 999);
 
-    return { s, form, consistency, estimated, impliedProb, timeAdj, vi };
+    const rawTrackFactor = computeTrackFactor(
+      s.post_position ?? 1,
+      s.start_method ?? "volte",
+      s.horse_starts_history ?? []
+    );
+
+    return { s, form, consistency, estimated, impliedProb, timeAdj, vi, rawTrackFactor };
   });
 
+  // Normalisera trackFactor min-max relativt fältet
+  const trackValues = intermediate.map((d) => d.rawTrackFactor);
+  const trackMin = Math.min(...trackValues);
+  const trackMax = Math.max(...trackValues);
+  const trackRange = trackMax - trackMin;
+
   const results: HorseAnalysis[] = intermediate.map((d) => {
+    const trackNorm = trackRange > 0
+      ? (d.rawTrackFactor - trackMin) / trackRange
+      : 0.5;
     const cs = compositeScore({
       formScore: d.form,
       valueIndex: d.vi,
       consistencyScore: d.consistency,
       timeAdj: d.timeAdj ?? 0,
+      trackFactor: trackNorm,
     });
     return {
       horseId: String(d.s.start_number),

@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchGame } from "@/lib/atg";
+import { fetchGame, fetchHorseStarts, HorseStart } from "@/lib/atg";
 import { calculateFormscore } from "@/lib/formscore";
 import { createServiceClient } from "@/lib/supabase/server";
 
-type Last5Result = { place: string; date: string; track: string; time: string };
-
 type ExistingStarter = {
   horse_id: string;
-  last_5_results: Last5Result[] | null;
+  last_5_results: HorseStart[] | null;
   formscore: number | null;
   finish_position: number | null;
   finish_time: string | null;
@@ -98,6 +96,22 @@ export async function POST(request: NextRequest) {
 
       console.log(`[fetch] Avd ${race.race_number}: ATG=${race.starters.length}, giltiga=${validStarters.length}, unika=${uniqueStarters.length}`);
 
+      // Hämta starterhistorik (last_5_results + spårdata) per häst
+      await Promise.all(
+        uniqueStarters.map(async (starter) => {
+          try {
+            const starts = await fetchHorseStarts(starter.horse_id);
+            if (starts.length > 0) {
+              starter.last_5_results = starts.slice(0, 5);
+              starter.horse_starts_history = starts;
+              // Används in-memory för spårfaktoranalys, sparas ej i DB
+            }
+          } catch (err) {
+            console.warn(`[fetch] Kunde inte hämta starterhistorik för häst ${starter.horse_id}:`, err instanceof Error ? err.message : String(err));
+          }
+        })
+      );
+
       // Upsert horses — uppdatera namn om det har ändrats
       const horseUpserts = uniqueStarters.map((s) => ({
         id: s.horse_id,
@@ -110,6 +124,9 @@ export async function POST(request: NextRequest) {
 
       // Formscore beräknas med merged last_5_results (inkl. fallback från DB)
       const scores = calculateFormscore(uniqueStarters);
+      if (scores.length !== uniqueStarters.length) {
+        console.error(`[fetch] Formscore-längd matchar inte starters (${scores.length} vs ${uniqueStarters.length}) avd ${race.race_number}`);
+      }
 
       await supabase.from("starters").delete().eq("race_id", raceId);
       const starterRows = uniqueStarters.map((s, i) => {

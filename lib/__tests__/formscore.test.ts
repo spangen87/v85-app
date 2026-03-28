@@ -59,9 +59,9 @@ describe("calculateFormscore", () => {
     const starters = [
       makeStarter({
         last_5_results: [
-          { place: "1", date: "2025-01-01", track: "Solvalla", time: "1:14,5" },
-          { place: "1", date: "2025-01-08", track: "Solvalla", time: "1:14,0" },
-          { place: "2", date: "2025-01-15", track: "Åby", time: "1:15,0" },
+          { place: "1", date: "2025-01-01", track: "Solvalla", time: "1:14,5", post_position: null },
+          { place: "1", date: "2025-01-08", track: "Solvalla", time: "1:14,0", post_position: null },
+          { place: "2", date: "2025-01-15", track: "Åby", time: "1:15,0", post_position: null },
         ],
       }),
       makeStarter({ start_number: 2, odds: 20 }),

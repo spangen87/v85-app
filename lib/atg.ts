@@ -32,6 +32,14 @@ export interface LifeRecord {
   time: string;
 }
 
+export interface HorseStart {
+  place: string;
+  date: string;
+  track: string;
+  time: string;
+  post_position: number | null;
+}
+
 export interface AtgStarter {
   start_number: number;
   post_position: number;
@@ -75,7 +83,9 @@ export interface AtgStarter {
   places_3rd_prev_year: number;
   best_time: string;
   life_records: LifeRecord[];
-  last_5_results: { place: string; date: string; track: string; time: string }[];
+  last_5_results: HorseStart[];
+  /** Populeras av fetch/route.ts efter att omgång hämtats – används för spårfaktoranalys */
+  horse_starts_history?: HorseStart[];
 }
 
 export interface AtgRace {
@@ -168,7 +178,7 @@ function formatTime(timeObj: Record<string, number> | null | undefined): string 
 
 export async function fetchHorseStarts(
   horseId: string
-): Promise<{ place: string; date: string; track: string; time: string }[]> {
+): Promise<HorseStart[]> {
   try {
     const res = await fetch(`${ATG_BASE}/horses/${horseId}`, {
       headers: HEADERS,
@@ -177,14 +187,16 @@ export async function fetchHorseStarts(
     if (!res.ok) return [];
     const raw = await res.json();
     const startsRaw = (raw["starts"] as Record<string, unknown>[]) ?? [];
-    return startsRaw.slice(0, 5).map((s) => {
+    return startsRaw.slice(0, 20).map((s) => {
       const race = (s["race"] as Record<string, unknown>) ?? {};
       const track = (race["track"] as Record<string, unknown>) ?? {};
+      const postPos = s["postPosition"] ?? null;
       return {
         date: String(race["date"] ?? s["date"] ?? ""),
         track: String(track["name"] ?? race["name"] ?? ""),
         place: String(s["place"] ?? "–"),
         time: formatTime(s["time"] as Record<string, number> | null | undefined),
+        post_position: postPos != null ? Number(postPos) : null,
       };
     });
   } catch {

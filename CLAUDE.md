@@ -133,7 +133,7 @@ spelvärde = beräknad chans − streckning%
 
 ### Utökad analys / Composite Score (CS) – `lib/analysis.ts → analyzeRaceEnhanced()`
 ```
-CS = 35% form + 25% värdeindex + 25% konsistens + 15% tidsjustering
+CS = 35% form + 25% värdeindex + 25% konsistens + 10% tidsjustering + 5% spårfaktor
 ```
 Häst markeras som "Värde" om CS > 55 och värdeindex > 0.
 

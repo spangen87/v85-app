@@ -143,7 +143,9 @@ export function RaceList({
 
   const hasActiveFilter = filterValue || hideOutsiders || search.trim().length > 0;
 
-  const enhanced = analyzeRaceEnhanced(activeRace.starters);
+  const enhanced = analyzeRaceEnhanced(
+    activeRace.starters.map((s) => ({ ...s, start_method: activeRace.start_method }))
+  );
   const enhancedMap = Object.fromEntries(enhanced.map((h) => [h.startNumber, h]));
   const compositeMap = Object.fromEntries(enhanced.map((h) => [h.startNumber, h.compositeScore]));
 
