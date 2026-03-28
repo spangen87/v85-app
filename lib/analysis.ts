@@ -1,3 +1,5 @@
+import type { HorseStart } from "./atg";
+
 export interface LifeRecord {
   start_method: string; // "auto" | "volte"
   distance: string;     // "short" | "medium" | "long"
@@ -80,6 +82,50 @@ export function computeDistanceSignal(
   if (bestOther <= 3)
     return { factor: 1.05, label: `Placerat på ${catLabel} (annan startmetod)` };
   return { factor: 0.85, label: `Sprungit men ej placerat på ${catLabel} (annan startmetod)` };
+}
+
+/** Statisk spårfaktor för voltstart (spår 1 = bäst). */
+const TRACK_BIAS_VOLTE: Record<number, number> = {
+  1: 1.00, 2: 0.95, 3: 0.88, 4: 0.80, 5: 0.72,
+  6: 0.65, 7: 0.58, 8: 0.52, 9: 0.46, 10: 0.40,
+  11: 0.35, 12: 0.30,
+};
+
+function staticTrackFactor(postPosition: number, startMethod: string): number {
+  const pos = Math.max(1, postPosition);
+  const baseVolte = pos <= 12 ? (TRACK_BIAS_VOLTE[pos] ?? 0.25) : 0.25;
+  if (startMethod === "auto") {
+    return 0.5 + (baseVolte - 0.5) * 0.4;
+  }
+  return baseVolte;
+}
+
+/**
+ * Beräknar spårfaktor (0–1) för en häst baserat på post_position.
+ * Hybrid: statisk tabell + dynamisk om ≥5 starter med spårdata finns.
+ */
+export function computeTrackFactor(
+  postPosition: number,
+  startMethod: string,
+  horseHistory: HorseStart[]
+): number {
+  const staticF = staticTrackFactor(postPosition, startMethod);
+
+  const startsWithPos = horseHistory.filter((s) => s.post_position != null);
+  if (startsWithPos.length < 5) {
+    return staticF;
+  }
+
+  const wins = startsWithPos.filter((s) => s.place === "1").length;
+  const top3 = startsWithPos.filter((s) => {
+    const p = parseInt(s.place);
+    return !isNaN(p) && p <= 3;
+  }).length;
+  const total = startsWithPos.length;
+  const dynamicRaw = 0.6 * (wins / total) + 0.4 * (top3 / total);
+  const dynamicF = Math.min(Math.max(dynamicRaw * 2.5, 0), 1);
+
+  return 0.5 * staticF + 0.5 * dynamicF;
 }
 
 export interface AnalysisStarter {
