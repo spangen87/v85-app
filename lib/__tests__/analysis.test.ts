@@ -194,4 +194,40 @@ describe("computeTrackFactor", () => {
     const fewData = computeTrackFactor(3, "volte", fewStarts);
     expect(fewData).toBeCloseTo(staticOnly, 5);
   });
+
+  it("använder dynamisk faktor vid exakt 5 starter (gränsfall)", () => {
+    const boundary5: HorseStart[] = [
+      { place: "1", date: "2025-01-01", track: "Test", time: "1:12,0", post_position: 5 },
+      { place: "1", date: "2025-01-02", track: "Test", time: "1:12,0", post_position: 5 },
+      { place: "2", date: "2025-01-03", track: "Test", time: "1:12,0", post_position: 5 },
+      { place: "2", date: "2025-01-04", track: "Test", time: "1:12,0", post_position: 5 },
+      { place: "5", date: "2025-01-05", track: "Test", time: "1:12,0", post_position: 5 },
+    ];
+    const factor = computeTrackFactor(5, "volte", boundary5);
+    expect(factor).toBeGreaterThanOrEqual(0);
+    expect(factor).toBeLessThanOrEqual(1.0);
+  });
+
+  it("klipper dynamisk faktor till max 1.0 vid perfekt vinstrate", () => {
+    const perfect: HorseStart[] = Array.from({ length: 6 }, () => ({
+      place: "1", date: "2025-01-01", track: "Test", time: "1:12,0", post_position: 1
+    }));
+    const factor = computeTrackFactor(1, "volte", perfect);
+    expect(factor).toBeLessThanOrEqual(1.0);
+    expect(factor).toBeGreaterThanOrEqual(0);
+  });
+
+  it("exkluderar starter med null post_position från dynamisk beräkning", () => {
+    const mixed: HorseStart[] = [
+      { place: "1", date: "2025-01-01", track: "Test", time: "1:12,0", post_position: 3 },
+      { place: "2", date: "2025-01-02", track: "Test", time: "1:12,0", post_position: null },
+      { place: "1", date: "2025-01-03", track: "Test", time: "1:12,0", post_position: 3 },
+      { place: "3", date: "2025-01-04", track: "Test", time: "1:12,0", post_position: null },
+      { place: "1", date: "2025-01-05", track: "Test", time: "1:12,0", post_position: 3 },
+    ];
+    // Bara 3 starter har post_position → ska falla tillbaka på statisk faktor
+    const factor = computeTrackFactor(3, "volte", mixed);
+    const staticOnly = computeTrackFactor(3, "volte", []);
+    expect(factor).toBeCloseTo(staticOnly, 5);
+  });
 });

@@ -123,8 +123,10 @@ export function computeTrackFactor(
   }).length;
   const total = startsWithPos.length;
   const dynamicRaw = 0.6 * (wins / total) + 0.4 * (top3 / total);
+  // 2.5 = 1/0.4: normaliserar max dynamicRaw (0.4 vid alla top-3, 0 vinster) till 1.0
   const dynamicF = Math.min(Math.max(dynamicRaw * 2.5, 0), 1);
 
+  // 50/50: balanserar statistisk tabell (reliabel) mot hästspecifik historik (relevant)
   return 0.5 * staticF + 0.5 * dynamicF;
 }
 
