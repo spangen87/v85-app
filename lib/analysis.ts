@@ -151,6 +151,7 @@ export interface AnalysisStarter {
   finish_time?: string | null;
   post_position?: number | null;
   horse_starts_history?: HorseStart[];
+  start_method?: string | null;
 }
 
 /**
@@ -406,7 +407,7 @@ export function analyzeRaceEnhanced(starters: AnalysisStarter[]): HorseAnalysis[
 
     const rawTrackFactor = computeTrackFactor(
       s.post_position ?? 1,
-      "volte", // temporärt – ersätts i Task 5 med korrekt startmetod
+      s.start_method ?? "volte",
       s.horse_starts_history ?? []
     );
 

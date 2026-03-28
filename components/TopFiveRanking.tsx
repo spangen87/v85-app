@@ -43,7 +43,9 @@ export function TopFiveRanking({ races, onHorseClick }: TopFiveRankingProps) {
   const allHorses: RankedHorse[] = [];
 
   for (const race of races) {
-    const analyzed = analyzeRaceEnhanced(race.starters);
+    const analyzed = analyzeRaceEnhanced(
+      race.starters.map((s) => ({ ...s, start_method: race.start_method }))
+    );
     const oddsMap = Object.fromEntries(
       race.starters.map((s) => [s.start_number, s.odds ?? null])
     );
