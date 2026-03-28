@@ -80,6 +80,7 @@ export function RaceList({
   systemMode,
   systemSelections,
   onToggleHorse,
+  onHorseClick,
 }: {
   races: Race[];
   activeRaceNumber: number;
@@ -88,6 +89,7 @@ export function RaceList({
   systemMode?: boolean;
   systemSelections?: SystemSelection[];
   onToggleHorse?: (raceNumber: number, horse: SystemHorse) => void;
+  onHorseClick?: (raceNumber: number, startNumber: number) => void;
 }) {
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>("composite");
@@ -171,7 +173,7 @@ export function RaceList({
 
   return (
     <div className="space-y-3">
-      <TopFiveRanking races={races} />
+      <TopFiveRanking races={races} onHorseClick={onHorseClick} />
 
       {/* Toolbar: sortering + filter på en rad */}
       <div className="flex items-center gap-2 flex-wrap px-1">
