@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchGame } from "@/lib/atg";
+import { fetchGame, HorseStart } from "@/lib/atg";
 import { calculateFormscore } from "@/lib/formscore";
 import { createServiceClient } from "@/lib/supabase/server";
 
-type Last5Result = { place: string; date: string; track: string; time: string };
-
 type ExistingStarter = {
   horse_id: string;
-  last_5_results: Last5Result[] | null;
+  last_5_results: HorseStart[] | null;
   formscore: number | null;
   finish_position: number | null;
   finish_time: string | null;
