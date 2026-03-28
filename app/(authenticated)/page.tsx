@@ -8,6 +8,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { UsefulLinks } from "@/components/UsefulLinks";
 import { CollapsibleControls } from "@/components/CollapsibleControls";
 import { RaceTabBar } from "@/components/RaceTabBar";
+import { RaceTabProvider } from "@/components/RaceTabContext";
 import { getProfile, getMyGroups } from "@/lib/actions/groups";
 import { getDraftForGame } from "@/lib/actions/systems";
 import { redirect } from "next/navigation";
@@ -94,6 +95,7 @@ export default async function HomePage({
     : (races[0]?.race_number ?? 1);
 
   return (
+    <RaceTabProvider initialRaceNumber={activeRaceNumber}>
     <main className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white">
       {/* Header: mobilanpassad med 2 rader på små skärmar */}
       <header className="sticky top-0 z-30 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800">
@@ -120,7 +122,6 @@ export default async function HomePage({
           <Suspense fallback={<div className="h-10 border-t border-gray-200 dark:border-gray-800" />}>
             <RaceTabBar
               races={races.map((r) => ({ race_number: r.race_number, start_time: r.start_time }))}
-              activeRaceNumber={activeRaceNumber}
             />
           </Suspense>
         )}
@@ -143,7 +144,6 @@ export default async function HomePage({
         <MainPageClient
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           races={races as any}
-          activeRaceNumber={activeRaceNumber}
           userGroups={userGroups}
           currentUserId={user.id}
           initialSystemMode={initialSystemMode}
@@ -155,5 +155,6 @@ export default async function HomePage({
         />
       </div>
     </main>
+    </RaceTabProvider>
   );
 }

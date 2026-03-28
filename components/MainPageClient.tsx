@@ -8,6 +8,7 @@ import { SystemDrawer } from '@/components/SystemDrawer'
 import type { SystemSelection, SystemHorse, Group } from '@/lib/types'
 import { formatRowCost } from '@/lib/atg'
 import { createSystem, updateDraft } from '@/lib/actions/systems'
+import { useRaceTab } from '@/components/RaceTabContext'
 
 type RaceListRaces = ComponentProps<typeof RaceList>['races']
 
@@ -18,7 +19,6 @@ function computeTotalRows(selections: SystemSelection[]): number {
 
 interface MainPageClientProps {
   races: RaceListRaces
-  activeRaceNumber: number
   userGroups: Group[]
   currentUserId: string
   initialSystemMode?: boolean
@@ -33,7 +33,6 @@ interface MainPageClientProps {
 
 export function MainPageClient({
   races,
-  activeRaceNumber,
   userGroups,
   currentUserId,
   initialSystemMode = false,
@@ -44,6 +43,7 @@ export function MainPageClient({
   initialSelections = [],
 }: MainPageClientProps) {
   const [systemMode, setSystemMode] = useState(initialSystemMode)
+  const { activeRaceNumber: activeRace, setActiveRaceNumber: setActiveRace } = useRaceTab()
   const [systemSelections, setSystemSelections] = useState<SystemSelection[]>(initialSelections)
   const [showSaveDialog, setShowSaveDialog] = useState(false)
   const [showDrawer, setShowDrawer] = useState(false)
@@ -115,6 +115,16 @@ export function MainPageClient({
     isFirstRender.current = true
   }, [])
 
+  const handleHorseClick = useCallback((raceNumber: number, startNumber: number) => {
+    setActiveRace(raceNumber)
+    requestAnimationFrame(() => {
+      const el = document.querySelector(
+        `[data-race="${raceNumber}"][data-start="${startNumber}"]`
+      )
+      el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }, [setActiveRace])
+
   const handleCancelSystemMode = useCallback(() => {
     setSystemMode(false)
     setSystemSelections([])
@@ -157,12 +167,13 @@ export function MainPageClient({
         ) : (
           <RaceList
             races={races}
-            activeRaceNumber={activeRaceNumber}
+            activeRaceNumber={activeRace}
             userGroups={userGroups}
             currentUserId={currentUserId}
             systemMode={systemMode}
             systemSelections={systemSelections}
             onToggleHorse={handleToggleHorse}
+            onHorseClick={handleHorseClick}
           />
         )}
       </div>
