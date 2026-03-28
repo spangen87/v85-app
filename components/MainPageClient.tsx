@@ -5,9 +5,10 @@ import { RaceList } from '@/components/RaceList'
 import { SaveSystemDialog } from '@/components/SaveSystemDialog'
 import { SystemSidebar } from '@/components/SystemSidebar'
 import { SystemDrawer } from '@/components/SystemDrawer'
-import type { SystemSelection, SystemHorse, Group } from '@/lib/types'
+import type { SystemSelection, SystemHorse, Group, GameSystem } from '@/lib/types'
 import { formatRowCost } from '@/lib/atg'
-import { createSystem, updateDraft } from '@/lib/actions/systems'
+import { createSystem, updateDraft, getUserDraftsForGame } from '@/lib/actions/systems'
+import { useRaceTab } from '@/components/RaceTabContext'
 
 type RaceListRaces = ComponentProps<typeof RaceList>['races']
 
@@ -18,7 +19,6 @@ function computeTotalRows(selections: SystemSelection[]): number {
 
 interface MainPageClientProps {
   races: RaceListRaces
-  activeRaceNumber: number
   userGroups: Group[]
   currentUserId: string
   initialSystemMode?: boolean
@@ -33,7 +33,6 @@ interface MainPageClientProps {
 
 export function MainPageClient({
   races,
-  activeRaceNumber,
   userGroups,
   currentUserId,
   initialSystemMode = false,
@@ -44,11 +43,14 @@ export function MainPageClient({
   initialSelections = [],
 }: MainPageClientProps) {
   const [systemMode, setSystemMode] = useState(initialSystemMode)
+  const { activeRaceNumber: activeRace, setActiveRaceNumber: setActiveRace } = useRaceTab()
   const [systemSelections, setSystemSelections] = useState<SystemSelection[]>(initialSelections)
   const [showSaveDialog, setShowSaveDialog] = useState(false)
   const [showDrawer, setShowDrawer] = useState(false)
   const [activeDraftId, setActiveDraftId] = useState<string | null>(draftId)
   const [draftSaveStatus, setDraftSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
+  const [draftName, setDraftName] = useState('Utkast')
+  const [savedDrafts, setSavedDrafts] = useState<GameSystem[]>([])
 
   // Auto-spara utkast (debounce 3 s) när systemMode är aktivt och val ändras
   const draftTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -73,7 +75,7 @@ export function MainPageClient({
           await updateDraft(activeDraftId, systemSelections, totalRows)
         } else {
           // Spara utkastet med group_id om vi är i sällskapsläge
-          const draft = await createSystem(initialGroupId, gameId, 'Utkast', systemSelections, totalRows, true)
+          const draft = await createSystem(initialGroupId, gameId, draftName, systemSelections, totalRows, true)
           setActiveDraftId(draft.id)
         }
         setDraftSaveStatus('saved')
@@ -107,13 +109,39 @@ export function MainPageClient({
     })
   }, [])
 
-  const handleActivateSystemMode = useCallback(() => {
+  const handleActivateSystemMode = useCallback(async () => {
     setSystemMode(true)
     setSystemSelections([])
     setActiveDraftId(null)
     setShowDrawer(false)
     isFirstRender.current = true
+    if (gameId) {
+      try {
+        const drafts = await getUserDraftsForGame(gameId)
+        setSavedDrafts(drafts)
+      } catch {
+        // ignorera fel
+      }
+    }
+  }, [gameId])
+
+  const handleLoadDraft = useCallback((draft: GameSystem) => {
+    setSystemSelections(draft.selections ?? [])
+    setActiveDraftId(draft.id)
+    setDraftName(draft.name)
+    isFirstRender.current = true
+    setSavedDrafts(prev => prev.filter(d => d.id !== draft.id))
   }, [])
+
+  const handleHorseClick = useCallback((raceNumber: number, startNumber: number) => {
+    setActiveRace(raceNumber)
+    requestAnimationFrame(() => {
+      const el = document.querySelector(
+        `[data-race="${raceNumber}"][data-start="${startNumber}"]`
+      )
+      el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }, [setActiveRace])
 
   const handleCancelSystemMode = useCallback(() => {
     setSystemMode(false)
@@ -157,12 +185,13 @@ export function MainPageClient({
         ) : (
           <RaceList
             races={races}
-            activeRaceNumber={activeRaceNumber}
+            activeRaceNumber={activeRace}
             userGroups={userGroups}
             currentUserId={currentUserId}
             systemMode={systemMode}
             systemSelections={systemSelections}
             onToggleHorse={handleToggleHorse}
+            onHorseClick={handleHorseClick}
           />
         )}
       </div>
@@ -178,6 +207,10 @@ export function MainPageClient({
           totalRows={totalRows}
           gameType={gameType}
           draftSaveStatus={draftSaveStatus}
+          draftName={draftName}
+          onDraftNameChange={setDraftName}
+          savedDrafts={savedDrafts}
+          onLoadDraft={handleLoadDraft}
         />
       )}
 

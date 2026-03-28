@@ -80,6 +80,7 @@ export function RaceList({
   systemMode,
   systemSelections,
   onToggleHorse,
+  onHorseClick,
 }: {
   races: Race[];
   activeRaceNumber: number;
@@ -88,6 +89,7 @@ export function RaceList({
   systemMode?: boolean;
   systemSelections?: SystemSelection[];
   onToggleHorse?: (raceNumber: number, horse: SystemHorse) => void;
+  onHorseClick?: (raceNumber: number, startNumber: number) => void;
 }) {
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>("composite");
@@ -165,12 +167,13 @@ export function RaceList({
     ? new Date(activeRace.start_time).toLocaleTimeString("sv-SE", {
         hour: "2-digit",
         minute: "2-digit",
+        timeZone: "Europe/Stockholm",
       })
     : null;
 
   return (
     <div className="space-y-3">
-      <TopFiveRanking races={races} />
+      <TopFiveRanking races={races} onHorseClick={onHorseClick} />
 
       {/* Toolbar: sortering + filter på en rad */}
       <div className="flex items-center gap-2 flex-wrap px-1">
@@ -268,43 +271,48 @@ export function RaceList({
         </p>
       )}
 
-      {/* Hästgrid: 1 → 2 → 3 → 4 kolumner */}
-      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {/* Hästlista: en per rad */}
+      <div className="flex flex-col gap-2">
         {sorted.map((s, idx) => {
           const enh = enhancedMap[s.start_number];
           return (
-            <HorseCard
+            <div
               key={s.id}
-              starter={s}
-              raceDistance={activeRace.distance}
-              raceStartMethod={activeRace.start_method ?? "auto"}
-              compositeScore={enh?.compositeScore}
-              valueIndex={enh?.valueIndex}
-              isValue={enh?.isValue}
-              sortRank={sortKey !== "number" ? idx + 1 : undefined}
-              isSelected={
-                systemMode
-                  ? (raceSelections?.horses.some((h) => h.horse_id === s.horse_id) ?? false)
-                  : undefined
-              }
-              onSelect={
-                systemMode && onToggleHorse
-                  ? () =>
-                      onToggleHorse(activeRace.race_number, {
-                        horse_id: s.horse_id,
-                        start_number: s.start_number,
-                        horse_name: s.horses?.name ?? "",
-                      })
-                  : undefined
-              }
-              notesSection={
-                <HorseNotes
-                  horseId={s.horse_id}
-                  userGroups={userGroups}
-                  currentUserId={currentUserId}
-                />
-              }
-            />
+              data-race={activeRace.race_number}
+              data-start={s.start_number}
+            >
+              <HorseCard
+                starter={s}
+                raceDistance={activeRace.distance}
+                raceStartMethod={activeRace.start_method ?? "auto"}
+                compositeScore={enh?.compositeScore}
+                valueIndex={enh?.valueIndex}
+                isValue={enh?.isValue}
+                sortRank={sortKey !== "number" ? idx + 1 : undefined}
+                isSelected={
+                  systemMode
+                    ? (raceSelections?.horses.some((h) => h.horse_id === s.horse_id) ?? false)
+                    : undefined
+                }
+                onSelect={
+                  systemMode && onToggleHorse
+                    ? () =>
+                        onToggleHorse(activeRace.race_number, {
+                          horse_id: s.horse_id,
+                          start_number: s.start_number,
+                          horse_name: s.horses?.name ?? "",
+                        })
+                    : undefined
+                }
+                notesSection={
+                  <HorseNotes
+                    horseId={s.horse_id}
+                    userGroups={userGroups}
+                    currentUserId={currentUserId}
+                  />
+                }
+              />
+            </div>
           );
         })}
       </div>

@@ -93,6 +93,24 @@ export async function updateDraft(
   if (error) throw error
 }
 
+/** Hämtar alla utkast för användaren för ett givet spel */
+export async function getUserDraftsForGame(gameId: string): Promise<GameSystem[]> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
+  const { data, error } = await supabase
+    .from('game_systems')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('game_id', gameId)
+    .eq('is_draft', true)
+    .order('created_at', { ascending: false })
+
+  if (error) return []
+  return (data ?? []) as GameSystem[]
+}
+
 /** Gör om ett utkast till ett sparat system (is_draft → false) */
 export async function publishDraft(
   draftId: string,

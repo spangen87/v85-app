@@ -1,21 +1,13 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRaceTab } from "@/components/RaceTabContext";
 
 interface RaceTabBarProps {
   races: { race_number: number; start_time: string | null }[];
-  activeRaceNumber: number;
 }
 
-export function RaceTabBar({ races, activeRaceNumber }: RaceTabBarProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-
-  function handleTabClick(raceNumber: number) {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("avd", String(raceNumber));
-    router.replace(`?${params.toString()}`);
-  }
+export function RaceTabBar({ races }: RaceTabBarProps) {
+  const { activeRaceNumber, setActiveRaceNumber } = useRaceTab();
 
   return (
     <div className="border-t border-gray-200 dark:border-gray-800 overflow-x-auto scrollbar-none">
@@ -26,12 +18,13 @@ export function RaceTabBar({ races, activeRaceNumber }: RaceTabBarProps) {
             ? new Date(race.start_time).toLocaleTimeString("sv-SE", {
                 hour: "2-digit",
                 minute: "2-digit",
+                timeZone: "Europe/Stockholm",
               })
             : null;
           return (
             <button
               key={race.race_number}
-              onClick={() => handleTabClick(race.race_number)}
+              onClick={() => setActiveRaceNumber(race.race_number)}
               className={`px-3 py-1.5 text-xs font-semibold rounded-md whitespace-nowrap transition-colors ${
                 isActive
                   ? "bg-indigo-700 text-white"
