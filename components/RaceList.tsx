@@ -165,6 +165,7 @@ export function RaceList({
     ? new Date(activeRace.start_time).toLocaleTimeString("sv-SE", {
         hour: "2-digit",
         minute: "2-digit",
+        timeZone: "Europe/Stockholm",
       })
     : null;
 
