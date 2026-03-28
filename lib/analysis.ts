@@ -149,6 +149,8 @@ export interface AnalysisStarter {
   last_5_results?: { place: string; date: string; track: string; time: string }[];
   finish_position?: number | null;
   finish_time?: string | null;
+  post_position?: number | null;
+  horse_starts_history?: HorseStart[];
 }
 
 /**
@@ -291,14 +293,15 @@ export function compositeScore(params: {
   valueIndex: number;
   consistencyScore: number;
   timeAdj: number;
+  trackFactor?: number; // normaliserat 0–1, default 0.5 (neutral)
 }): number {
-  const { formScore, valueIndex: vi, consistencyScore: cs, timeAdj } = params;
+  const { formScore, valueIndex: vi, consistencyScore: cs, timeAdj, trackFactor = 0.5 } = params;
   const formNorm = formScore / 100;
   const valueNorm = Math.min(Math.max(vi / 20 + 0.5, 0), 1);
   const consistNorm = cs / 100;
   const timeNorm = Math.min(Math.max((-timeAdj + 3) / 6, 0), 1);
   return Math.round(
-    (formNorm * 0.35 + valueNorm * 0.25 + consistNorm * 0.25 + timeNorm * 0.15) * 100
+    (formNorm * 0.35 + valueNorm * 0.25 + consistNorm * 0.25 + timeNorm * 0.10 + trackFactor * 0.05) * 100
   );
 }
 
@@ -401,15 +404,31 @@ export function analyzeRaceEnhanced(starters: AnalysisStarter[]): HorseAnalysis[
 
     const vi = valueIndex(estimated, oddsNum && oddsNum > 0 ? oddsNum : 999);
 
-    return { s, form, consistency, estimated, impliedProb, timeAdj, vi };
+    const rawTrackFactor = computeTrackFactor(
+      s.post_position ?? 1,
+      "volte", // temporärt – ersätts i Task 5 med korrekt startmetod
+      s.horse_starts_history ?? []
+    );
+
+    return { s, form, consistency, estimated, impliedProb, timeAdj, vi, rawTrackFactor };
   });
 
+  // Normalisera trackFactor min-max relativt fältet
+  const trackValues = intermediate.map((d) => d.rawTrackFactor);
+  const trackMin = Math.min(...trackValues);
+  const trackMax = Math.max(...trackValues);
+  const trackRange = trackMax - trackMin;
+
   const results: HorseAnalysis[] = intermediate.map((d) => {
+    const trackNorm = trackRange > 0
+      ? (d.rawTrackFactor - trackMin) / trackRange
+      : 0.5;
     const cs = compositeScore({
       formScore: d.form,
       valueIndex: d.vi,
       consistencyScore: d.consistency,
       timeAdj: d.timeAdj ?? 0,
+      trackFactor: trackNorm,
     });
     return {
       horseId: String(d.s.start_number),
