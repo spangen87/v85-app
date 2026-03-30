@@ -470,17 +470,6 @@ export function HorseCard({
               </span>
             );
           })}
-          {vi != null && (
-            <span
-              className={`ml-auto text-[10px] font-semibold ${
-                vi > 0 ? "text-green-600 dark:text-green-400" : "text-red-500 dark:text-red-400"
-              }`}
-              title="Värdeindex"
-            >
-              {vi > 0 ? "+" : ""}
-              {vi.toFixed(1)}%{vi > 0 ? "↑" : "↓"}
-            </span>
-          )}
         </div>
       )}
 
