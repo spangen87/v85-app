@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchGame, fetchHorseStarts, HorseStart } from "@/lib/atg";
-import { calculateFormscore } from "@/lib/formscore";
+import { calculateCompositeScore } from "@/lib/formscore";
 import { createServiceClient } from "@/lib/supabase/server";
 
 type ExistingStarter = {
@@ -122,8 +122,12 @@ export async function POST(request: NextRequest) {
         if (horseErr) console.error(`[fetch] horses.upsert fel avd ${race.race_number}:`, horseErr.message);
       }
 
-      // Formscore beräknas med merged last_5_results (inkl. fallback från DB)
-      const scores = calculateFormscore(uniqueStarters);
+      // Composite Score beräknas med merged last_5_results (inkl. fallback från DB)
+      const scores = calculateCompositeScore(uniqueStarters, {
+        distance: race.distance,
+        start_method: race.start_method,
+        field_size: uniqueStarters.length,
+      });
       if (scores.length !== uniqueStarters.length) {
         console.error(`[fetch] Formscore-längd matchar inte starters (${scores.length} vs ${uniqueStarters.length}) avd ${race.race_number}`);
       }

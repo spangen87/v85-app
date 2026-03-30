@@ -187,19 +187,43 @@ export async function fetchHorseStarts(
     if (!res.ok) return [];
     const raw = await res.json();
     const startsRaw = (raw["starts"] as Record<string, unknown>[]) ?? [];
+    if (!Array.isArray(startsRaw)) {
+      console.warn(`[fetchHorseStarts] "starts" är inte en array för häst ${horseId}`);
+      return [];
+    }
     return startsRaw.slice(0, 20).map((s) => {
       const race = (s["race"] as Record<string, unknown>) ?? {};
       const track = (race["track"] as Record<string, unknown>) ?? {};
       const postPos = s["postPosition"] ?? null;
+
+      // Defensiv place-parsing: hantera sträng, nummer, objekt och "result"-fält
+      let placeVal = s["place"] ?? s["result"] ?? "–";
+      if (typeof placeVal === "object" && placeVal !== null) {
+        // Om place är ett objekt (API-ändring), försök extrahera finishOrder/place
+        const po = placeVal as Record<string, unknown>;
+        placeVal = po["finishOrder"] ?? po["place"] ?? po["position"] ?? "–";
+      }
+      const placeStr = String(placeVal);
+
+      // Defensiv time-parsing: hantera både objekt {minutes,seconds,tenths} och sträng
+      let timeStr = "";
+      const timeRaw = s["time"] ?? s["result.time"] ?? null;
+      if (typeof timeRaw === "string") {
+        timeStr = timeRaw;
+      } else if (typeof timeRaw === "object" && timeRaw !== null) {
+        timeStr = formatTime(timeRaw as Record<string, number>);
+      }
+
       return {
         date: String(race["date"] ?? s["date"] ?? ""),
         track: String(track["name"] ?? race["name"] ?? ""),
-        place: String(s["place"] ?? "–"),
-        time: formatTime(s["time"] as Record<string, number> | null | undefined),
+        place: placeStr,
+        time: timeStr,
         post_position: postPos != null ? Number(postPos) : null,
       };
     });
-  } catch {
+  } catch (err) {
+    console.warn(`[fetchHorseStarts] Fel för häst ${horseId}:`, err instanceof Error ? err.message : String(err));
     return [];
   }
 }

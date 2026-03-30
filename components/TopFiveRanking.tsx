@@ -1,15 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { analyzeRaceEnhanced } from "@/lib/analysis";
-import type { AnalysisStarter } from "@/lib/analysis";
+
+interface StarterForRanking {
+  start_number: number;
+  horses: { name: string } | null;
+  formscore: number | null;
+  odds: number | null;
+  bet_distribution: number | null;
+  finish_position?: number | null;
+  finish_time?: string | null;
+}
 
 interface RaceForRanking {
   id: string;
   race_number: number;
   distance: number;
   start_method: string | null;
-  starters: AnalysisStarter[];
+  starters: StarterForRanking[];
 }
 
 interface RankedHorse {
@@ -17,7 +25,6 @@ interface RankedHorse {
   startNumber: number;
   raceNumber: number;
   compositeScore: number;
-  estimatedWinPct: number;
   odds: number | null;
   isValue: boolean;
   finish_position: number | null;
@@ -43,23 +50,25 @@ export function TopFiveRanking({ races, onHorseClick }: TopFiveRankingProps) {
   const allHorses: RankedHorse[] = [];
 
   for (const race of races) {
-    const analyzed = analyzeRaceEnhanced(
-      race.starters.map((s) => ({ ...s, start_method: race.start_method }))
-    );
-    const oddsMap = Object.fromEntries(
-      race.starters.map((s) => [s.start_number, s.odds ?? null])
-    );
-    for (const h of analyzed) {
+    for (const s of race.starters) {
+      const cs = s.formscore ?? 0;
+      if (cs === 0) continue;
+
+      // Beräkna om hästen är ett värde: CS > 55 och positivt spelvärde
+      const totalCS = race.starters.reduce((sum, st) => sum + (st.formscore ?? 0), 0);
+      const calcPct = totalCS > 0 ? (cs / totalCS) * 100 : 0;
+      const streckPct = s.bet_distribution ?? 0;
+      const isValue = cs > 55 && streckPct > 0 && calcPct > streckPct;
+
       allHorses.push({
-        horseName: h.horseName,
-        startNumber: h.startNumber,
+        horseName: s.horses?.name ?? `Nr ${s.start_number}`,
+        startNumber: s.start_number,
         raceNumber: race.race_number,
-        compositeScore: h.compositeScore,
-        estimatedWinPct: h.estimatedWinPct,
-        odds: oddsMap[h.startNumber] ?? null,
-        isValue: h.isValue,
-        finish_position: h.finish_position ?? null,
-        finish_time: h.finish_time ?? null,
+        compositeScore: cs,
+        odds: s.odds ?? null,
+        isValue,
+        finish_position: s.finish_position ?? null,
+        finish_time: s.finish_time ?? null,
       });
     }
   }
@@ -71,7 +80,6 @@ export function TopFiveRanking({ races, onHorseClick }: TopFiveRankingProps) {
 
   return (
     <div className="mb-6 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/40 rounded-xl overflow-hidden md:max-w-[45%]">
-      {/* Header med kollaps-knapp */}
       <div className="px-5 py-3 border-b border-indigo-200 dark:border-indigo-800/30 flex items-center justify-between">
         <div>
           <h2 className="text-sm font-semibold text-indigo-700 dark:text-indigo-300 uppercase tracking-wide">
@@ -79,7 +87,7 @@ export function TopFiveRanking({ races, onHorseClick }: TopFiveRankingProps) {
           </h2>
           {!collapsed && (
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              Rankad efter form, konsistens, tid och värde relativt marknaden
+              Rankad efter Composite Score (CS) — form, tid, odds, konsistens, distans och spår
             </p>
           )}
         </div>
@@ -100,14 +108,12 @@ export function TopFiveRanking({ races, onHorseClick }: TopFiveRankingProps) {
               onClick={() => onHorseClick?.(horse.raceNumber, horse.startNumber)}
               className={`flex items-center gap-3 px-5 py-3 hover:bg-indigo-100 dark:hover:bg-indigo-950/30 transition ${onHorseClick ? "cursor-pointer" : ""}`}
             >
-              {/* Rank badge */}
               <span
                 className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${MEDAL_COLORS[i]}`}
               >
                 {i + 1}
               </span>
 
-              {/* Horse info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-semibold text-gray-900 dark:text-white text-sm truncate">
@@ -125,7 +131,6 @@ export function TopFiveRanking({ races, onHorseClick }: TopFiveRankingProps) {
                 </span>
               </div>
 
-              {/* Resultat */}
               {horse.finish_position != null && (
                 <span
                   className={`text-xs font-bold px-2 py-1 rounded-full shrink-0 ${
@@ -143,23 +148,12 @@ export function TopFiveRanking({ races, onHorseClick }: TopFiveRankingProps) {
                 </span>
               )}
 
-              {/* Score */}
               <div className="text-right shrink-0">
                 <div className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
                   {horse.compositeScore}
                 </div>
                 <div className="text-xs text-gray-500 dark:text-gray-400">
-                  poäng
-                </div>
-              </div>
-
-              {/* Win pct */}
-              <div className="text-right shrink-0 hidden sm:block">
-                <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {horse.estimatedWinPct}%
-                </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">
-                  vinstchans
+                  CS
                 </div>
               </div>
             </div>

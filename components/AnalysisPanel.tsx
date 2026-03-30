@@ -1,6 +1,17 @@
 "use client";
 
-import { analyzeRace, analyzeRaceEnhanced, StarterAnalysis, AnalysisStarter, HorseAnalysis } from "@/lib/analysis";
+import { computeDistanceSignal, type LifeRecord, type DistanceSignal } from "@/lib/analysis";
+
+interface AnalysisStarter {
+  start_number: number;
+  horses: { name: string } | null;
+  odds: number | null;
+  bet_distribution: number | null;
+  life_records: LifeRecord[] | null;
+  formscore: number | null;
+  finish_position?: number | null;
+  finish_time?: string | null;
+}
 
 interface AnalysisPanelProps {
   starters: AnalysisStarter[];
@@ -38,35 +49,7 @@ function DistBadge({ factor, label }: { factor: number; label: string }) {
   );
 }
 
-function ValueBadge({ value, active }: { value: number; active: boolean }) {
-  if (!active)
-    return <span className="text-xs text-gray-400 dark:text-gray-500 italic">inväntar streckning</span>;
-  if (value >= 5)
-    return (
-      <span className="text-xs font-bold text-green-400 bg-green-100 dark:bg-green-900/40 px-1.5 py-0.5 rounded whitespace-nowrap">
-        +{value} pp ★
-      </span>
-    );
-  if (value >= 2)
-    return (
-      <span className="text-xs font-semibold text-green-400 bg-green-50 dark:bg-green-900/20 px-1.5 py-0.5 rounded whitespace-nowrap">
-        +{value} pp
-      </span>
-    );
-  if (value <= -5)
-    return (
-      <span className="text-xs text-red-400 bg-red-50 dark:bg-red-900/20 px-1.5 py-0.5 rounded whitespace-nowrap">
-        {value} pp
-      </span>
-    );
-  return (
-    <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
-      {value > 0 ? `+${value}` : value} pp
-    </span>
-  );
-}
-
-function FormScoreBadge({ score }: { score: number }) {
+function ScoreBadge({ score }: { score: number }) {
   const color =
     score >= 70
       ? "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400"
@@ -80,100 +63,103 @@ function FormScoreBadge({ score }: { score: number }) {
   );
 }
 
-function ConsistencyBar({ score }: { score: number }) {
-  const color =
-    score >= 60
-      ? "bg-green-500"
-      : score >= 30
-      ? "bg-yellow-500"
-      : "bg-gray-400";
-  return (
-    <div className="flex items-center gap-1.5">
-      <div className="w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
-        <div className={`${color} h-1.5 rounded-full`} style={{ width: `${score}%` }} />
-      </div>
-      <span className="text-xs tabular-nums text-gray-500 dark:text-gray-400">{score}%</span>
-    </div>
-  );
+interface RankedStarter {
+  starter: AnalysisStarter;
+  cs: number;
+  distSignal: DistanceSignal;
+  calcPct: number;
+  streckPct: number;
+  value: number;
+  rank: number;
+  isValue: boolean;
 }
 
-function TimeAdjCell({ adj }: { adj: number | null }) {
-  if (adj === null) return <span className="text-gray-400 dark:text-gray-600">–</span>;
-  const color =
-    adj < 0
-      ? "text-green-600 dark:text-green-400"
-      : adj > 0
-      ? "text-red-500 dark:text-red-400"
-      : "text-gray-500 dark:text-gray-400";
-  return (
-    <span className={`text-xs font-mono tabular-nums ${color}`}>
-      {adj > 0 ? "+" : ""}{adj.toFixed(1)}s
-    </span>
-  );
+function rankStarters(
+  starters: AnalysisStarter[],
+  raceMeters: number,
+  raceStartMethod: string
+): RankedStarter[] {
+  // Beräkna distanssignal per häst (för visning)
+  const withDist = starters.map((s) => {
+    const records: LifeRecord[] = Array.isArray(s.life_records) ? s.life_records : [];
+    const distSignal = computeDistanceSignal(records, raceMeters, raceStartMethod);
+    const cs = s.formscore ?? 0;
+
+    const betDist = s.bet_distribution;
+    const streckPct = betDist != null && isFinite(Number(betDist)) ? Number(betDist) : 0;
+
+    // Beräknad chans baserad på CS relativt fältet
+    const totalCS = starters.reduce((sum, st) => sum + (st.formscore ?? 0), 0);
+    const calcPct = totalCS > 0 ? Math.round(((cs / totalCS) * 100) * 10) / 10 : 0;
+
+    const value = streckPct > 0 ? Math.round((calcPct - streckPct) * 10) / 10 : 0;
+    const isValue = cs > 55 && value > 0;
+
+    return { starter: s, cs, distSignal, calcPct, streckPct, value, rank: 0, isValue };
+  });
+
+  withDist.sort((a, b) => b.cs - a.cs);
+  withDist.forEach((r, i) => (r.rank = i + 1));
+  return withDist;
 }
 
-function ValueIndexCell({ vi }: { vi: number }) {
-  if (vi > 0)
-    return (
-      <span className="text-xs font-semibold text-green-600 dark:text-green-400 whitespace-nowrap">
-        +{vi.toFixed(1)}% ✓
-      </span>
-    );
-  if (vi < -2)
-    return (
-      <span className="text-xs text-red-500 dark:text-red-400 whitespace-nowrap">
-        {vi.toFixed(1)}%
-      </span>
-    );
-  return (
-    <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
-      {vi > 0 ? "+" : ""}{vi.toFixed(1)}%
-    </span>
-  );
-}
+export function AnalysisPanel({ starters, raceMeters, raceStartMethod }: AnalysisPanelProps) {
+  const ranked = rankStarters(starters, raceMeters, raceStartMethod);
+  const hasStreckning = ranked.some((r) => r.streckPct > 0);
 
-function EnhancedAnalysisSection({ starters }: { starters: AnalysisStarter[] }) {
-  const enhanced: HorseAnalysis[] = analyzeRaceEnhanced(starters);
+  const distLabel =
+    raceMeters <= 1800 ? "kort" : raceMeters <= 2400 ? "medel" : "lång";
+
   return (
-    <div className="mt-4 border-t border-indigo-200 dark:border-indigo-800/40 pt-3">
-      <h4 className="text-xs font-bold text-indigo-700 dark:text-indigo-300 mb-1">
-        Utökad analys — sammansatt poäng
-      </h4>
+    <div className="mt-3 bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800/50 rounded-xl p-4">
+      <h3 className="text-sm font-bold text-indigo-700 dark:text-indigo-300 mb-1">
+        Analys — Composite Score
+      </h3>
       <p className="text-xs text-indigo-600 dark:text-indigo-400/80 mb-2">
-        Viktad form (35%) + värdeindex (25%) + konsistens (25%) + tid (15%).
-        Grön rad = systemet bedömer hästen som undervärderad (VÄRDE).
+        CS (0–100) = form (30%) + vinstprocent (20%) + odds (15%) + tid (15%) + konsistens (10%) + distans (5%) + spår (5%).
+        {" "}Distans: {distLabel} ({raceMeters} m, {raceStartMethod}start).
+        {" "}Spelvärde = CS-andel − streckning.
       </p>
+
+      {!hasStreckning && (
+        <p className="text-xs text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded px-2 py-1 mb-2">
+          Streckningsdata saknas — hämta om spelet när poolen är öppen.
+        </p>
+      )}
+
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-xs text-indigo-500 dark:text-indigo-400/60 border-b border-indigo-200 dark:border-indigo-800/40">
               <th className="text-left py-1 pr-2 font-medium w-8">Rank</th>
               <th className="text-left py-1 pr-2 font-medium">Häst</th>
-              <th className="text-center py-1 pr-2 font-medium w-16">Form</th>
-              <th className="text-left py-1 pr-2 font-medium min-w-[90px]">Konsistens</th>
-              <th className="text-right py-1 pr-2 font-medium w-20">Tid</th>
-              <th className="text-right py-1 pr-2 font-medium w-20">Värde</th>
-              <th className="text-right py-1 pr-2 font-medium w-16">Poäng</th>
+              <th className="text-center py-1 pr-2 font-medium w-14">CS</th>
+              <th className="text-right py-1 pr-2 font-medium w-16">Odds</th>
+              <th className="text-right py-1 pr-2 font-medium w-20">Beräknad</th>
+              <th className="text-right py-1 pr-2 font-medium w-20">Streckning</th>
+              <th className="text-left py-1 pr-2 font-medium min-w-[100px]">Distans</th>
+              <th className="text-right py-1 pr-2 font-medium min-w-[90px]">Spelvärde</th>
               <th className="text-right py-1 font-medium w-20">Resultat</th>
             </tr>
           </thead>
           <tbody>
-            {enhanced.map((r) => (
+            {ranked.map((r) => (
               <tr
-                key={r.startNumber}
+                key={r.starter.start_number}
                 className={`border-b border-indigo-100 dark:border-indigo-800/20 ${
-                  r.isValue ? "border-l-2 border-l-green-500" : ""
-                } ${r.isValue ? "bg-green-50 dark:bg-green-900/10" : ""}`}
+                  r.isValue ? "border-l-2 border-l-green-500 bg-green-50 dark:bg-green-900/10" : ""
+                }`}
               >
                 <td className="py-1.5 pr-2 tabular-nums">
                   {r.rank === 1 ? (
-                    <span className="font-bold text-yellow-600 dark:text-yellow-400">🥇 #1</span>
+                    <span className="font-bold text-yellow-600 dark:text-yellow-400">#1</span>
                   ) : (
                     <span className="text-gray-400 dark:text-gray-500 text-xs">#{r.rank}</span>
                   )}
                 </td>
                 <td className="py-1.5 pr-2 font-medium text-gray-900 dark:text-gray-100">
-                  {r.horseName}
+                  <span className="text-gray-400 dark:text-gray-500 text-xs mr-1">{r.starter.start_number}.</span>
+                  {r.starter.horses?.name ?? "–"}
                   {r.isValue && (
                     <span className="ml-1.5 text-[10px] font-bold bg-green-600 text-white px-1 py-0.5 rounded uppercase tracking-wide">
                       Värde
@@ -181,34 +167,61 @@ function EnhancedAnalysisSection({ starters }: { starters: AnalysisStarter[] }) 
                   )}
                 </td>
                 <td className="py-1.5 pr-2 text-center">
-                  <FormScoreBadge score={r.formScore} />
+                  <ScoreBadge score={r.cs} />
+                </td>
+                <td className="py-1.5 pr-2 text-right text-gray-500 dark:text-gray-400 tabular-nums">
+                  {r.starter.odds != null ? `${r.starter.odds.toFixed(1)}x` : "–"}
+                </td>
+                <td className="py-1.5 pr-2 text-right font-mono text-indigo-700 dark:text-indigo-300 tabular-nums">
+                  {r.calcPct}%
+                </td>
+                <td className="py-1.5 pr-2 text-right font-mono tabular-nums">
+                  {r.streckPct > 0 ? (
+                    <span className="text-purple-600 dark:text-purple-400">{r.streckPct}%</span>
+                  ) : (
+                    <span className="text-gray-500 dark:text-gray-600">–</span>
+                  )}
                 </td>
                 <td className="py-1.5 pr-2">
-                  <ConsistencyBar score={r.consistencyScore} />
+                  <DistBadge factor={r.distSignal.factor} label={r.distSignal.label} />
                 </td>
                 <td className="py-1.5 pr-2 text-right">
-                  <TimeAdjCell adj={r.timeAdjustment} />
-                </td>
-                <td className="py-1.5 pr-2 text-right">
-                  <ValueIndexCell vi={r.valueIndex} />
-                </td>
-                <td className="py-1.5 pr-2 text-right font-bold tabular-nums text-indigo-700 dark:text-indigo-300">
-                  {r.compositeScore}
+                  {r.streckPct > 0 ? (
+                    r.value >= 5 ? (
+                      <span className="text-xs font-bold text-green-400 bg-green-100 dark:bg-green-900/40 px-1.5 py-0.5 rounded whitespace-nowrap">
+                        +{r.value} pp
+                      </span>
+                    ) : r.value >= 2 ? (
+                      <span className="text-xs font-semibold text-green-400 bg-green-50 dark:bg-green-900/20 px-1.5 py-0.5 rounded whitespace-nowrap">
+                        +{r.value} pp
+                      </span>
+                    ) : r.value <= -5 ? (
+                      <span className="text-xs text-red-400 bg-red-50 dark:bg-red-900/20 px-1.5 py-0.5 rounded whitespace-nowrap">
+                        {r.value} pp
+                      </span>
+                    ) : (
+                      <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                        {r.value > 0 ? `+${r.value}` : r.value} pp
+                      </span>
+                    )
+                  ) : (
+                    <span className="text-xs text-gray-400 dark:text-gray-500 italic">inväntar streckning</span>
+                  )}
                 </td>
                 <td className="py-1.5 text-right">
-                  {r.finish_position != null ? (
+                  {r.starter.finish_position != null ? (
                     <span
                       className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${
-                        r.finish_position === 1
+                        r.starter.finish_position === 1
                           ? "bg-yellow-400 text-black"
-                          : r.finish_position === 2
+                          : r.starter.finish_position === 2
                           ? "bg-gray-300 text-black"
-                          : r.finish_position === 3
+                          : r.starter.finish_position === 3
                           ? "bg-amber-600 text-white"
                           : "bg-gray-500 text-white"
                       }`}
                     >
-                      {r.finish_position}:a{r.finish_time ? ` ${r.finish_time}` : ""}
+                      {r.starter.finish_position}:a{r.starter.finish_time ? ` ${r.starter.finish_time}` : ""}
                     </span>
                   ) : (
                     <span className="text-gray-400 dark:text-gray-600 text-xs">–</span>
@@ -219,117 +232,14 @@ function EnhancedAnalysisSection({ starters }: { starters: AnalysisStarter[] }) 
           </tbody>
         </table>
       </div>
-    </div>
-  );
-}
-
-export function AnalysisPanel({ starters, raceMeters, raceStartMethod }: AnalysisPanelProps) {
-  const results: StarterAnalysis[] = analyzeRace(starters, raceMeters, raceStartMethod).sort(
-    (a, b) => b.calc_pct - a.calc_pct
-  );
-
-  const hasStreckning = results.some((r) => r.streckning_loaded);
-  const distLabel =
-    raceMeters <= 1800 ? "kort" : raceMeters <= 2400 ? "medel" : "lång";
-
-  return (
-    <div className="mt-3 bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800/50 rounded-xl p-4">
-      <h3 className="text-sm font-bold text-indigo-700 dark:text-indigo-300 mb-1">
-        Matematisk analys — beräknad vinstchans
-      </h3>
-      <p className="text-xs text-indigo-600 dark:text-indigo-400/80 mb-2">
-        Baspoäng: 40% karriärvinst-% + 40% senaste form-% + 20% odds-implicit sannolikhet.
-        Multipliceras med <strong>distansfaktor</strong> (×0.6–×1.35) baserat på hästens
-        historik på {distLabel} distans ({raceMeters} m, {raceStartMethod}start).
-        Spelvärde = beräknad chans − streckning.
-      </p>
-
-      {!hasStreckning && (
-        <p className="text-xs text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded px-2 py-1 mb-2">
-          Streckningsdata saknas — hämta om spelet när V85-poolen är öppen.
-        </p>
-      )}
-
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-xs text-indigo-500 dark:text-indigo-400/60 border-b border-indigo-200 dark:border-indigo-800/40">
-              <th className="text-left py-1 pr-2 font-medium w-6">Nr</th>
-              <th className="text-left py-1 pr-2 font-medium">Häst</th>
-              <th className="text-right py-1 pr-2 font-medium w-20">Beräknad</th>
-              <th className="text-right py-1 pr-2 font-medium w-20">Streckning</th>
-              <th className="text-right py-1 pr-2 font-medium w-16">Odds</th>
-              <th className="text-left py-1 pr-2 font-medium min-w-[100px]">Distans</th>
-              <th className="text-right py-1 pr-2 font-medium min-w-[100px]">Spelvärde</th>
-              <th className="text-right py-1 font-medium w-20">Resultat</th>
-            </tr>
-          </thead>
-          <tbody>
-            {results.map((r) => {
-              const isValue = r.streckning_loaded && r.value >= 2;
-              const starter = starters.find((s) => s.start_number === r.start_number);
-              return (
-                <tr
-                  key={r.start_number}
-                  className={`border-b border-indigo-100 dark:border-indigo-800/20 ${isValue ? "bg-green-50 dark:bg-green-900/20" : ""}`}
-                >
-                  <td className="py-1.5 pr-2 text-gray-400 dark:text-gray-500 tabular-nums">{r.start_number}</td>
-                  <td className="py-1.5 pr-2 font-medium text-gray-900 dark:text-gray-100">{r.horse_name}</td>
-                  <td className="py-1.5 pr-2 text-right font-mono text-indigo-700 dark:text-indigo-300 tabular-nums">
-                    {r.calc_pct}%
-                  </td>
-                  <td className="py-1.5 pr-2 text-right font-mono tabular-nums">
-                    {r.streckning_loaded ? (
-                      <span className="text-purple-600 dark:text-purple-400">{r.streckning_pct}%</span>
-                    ) : (
-                      <span className="text-gray-500 dark:text-gray-600">–</span>
-                    )}
-                  </td>
-                  <td className="py-1.5 pr-2 text-right text-gray-500 dark:text-gray-400 tabular-nums">
-                    {r.odds != null ? `${r.odds.toFixed(1)}x` : "–"}
-                  </td>
-                  <td className="py-1.5 pr-2">
-                    <DistBadge factor={r.dist_signal.factor} label={r.dist_signal.label} />
-                  </td>
-                  <td className="py-1.5 pr-2 text-right">
-                    <ValueBadge value={r.value} active={r.streckning_loaded} />
-                  </td>
-                  <td className="py-1.5 text-right">
-                    {starter?.finish_position != null ? (
-                      <span
-                        className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${
-                          starter.finish_position === 1
-                            ? "bg-yellow-400 text-black"
-                            : starter.finish_position === 2
-                            ? "bg-gray-300 text-black"
-                            : starter.finish_position === 3
-                            ? "bg-amber-600 text-white"
-                            : "bg-gray-500 text-white"
-                        }`}
-                      >
-                        {starter.finish_position}:a{starter.finish_time ? ` ${starter.finish_time}` : ""}
-                      </span>
-                    ) : (
-                      <span className="text-gray-400 dark:text-gray-600 text-xs">–</span>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
 
       <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-indigo-500 dark:text-indigo-400/60">
         <span>↑↑ Vunnit på distansen (×1.35)</span>
         <span>↑ Placerat (×1.1)</span>
         <span>→ Sprungit utan placering</span>
         <span>↓ Annan startmetod</span>
-        <span>↓↓ Aldrig sprungit på distansen (×0.6)</span>
-        <span className="ml-auto">★ = spelvärde ≥ 5 pp</span>
+        <span>↓↓ Aldrig sprungit (×0.6)</span>
       </div>
-
-      <EnhancedAnalysisSection starters={starters} />
     </div>
   );
 }
