@@ -80,15 +80,12 @@ const DIST_LABEL: Record<string, string> = {
   long: "Lång",
 };
 
-const FS_EXPLANATION =
-  "FS – Formscore (0–100): viktat index baserat på senaste form (40%), vinstprocent år (20%), odds (20%) och bästa tid (20%). Innevarande år prioriteras; föregående år kompletterar vid få starter.";
 const CS_EXPLANATION =
-  "CS – Composite Score (0–100): kombinerar FS med värdeindex (odds vs beräknad chans) och konsistens. Ger en bredare helhetsbedömning.";
+  "CS – Composite Score (0–100): viktat index baserat på form (30%), vinstprocent (20%), odds (15%), tid (15%), konsistens (10%), distans (5%) och spårfaktor (5%).";
 
-function FormBadge({ score, label }: { score: number | null; label?: string }) {
+function ScoreBadge({ score }: { score: number | null }) {
   const [open, setOpen] = useState(false);
   if (score == null) return null;
-  const isCS = label === "CS";
   const color =
     score >= 70 ? "bg-green-600" : score >= 40 ? "bg-yellow-600" : "bg-gray-600";
   return (
@@ -101,11 +98,11 @@ function FormBadge({ score, label }: { score: number | null; label?: string }) {
         }}
         className={`${color} text-white text-[10px] font-bold font-mono px-1.5 py-0.5 rounded cursor-pointer select-none`}
       >
-        {label ?? "FS"} {score}
+        CS {score}
       </button>
       {open && (
         <span className="absolute right-0 top-full mt-1 z-20 w-64 bg-gray-900 text-gray-100 text-xs rounded shadow-lg p-2 leading-relaxed">
-          {isCS ? CS_EXPLANATION : FS_EXPLANATION}
+          {CS_EXPLANATION}
         </span>
       )}
     </span>
@@ -288,8 +285,6 @@ export function HorseCard({
   notesSection,
   raceDistance,
   raceStartMethod,
-  compositeScore: compScore,
-  valueIndex: vi,
   isValue,
   sortRank,
   isSelected,
@@ -299,8 +294,6 @@ export function HorseCard({
   notesSection?: ReactNode;
   raceDistance?: number;
   raceStartMethod?: string;
-  compositeScore?: number;
-  valueIndex?: number;
   isValue?: boolean;
   sortRank?: number;
   isSelected?: boolean;
@@ -450,8 +443,7 @@ export function HorseCard({
             )}
           </div>
           <div className="flex items-center gap-1">
-            {starter.formscore != null && <FormBadge score={starter.formscore} />}
-            {compScore != null && <FormBadge score={compScore} label="CS" />}
+            <ScoreBadge score={starter.formscore} />
           </div>
         </div>
       </div>

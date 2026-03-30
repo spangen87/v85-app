@@ -1,4 +1,5 @@
-import type { AtgStarter } from "./atg";
+import type { AtgStarter, LifeRecord } from "./atg";
+import { computeDistanceSignal, computeTrackFactor, parseTimeToSeconds } from "./analysis";
 
 // Vikter för senaste 5 starter (nyast → äldst)
 const FORM_WEIGHTS = [0.40, 0.25, 0.15, 0.11, 0.09];
@@ -18,15 +19,24 @@ function normalize(value: number, min: number, max: number): number {
   return Math.max(0, Math.min(1, (value - min) / (max - min)));
 }
 
-export interface FormscoreInput {
-  starter: AtgStarter;
-  allOddsInRace: (number | null)[];
+/** Race-metadata som behövs för distans- och spårfaktor */
+export interface RaceContext {
+  distance: number;
+  start_method: string;
+  field_size: number;
 }
 
-export function calculateFormscore(starters: AtgStarter[]): number[] {
-  // --- Komponent 1: Senaste form (40%) ---
-  // ATG:s horses-API returnerar inte individuella starter, så last_5_results är tom.
-  // Fallback: beräknad form från vinstprocent (år + karriär).
+/**
+ * Beräknar Composite Score (0–100) per häst i ett lopp.
+ *
+ * CS = 30% senaste form + 20% vinstprocent + 15% odds-index
+ *    + 15% tidindex + 10% konsistens + 5% distansfaktor + 5% spårfaktor
+ */
+export function calculateCompositeScore(
+  starters: AtgStarter[],
+  race: RaceContext
+): number[] {
+  // --- Komponent 1: Senaste form (30%) ---
   const formComponents = starters.map((s) => {
     const results = s.last_5_results;
     if (results.length > 0) {
@@ -34,8 +44,7 @@ export function calculateFormscore(starters: AtgStarter[]): number[] {
         const w = FORM_WEIGHTS[i] ?? 0;
         return sum + w * placeScore(r.place);
       }, 0);
-      // Max möjlig poäng = 10 * sum(weights) = 10
-      return score / 10;
+      return score / 10; // Max = 10 * sum(weights) = 10, normaliserat 0–1
     }
     // Fallback: prioritera innevarande år, komplettera med föregående vid < 2 starter
     const currentStarts = Number(s.starts_current_year) || 0;
@@ -51,7 +60,7 @@ export function calculateFormscore(starters: AtgStarter[]): number[] {
     return lifeStarts > 0 ? lifeWins / lifeStarts : 0;
   });
 
-  // --- Komponent 2: Vinstprocent (20%) — innevarande år, kompletteras med föregående vid < 2 starter ---
+  // --- Komponent 2: Vinstprocent (20%) ---
   const winRates = starters.map((s) => {
     const currentStarts = Number(s.starts_current_year) || 0;
     const currentWins = Number(s.wins_current_year) || 0;
@@ -62,45 +71,73 @@ export function calculateFormscore(starters: AtgStarter[]): number[] {
     return combined > 0 ? (currentWins + prevWins) / combined : 0;
   });
 
-  // --- Komponent 3: Odds-index (20%) — lägre odds = bättre ---
+  // --- Komponent 3: Odds-index (15%) — lägre odds = bättre ---
   const validOdds = starters.map((s) => s.odds).filter((o): o is number => o != null && o > 0);
   const minOdds = validOdds.length ? Math.min(...validOdds) : 1;
   const maxOdds = validOdds.length ? Math.max(...validOdds) : 100;
   const oddsComponents = starters.map((s) => {
     if (!s.odds || s.odds <= 0) return 0;
-    // Inverterat: låga odds → högt index
     return 1 - normalize(s.odds, minOdds, maxOdds);
   });
 
-  // --- Komponent 4: Tidindex (20%) — bästa tid relativt loppet ---
-  // Tolka "1.12,3" som sekunder/km
-  function parseTime(t: string | null): number | null {
-    if (!t) return null;
-    const match = t.match(/(\d+)\.(\d+),(\d+)/);
-    if (!match) return null;
-    const min = parseInt(match[1]);
-    const sec = parseInt(match[2]);
-    const tenth = parseInt(match[3]);
-    return min * 60 + sec + tenth / 10;
-  }
-
-  const times = starters.map((s) => parseTime(s.best_time));
+  // --- Komponent 4: Tidindex (15%) — bästa tid relativt fältet ---
+  const times = starters.map((s) => parseTimeToSeconds(s.best_time));
   const validTimes = times.filter((t): t is number => t != null);
   const minTime = validTimes.length ? Math.min(...validTimes) : 0;
   const maxTime = validTimes.length ? Math.max(...validTimes) : 100;
   const timeComponents = times.map((t) => {
     if (t == null) return 0;
-    // Inverterat: snabb tid → högt index
-    return 1 - normalize(t, minTime, maxTime);
+    return 1 - normalize(t, minTime, maxTime); // Snabb tid → högt index
   });
+
+  // --- Komponent 5: Konsistens (10%) — vinst + platsfrekvens ---
+  const consistencyComponents = starters.map((s) => {
+    const starts = Number(s.starts_total) || 0;
+    if (starts === 0) return 0;
+    const wins = Number(s.wins_total) || 0;
+    const places = wins + (Number(s.places_2nd) || 0) + (Number(s.places_3rd) || 0);
+    return 0.6 * (wins / starts) + 0.4 * (places / starts);
+  });
+
+  // --- Komponent 6: Distansfaktor (5%) — baserat på life_records ---
+  const distComponents = starters.map((s) => {
+    const records: LifeRecord[] = Array.isArray(s.life_records) ? s.life_records : [];
+    const signal = computeDistanceSignal(records, race.distance, race.start_method);
+    // Normalisera faktor 0.6–1.35 → 0–1
+    return normalize(signal.factor, 0.6, 1.35);
+  });
+
+  // --- Komponent 7: Spårfaktor (5%) — post_position + historik ---
+  const rawTrackFactors = starters.map((s) =>
+    computeTrackFactor(
+      s.post_position ?? 1,
+      race.start_method,
+      s.horse_starts_history ?? []
+    )
+  );
+  // Normalisera min-max relativt fältet
+  const trackMin = Math.min(...rawTrackFactors);
+  const trackMax = Math.max(...rawTrackFactors);
+  const trackRange = trackMax - trackMin;
+  const trackComponents = rawTrackFactors.map((f) =>
+    trackRange > 0 ? (f - trackMin) / trackRange : 0.5
+  );
 
   // --- Vägt slutresultat (0–100) ---
   return starters.map((_, i) => {
     const score =
-      formComponents[i] * 0.40 +
+      formComponents[i] * 0.30 +
       winRates[i] * 0.20 +
-      oddsComponents[i] * 0.20 +
-      timeComponents[i] * 0.20;
+      oddsComponents[i] * 0.15 +
+      timeComponents[i] * 0.15 +
+      consistencyComponents[i] * 0.10 +
+      distComponents[i] * 0.05 +
+      trackComponents[i] * 0.05;
     return Math.round(score * 100);
   });
+}
+
+/** @deprecated Använd calculateCompositeScore istället. Behålls för bakåtkompatibilitet. */
+export function calculateFormscore(starters: AtgStarter[]): number[] {
+  return calculateCompositeScore(starters, { distance: 2140, start_method: "auto", field_size: starters.length });
 }

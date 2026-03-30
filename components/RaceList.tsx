@@ -5,7 +5,6 @@ import { HorseCard } from "./HorseCard";
 import { AnalysisPanel } from "./AnalysisPanel";
 import { HorseNotes } from "./notes/HorseNotes";
 import { TopFiveRanking } from "./TopFiveRanking";
-import { analyzeRaceEnhanced } from "@/lib/analysis";
 import type { Group, SystemSelection, SystemHorse } from "@/lib/types";
 
 interface LifeRecord {
@@ -15,7 +14,7 @@ interface LifeRecord {
   time: string;
 }
 
-type SortKey = "number" | "formscore" | "odds" | "bet" | "composite";
+type SortKey = "number" | "odds" | "bet" | "composite";
 
 interface Starter {
   id: string;
@@ -103,8 +102,7 @@ export function RaceList({
   }, [activeRaceNumber]);
 
   const SORT_OPTIONS: { key: SortKey; label: string }[] = [
-    { key: "composite", label: "CS — sammansatt poäng" },
-    { key: "formscore", label: "FS — formscore" },
+    { key: "composite", label: "CS — Composite Score" },
     { key: "number", label: "Startnummer" },
     { key: "odds", label: "Odds (lägst)" },
     { key: "bet", label: "Streck% (högst)" },
@@ -132,7 +130,6 @@ export function RaceList({
           return b.bet_distribution - a.bet_distribution;
         case "composite":
           return (compositeMap[b.start_number] ?? 0) - (compositeMap[a.start_number] ?? 0);
-        case "formscore":
         default:
           return (b.formscore ?? 0) - (a.formscore ?? 0);
       }
@@ -143,15 +140,25 @@ export function RaceList({
 
   const hasActiveFilter = filterValue || hideOutsiders || search.trim().length > 0;
 
-  const enhanced = analyzeRaceEnhanced(
-    activeRace.starters.map((s) => ({ ...s, start_method: activeRace.start_method }))
+  // Bygg compositeMap direkt från DB-lagrad formscore (CS)
+  const compositeMap = Object.fromEntries(
+    activeRace.starters.map((s) => [s.start_number, s.formscore ?? 0])
   );
-  const enhancedMap = Object.fromEntries(enhanced.map((h) => [h.startNumber, h]));
-  const compositeMap = Object.fromEntries(enhanced.map((h) => [h.startNumber, h.compositeScore]));
+
+  // Beräkna "isValue" per häst: CS > 55 och positiv CS-andel vs streckning
+  const totalCS = activeRace.starters.reduce((sum, s) => sum + (s.formscore ?? 0), 0);
+  const valueMap = Object.fromEntries(
+    activeRace.starters.map((s) => {
+      const cs = s.formscore ?? 0;
+      const calcPct = totalCS > 0 ? (cs / totalCS) * 100 : 0;
+      const streckPct = s.bet_distribution ?? 0;
+      return [s.start_number, cs > 55 && streckPct > 0 && calcPct > streckPct];
+    })
+  );
 
   const q = search.trim().toLowerCase();
   const filtered = activeRace.starters
-    .filter((s) => !filterValue || enhancedMap[s.start_number]?.isValue)
+    .filter((s) => !filterValue || valueMap[s.start_number])
     .filter((s) => !hideOutsiders || s.odds == null || s.odds <= 50)
     .filter((s) => {
       if (!q) return true;
@@ -276,7 +283,6 @@ export function RaceList({
       {/* Hästlista: en per rad */}
       <div className="flex flex-col gap-2">
         {sorted.map((s, idx) => {
-          const enh = enhancedMap[s.start_number];
           return (
             <div
               key={s.id}
@@ -287,9 +293,7 @@ export function RaceList({
                 starter={s}
                 raceDistance={activeRace.distance}
                 raceStartMethod={activeRace.start_method ?? "auto"}
-                compositeScore={enh?.compositeScore}
-                valueIndex={enh?.valueIndex}
-                isValue={enh?.isValue}
+                isValue={valueMap[s.start_number] ?? false}
                 sortRank={sortKey !== "number" ? idx + 1 : undefined}
                 isSelected={
                   systemMode

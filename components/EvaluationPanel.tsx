@@ -51,7 +51,7 @@ export function EvaluationPanel({ overall, games }: Props) {
       <div className="text-center py-20 text-gray-400 dark:text-gray-500">
         <p className="text-lg mb-2">Inga utvärderade lopp ännu.</p>
         <p className="text-sm">
-          Hämta resultat för avgjorda spel via "Hämta resultat"-knappen på startsidan.
+          Hämta resultat för avgjorda spel via &quot;Hämta resultat&quot;-knappen på startsidan.
         </p>
       </div>
     );
@@ -59,15 +59,21 @@ export function EvaluationPanel({ overall, games }: Props) {
 
   return (
     <div className="flex flex-col gap-8">
+      {/* Förklaring */}
+      <p className="text-sm text-gray-500 dark:text-gray-400">
+        Utvärderar hur ofta hästarna med högst Composite Score (CS) vinner loppet.
+        Topp-3 = de tre hästar med högst CS i varje avdelning.
+      </p>
+
       {/* Totalstatistik */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard
-          label="Topphäst vinner"
+          label="Topprankad (CS) vinner"
           value={`${overall.top_pick_win_rate.toFixed(0)}%`}
           sub={`av ${overall.races_evaluated} avdelningar`}
         />
         <StatCard
-          label="Vinnare i topp-3"
+          label="Vinnare bland topp 3 (CS)"
           value={`${overall.top_3_coverage_rate.toFixed(0)}%`}
           sub="av avdelningarna"
         />
@@ -124,9 +130,9 @@ export function EvaluationPanel({ overall, games }: Props) {
                       <tr className="text-gray-400 dark:text-gray-500 text-xs">
                         <th className="text-left px-5 py-2 font-normal">Avd</th>
                         <th className="text-left px-3 py-2 font-normal">Vinnare</th>
-                        <th className="text-left px-3 py-2 font-normal">Toppval</th>
+                        <th className="text-left px-3 py-2 font-normal">Toppval (CS)</th>
                         <th className="text-center px-3 py-2 font-normal">Toppval vann?</th>
-                        <th className="text-center px-3 py-2 font-normal">I topp-3?</th>
+                        <th className="text-center px-3 py-2 font-normal">Vinnare i topp 3?</th>
                       </tr>
                     </thead>
                     <tbody>
