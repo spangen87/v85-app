@@ -3,6 +3,14 @@ import { EvaluationPanel } from "@/components/EvaluationPanel";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { redirect } from "next/navigation";
 
+interface GameSummary {
+  game_id: string;
+  date: string;
+  game_type: string;
+  track: string;
+  has_results: boolean; // true when at least one starter has finish_position != null
+}
+
 interface StarterRow {
   race_id: string;
   start_number: number;
@@ -145,6 +153,14 @@ export default async function EvaluationPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  // Query A — all games ordered by date descending (limit 100 to prevent unbounded results)
+  const { data: allGamesData } = await supabase
+    .from("games")
+    .select("id, date, game_type, track")
+    .order("date", { ascending: false })
+    .limit(100);
+
+  // Query B — starters with finish_position to determine which games have results
   const { data } = await supabase
     .from("starters")
     .select(`
@@ -158,6 +174,21 @@ export default async function EvaluationPage() {
   const rows = (data ?? []) as unknown as StarterRow[];
   const { overall, games } = computeEvaluation(rows);
 
+  // Derive allGames with has_results flag
+  const resultedGameIds = new Set(
+    rows
+      .map((r) => r.races?.games?.id)
+      .filter(Boolean)
+  );
+
+  const allGames: GameSummary[] = (allGamesData ?? []).map((g) => ({
+    game_id: g.id,
+    date: g.date,
+    game_type: g.game_type,
+    track: g.track,
+    has_results: resultedGameIds.has(g.id),
+  }));
+
   return (
     <main className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white">
       <header className="sticky top-0 z-30 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center justify-between gap-4">
@@ -166,7 +197,7 @@ export default async function EvaluationPage() {
       </header>
 
       <div className="max-w-4xl mx-auto px-4 py-6">
-        <EvaluationPanel overall={overall} games={games} />
+        <EvaluationPanel overall={overall} games={games} allGames={allGames} />
       </div>
     </main>
   );
