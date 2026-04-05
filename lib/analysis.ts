@@ -1,4 +1,5 @@
 import type { HorseStart } from "./atg";
+import type { TrackConfig } from "./types";
 
 export interface LifeRecord {
   start_method: string; // "auto" | "volte"
@@ -92,17 +93,45 @@ function staticTrackFactor(postPosition: number, startMethod: string): number {
 /**
  * Beräknar spårfaktor (0–1) för en häst baserat på post_position.
  * Hybrid: statisk tabell + dynamisk om ≥5 starter med spårdata finns.
+ *
+ * Valfri trackConfig applicerar banspecifika deltajusteringar på den statiska faktorn:
+ *   +0.12 för open stretch-spår (om postPosition finns i open_stretch_lanes)
+ *   -0.08 för korta lopp (om raceDistance <= short_race_threshold och postPosition >= 5)
  */
 export function computeTrackFactor(
   postPosition: number,
   startMethod: string,
-  horseHistory: HorseStart[]
+  horseHistory: HorseStart[],
+  trackConfig?: TrackConfig,
+  raceDistance?: number
 ): number {
   const staticF = staticTrackFactor(postPosition, startMethod);
 
+  let adjustedStaticF = staticF;
+
+  // Open stretch-modifier: +0.12 för spår i open_stretch_lanes
+  if (
+    trackConfig &&
+    trackConfig.open_stretch &&
+    trackConfig.open_stretch_lanes.includes(postPosition)
+  ) {
+    adjustedStaticF += 0.12;
+  }
+
+  // Kort lopp-modifier: -0.08 för yttre spår (>= 5) vid kort lopp
+  if (
+    trackConfig &&
+    trackConfig.short_race_threshold > 0 &&
+    raceDistance !== undefined &&
+    raceDistance <= trackConfig.short_race_threshold &&
+    postPosition >= 5
+  ) {
+    adjustedStaticF -= 0.08;
+  }
+
   const startsWithPos = horseHistory.filter((s) => s.post_position != null);
   if (startsWithPos.length < 5) {
-    return staticF;
+    return adjustedStaticF;
   }
 
   const wins = startsWithPos.filter((s) => s.place === "1").length;
@@ -114,7 +143,7 @@ export function computeTrackFactor(
   const dynamicRaw = 0.6 * (wins / total) + 0.4 * (top3 / total);
   const dynamicF = Math.min(Math.max(dynamicRaw * 2.5, 0), 1);
 
-  return 0.5 * staticF + 0.5 * dynamicF;
+  return 0.5 * adjustedStaticF + 0.5 * dynamicF;
 }
 
 /**
