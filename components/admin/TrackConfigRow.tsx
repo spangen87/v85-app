@@ -21,7 +21,7 @@ export function TrackConfigRow({ initialConfig }: { initialConfig: TrackConfig }
     setLanesError(null);
 
     // Validate open_stretch_lanes when toggle is ON
-    let parsedLanes: number[] = [];
+    const parsedLanes: number[] = [];
     if (openStretch) {
       const tokens = lanesInput.split(",").map((s) => s.trim()).filter(Boolean);
       for (const token of tokens) {
