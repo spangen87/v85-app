@@ -85,3 +85,12 @@ export interface GameSystem {
   created_at: string;
   author_display_name?: string;
 }
+
+export interface TrackConfig {
+  track_name: string;
+  open_stretch: boolean;
+  open_stretch_lanes: number[];
+  short_race_threshold: number;
+  active: boolean;
+  updated_at: string;
+}
