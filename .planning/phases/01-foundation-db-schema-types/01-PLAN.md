@@ -364,7 +364,7 @@ export async function createClient()   // async — requires auth cookies
     npx tsc --noEmit
   </action>
   <verify>
-    <automated>cd /Users/spangen87/Documents/GitHub/v-85-app-git/Namnlös && npx jest lib/__tests__/track_config.test.ts --no-coverage 2>&1 | tail -10</automated>
+    <automated>cd /Users/spangen87/Documents/GitHub/v-85-app-git/Namnlös && npx jest lib/__tests__/track_config.test.ts --no-coverage 2>&1 | tail -10 && npx tsc --noEmit</automated>
   </verify>
   <done>
     - lib/types.ts contains exported TrackConfig interface with all 6 fields

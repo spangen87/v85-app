@@ -396,17 +396,17 @@ describe("getTrackConfig", () => {
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **What exact strings does ATG return for `race.track.name`?**
    - What we know: The field path is `race.track.name` in ATG JSON, stored verbatim in `games.track`
    - What's unclear: Whether ATG uses "Åby" or "Åby travbana", "Jägersro" or "Jägersro travbana", etc.
-   - Recommendation: Make the seed INSERT step in the plan conditional on a preceding query of `SELECT DISTINCT track FROM games ORDER BY track`. If no games rows exist yet (new install), seed with best-guess values and document that they need verification on first real game fetch.
+   - RESOLVED: Verify at execution time using `SELECT DISTINCT track FROM games ORDER BY track` before writing seed data. If no rows exist yet, seed with short-form best-guess values (e.g., "Åby", "Jägersro") and document that values need verification on first real game fetch. Plan Task 2 includes this step explicitly. Plan Task 5 includes a LEFT JOIN cross-check to detect mismatches.
 
 2. **Which tracks have open stretch (öppen sträcka)?**
    - What we know: Solvalla and Jägersro are commonly cited in Swedish trotting as having open stretches
    - What's unclear: Exact list and which lane numbers benefit
-   - Recommendation: Seed with conservative values (only Solvalla=true, all others=false). Admin UI (Phase 3) allows correction without a migration.
+   - RESOLVED: Seed with Solvalla=true (lanes 7–12) and Jägersro=true (lanes 7–12); all others default to false. These values are assumed and correctable via Phase 3 admin UI without a migration.
 
 ---
 
