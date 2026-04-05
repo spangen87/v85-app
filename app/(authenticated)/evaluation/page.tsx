@@ -8,7 +8,7 @@ interface GameSummary {
   date: string;
   game_type: string;
   track: string;
-  has_results: boolean; // true when at least one starter has finish_position != null
+  has_results: boolean; // true only when ALL races in the game have at least one finish_position
 }
 
 interface StarterRow {
@@ -171,23 +171,42 @@ export default async function EvaluationPage() {
     .not("formscore", "is", null)
     .not("finish_position", "is", null);
 
+  // Query C — all races to know total race count per game (needed for completeness check)
+  const { data: allRacesData } = await supabase
+    .from("races")
+    .select("id, game_id");
+
   const rows = (data ?? []) as unknown as StarterRow[];
   const { overall, games } = computeEvaluation(rows);
 
-  // Derive allGames with has_results flag
-  const resultedGameIds = new Set(
-    rows
-      .map((r) => r.races?.games?.id)
-      .filter(Boolean)
-  );
+  // Races with at least one result per game (from Query B)
+  const racesWithResultsByGame = new Map<string, Set<string>>();
+  for (const row of rows) {
+    const gameId = row.races?.games?.id;
+    const raceId = row.race_id;
+    if (gameId && raceId) {
+      if (!racesWithResultsByGame.has(gameId)) racesWithResultsByGame.set(gameId, new Set());
+      racesWithResultsByGame.get(gameId)!.add(raceId);
+    }
+  }
 
-  const allGames: GameSummary[] = (allGamesData ?? []).map((g) => ({
-    game_id: g.id,
-    date: g.date,
-    game_type: g.game_type,
-    track: g.track,
-    has_results: resultedGameIds.has(g.id),
-  }));
+  // Total races per game (from Query C)
+  const totalRacesByGame = new Map<string, number>();
+  for (const race of (allRacesData ?? [])) {
+    totalRacesByGame.set(race.game_id, (totalRacesByGame.get(race.game_id) ?? 0) + 1);
+  }
+
+  const allGames: GameSummary[] = (allGamesData ?? []).map((g) => {
+    const resultRaceCount = racesWithResultsByGame.get(g.id)?.size ?? 0;
+    const totalRaceCount = totalRacesByGame.get(g.id) ?? 0;
+    return {
+      game_id: g.id,
+      date: g.date,
+      game_type: g.game_type,
+      track: g.track,
+      has_results: totalRaceCount > 0 && resultRaceCount >= totalRaceCount,
+    };
+  });
 
   return (
     <main className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white">
