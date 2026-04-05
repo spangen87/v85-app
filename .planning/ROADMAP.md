@@ -48,8 +48,11 @@ Plans:
   3. Rounds that return HTTP 422 (not ready yet) are shown as "Inte redo" and are not counted as errors
   4. Rounds that succeed show "Klar" and rounds that fail with a server error show a distinct error state — both visible simultaneously after a partial-success batch
   5. The button becomes disabled while fetching is in progress and re-enables when the batch completes
-**Plans**: TBD
-**UI hint**: yes
+**Plans**: 2 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — Refactor evaluation page to load all games with result coverage status (EVAL-01)
+- [ ] 02-02-PLAN.md — BulkResultsButton component with sequential fetch, 3-state status, partial failure handling (EVAL-02, EVAL-03, EVAL-04, EVAL-05)
 
 ### Phase 3: Track CS Adjustment & Admin UI
 **Goal**: CS rankings reflect track-specific post-position bias using the configured data, admins can review and correct pre-seeded values, and horse cards show when a track factor changed a horse's CS
@@ -73,5 +76,5 @@ Phases execute in numeric order: 1 → 2 → 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation — DB Schema & Types | 1/1 | Complete   | 2026-04-05 |
-| 2. Bulk Results Fetching | 0/? | Not started | - |
+| 2. Bulk Results Fetching | 0/2 | Not started | - |
 | 3. Track CS Adjustment & Admin UI | 0/? | Not started | - |
