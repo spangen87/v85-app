@@ -33,7 +33,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Calling `getTrackConfig("Solvalla")` from a server action returns a typed `TrackConfig` object (not `null`)
   4. The `TrackConfig` TypeScript interface in `lib/types.ts` compiles without errors and covers all DB columns
   5. Write operations to `track_configs` from the browser anon key are blocked by RLS policy
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+- [ ] 01-PLAN.md — Migration v9 (track_configs table + RLS + 15-row seed), TrackConfig interface, getTrackConfig server action, unit tests
 
 ### Phase 2: Bulk Results Fetching
 **Goal**: Users can fetch results for all pending evaluation rounds with one button click, see per-round status, and continue seeing partial results when some rounds fail or are not yet ready
@@ -69,6 +72,6 @@ Phases execute in numeric order: 1 → 2 → 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation — DB Schema & Types | 0/? | Not started | - |
+| 1. Foundation — DB Schema & Types | 0/1 | Ready to execute | - |
 | 2. Bulk Results Fetching | 0/? | Not started | - |
 | 3. Track CS Adjustment & Admin UI | 0/? | Not started | - |
