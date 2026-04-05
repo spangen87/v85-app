@@ -563,22 +563,19 @@ const { error } = await db
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Badge threshold math (CRITICAL)**
-   - What we know: D-11 says "badge only if CS changes by ≥1 point." The track factor weight is 5%. A delta of +0.12 in the raw factor yields ~0.6 CS points in a naive calculation.
-   - What's unclear: Does the "1 point" threshold apply to the raw factor delta, the estimated single-horse CS impact, or the full field-relative recalculated CS from `AnalysisPanel`? The field-relative normalization in `calculateCompositeScore()` can amplify deltas significantly.
-   - Recommendation: The planner should implement badge logic where `RaceList` computes adjusted CS for all starters (using `calculateCompositeScore()` with and without `trackConfig`), then passes `{ baseCS, adjustedCS }` as props to each `HorseCard`. This ensures the threshold is checked against real CS values. The badge condition becomes `Math.abs(adjustedCS - baseCS) >= 1` which is the most faithful interpretation of D-11.
+1. **Badge threshold math (CRITICAL) — RESOLVED**
+   - Resolution: Use the `delta * 500` heuristic implemented in Plan 02 Task 2. `HorseCard` computes `csDelta = Math.round((adjustedF - baseF) * 500)` and shows the badge when `Math.abs(csDelta) >= 1`. For a +0.12 factor delta, this yields ~60 CS points — well above the threshold. This ensures the badge reliably renders for non-trivial open-stretch and short-race adjustments without requiring full field-relative CS recalculation inside `HorseCard`.
 
-2. **`open_stretch_lanes` when `open_stretch === false`**
-   - What we know: D-02 says the modifier applies when `open_stretch === true` AND `postPosition` is in `open_stretch_lanes`. When `open_stretch === false`, modifier is skipped (D-04).
-   - What's unclear: Should the admin form clear/disable `open_stretch_lanes` when toggle is OFF, or preserve the values for when it's re-enabled?
-   - Recommendation: Preserve values in state (good UX), disable the input visually. On save, submit whatever value is in the field — the modifier logic ignores it when `open_stretch === false`.
+2. **`open_stretch_lanes` when `open_stretch === false` — RESOLVED**
+   - Resolution: Preserve values in state (good UX), disable the input visually. On save, submit whatever value is in the field — the modifier logic ignores it when `open_stretch === false`. Implemented in Plan 03 `TrackConfigRow` with `opacity-50 pointer-events-none` on the lanes input when toggle is off.
 
-3. **Strict vs. non-strict `< threshold` for short-race modifier**
-   - What we know: D-06 example says "spår 5, threshold=1640m, lopp 1640m → negativ delta". However `1640 < 1640` is `false` — the strict less-than would NOT trigger.
-   - What's unclear: Is the intent `race.distance < threshold` (strict) or `race.distance <= threshold` (inclusive)?
-   - Recommendation: The D-06 example implies `<=` (inclusive) was intended. The planner should use `race.distance <= trackConfig.short_race_threshold` for the condition, or flag this for user confirmation.
+3. **Strict vs. non-strict `<= threshold` for short-race modifier — RESOLVED**
+   - Resolution: User confirmed inclusive `<=` (not strict `<`). When `race.distance <= short_race_threshold`, the -0.08 delta applies. Example: Solvalla spår 5, threshold=1640m, lopp 1640m → -0.08 delta IS applied (1640 <= 1640 is true). Plan 01 Task 1 uses `raceDistance <= trackConfig.short_race_threshold` and Test 5 verifies that `raceDistance === threshold` triggers the delta.
+
+4. **staticF clamping — RESOLVED**
+   - Resolution: Apply `Math.max(0, Math.min(1, modifiedStaticF))` after all deltas are applied, before the dynamic blend. This keeps staticF in [0, 1] and prevents out-of-range inputs (e.g., spår 1 at 1.00 + 0.12 open-stretch delta = 1.12 → clamped to 1.0). Plan 01 Task 1 action includes this clamp.
 
 ---
 

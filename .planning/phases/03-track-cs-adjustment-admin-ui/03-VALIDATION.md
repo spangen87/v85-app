@@ -2,8 +2,8 @@
 phase: 3
 slug: track-cs-adjustment-admin-ui
 status: draft
-nyquist_compliant: false
-wave_0_complete: false
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-04-05
 ---
 
@@ -48,7 +48,7 @@ created: 2026-04-05
 | 3-04-01 | 04 | 2 | TRACK-UI-01 | T-3-01 | Admin page inaccessible to non-admins | manual | `npm run dev` → `/admin` | ❌ W0 | ⬜ pending |
 | 3-04-02 | 04 | 2 | TRACK-UI-02 | T-3-01 | Non-admin redirected to `/` | manual | Test with non-admin account | ❌ W0 | ⬜ pending |
 | 3-04-03 | 04 | 2 | TRACK-UI-03 | — | N/A | manual | `npm run dev` → admin form visual inspection | ❌ W0 | ⬜ pending |
-| 3-04-04 | 04 | 2 | TRACK-UI-04 | T-3-02 | Upsert uses service client (bypasses RLS, checked server-side) | unit | `npx jest lib/__tests__/admin_tracks.test.ts` | ❌ W0 | ⬜ pending |
+| 3-04-04 | 04 | 2 | TRACK-UI-04 | T-3-02 | Upsert uses service client (bypasses RLS, checked server-side) | unit | `npx jest lib/__tests__/admin_tracks.test.ts` | ✅ W0 done (Plan 03 Task 1) | ⬜ pending |
 | 3-04-05 | 04 | 2 | TRACK-UI-06 | — | N/A | manual | Test with admin vs non-admin account | ❌ W0 | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
@@ -57,7 +57,7 @@ created: 2026-04-05
 
 ## Wave 0 Requirements
 
-- [ ] `lib/__tests__/admin_tracks.test.ts` — stub for TRACK-UI-04 upsert server action test
+- [x] `lib/__tests__/admin_tracks.test.ts` — stub for TRACK-UI-04 upsert server action test (created in Plan 03 Task 1)
 
 *Existing infrastructure (Jest + ts-jest) covers all unit test requirements. Only one new test file needed for admin server action.*
 
@@ -78,11 +78,11 @@ created: 2026-04-05
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 10s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references (admin_tracks.test.ts created in Plan 03 Task 1)
+- [x] No watch-mode flags
+- [x] Feedback latency < 10s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** signed off (revision 2026-04-05)
