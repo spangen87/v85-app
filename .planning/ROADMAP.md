@@ -51,8 +51,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Refactor evaluation page to load all games with result coverage status (EVAL-01)
-- [ ] 02-02-PLAN.md — BulkResultsButton component with sequential fetch, 3-state status, partial failure handling (EVAL-02, EVAL-03, EVAL-04, EVAL-05)
+- [x] 02-01-PLAN.md — Refactor evaluation page to load all games with result coverage status (EVAL-01)
+- [x] 02-02-PLAN.md — BulkResultsButton component with sequential fetch, 3-state status, partial failure handling (EVAL-02, EVAL-03, EVAL-04, EVAL-05)
 
 ### Phase 3: Track CS Adjustment & Admin UI
 **Goal**: CS rankings reflect track-specific post-position bias using the configured data, admins can review and correct pre-seeded values, and horse cards show when a track factor changed a horse's CS
@@ -65,8 +65,13 @@ Plans:
   4. A horse card shows a green (bra spår) or red (dåligt spår) badge next to CS when the track factor produced a non-zero bonus or penalty for that horse's post position
   5. Navigating to `/admin` as a configured admin user shows a form per track where open stretch, favored lanes, and short-race threshold can be edited and saved
   6. Saving a track update via the admin form persists the change to `track_configs` and the updated value is reflected immediately on next page load
-**Plans**: TBD
-**UI hint**: yes
+**Plans**: 4 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — Extend computeTrackFactor() with open-stretch (+0.12) and short-race (-0.08) deltas; unit tests (TRACK-CS-01, TRACK-CS-02, TRACK-CS-03, TRACK-CS-04, TRACK-CS-06)
+- [ ] 03-02-PLAN.md — Thread TrackConfig prop from page.tsx through RaceList to HorseCard; add TrackAdjustmentBadge (TRACK-CS-05, TRACK-UI-05)
+- [ ] 03-03-PLAN.md — getAllTrackConfigs + upsertTrackConfig server actions; admin page at /admin with per-track TrackConfigRow (TRACK-UI-01, TRACK-UI-02, TRACK-UI-03, TRACK-UI-04)
+- [ ] 03-04-PLAN.md — AuthenticatedLayout async + isAdmin prop; BottomNav 5th Admin tab; TopNav Admin link (TRACK-UI-06)
 
 ## Progress
 
@@ -77,4 +82,4 @@ Phases execute in numeric order: 1 → 2 → 3
 |-------|----------------|--------|-----------|
 | 1. Foundation — DB Schema & Types | 1/1 | Complete   | 2026-04-05 |
 | 2. Bulk Results Fetching | 0/2 | Not started | - |
-| 3. Track CS Adjustment & Admin UI | 0/? | Not started | - |
+| 3. Track CS Adjustment & Admin UI | 0/4 | Not started | - |
