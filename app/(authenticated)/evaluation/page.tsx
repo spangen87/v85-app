@@ -176,13 +176,20 @@ export default async function EvaluationPage() {
     .from("races")
     .select("id, game_id");
 
+  // Query D — races with any finish result, no formscore filter (covers V65/V64/V75 where
+  // starters may lack formscores but results are fully fetched)
+  const { data: resultedRacesData } = await supabase
+    .from("starters")
+    .select("race_id, races(game_id)")
+    .not("finish_position", "is", null);
+
   const rows = (data ?? []) as unknown as StarterRow[];
   const { overall, games } = computeEvaluation(rows);
 
-  // Races with at least one result per game (from Query B)
+  // Races with at least one result per game (from Query D — finish_position only, no formscore)
   const racesWithResultsByGame = new Map<string, Set<string>>();
-  for (const row of rows) {
-    const gameId = row.races?.games?.id;
+  for (const row of (resultedRacesData ?? []) as unknown as { race_id: string; races: { game_id: string } | null }[]) {
+    const gameId = row.races?.game_id;
     const raceId = row.race_id;
     if (gameId && raceId) {
       if (!racesWithResultsByGame.has(gameId)) racesWithResultsByGame.set(gameId, new Set());
