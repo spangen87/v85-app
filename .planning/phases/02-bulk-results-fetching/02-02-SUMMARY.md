@@ -113,6 +113,7 @@ None — no new network endpoints or auth paths introduced. `BulkResultsButton` 
 - FOUND: `.planning/phases/02-bulk-results-fetching/02-02-SUMMARY.md`
 - FOUND commit `833e993` (Task 1)
 - FOUND commit `f56bb6c` (Task 2)
+- Checkpoint human-verify: APPROVED (user confirmed BulkResultsButton works as specified)
 
 ---
 *Phase: 02-bulk-results-fetching*
