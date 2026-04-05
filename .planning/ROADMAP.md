@@ -68,10 +68,10 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Extend computeTrackFactor() with open-stretch (+0.12) and short-race (-0.08) deltas; unit tests (TRACK-CS-01, TRACK-CS-02, TRACK-CS-03, TRACK-CS-04, TRACK-CS-06)
-- [ ] 03-02-PLAN.md — Thread TrackConfig prop from page.tsx through RaceList to HorseCard; add TrackAdjustmentBadge (TRACK-CS-05, TRACK-UI-05)
-- [ ] 03-03-PLAN.md — getAllTrackConfigs + upsertTrackConfig server actions; admin page at /admin with per-track TrackConfigRow (TRACK-UI-01, TRACK-UI-02, TRACK-UI-03, TRACK-UI-04)
-- [ ] 03-04-PLAN.md — AuthenticatedLayout async + isAdmin prop; BottomNav 5th Admin tab; TopNav Admin link (TRACK-UI-06)
+- [x] 03-01-PLAN.md — Extend computeTrackFactor() with open-stretch (+0.12) and short-race (-0.08) deltas; unit tests (TRACK-CS-01, TRACK-CS-02, TRACK-CS-03, TRACK-CS-04, TRACK-CS-06)
+- [x] 03-02-PLAN.md — Thread TrackConfig prop from page.tsx through RaceList to HorseCard; add TrackAdjustmentBadge (TRACK-CS-05, TRACK-UI-05)
+- [x] 03-03-PLAN.md — getAllTrackConfigs + upsertTrackConfig server actions; admin page at /admin with per-track TrackConfigRow (TRACK-UI-01, TRACK-UI-02, TRACK-UI-03, TRACK-UI-04)
+- [x] 03-04-PLAN.md — AuthenticatedLayout async + isAdmin prop; BottomNav 5th Admin tab; TopNav Admin link (TRACK-UI-06)
 
 ## Progress
 
