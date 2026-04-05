@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { BulkResultsButton } from "@/components/BulkResultsButton";
 
 interface RaceEval {
   race_number: number;
@@ -54,6 +55,7 @@ function StatCard({ label, value, sub }: { label: string; value: string; sub?: s
 
 export function EvaluationPanel({ overall, games, allGames }: Props) {
   const [openGame, setOpenGame] = useState<string | null>(null);
+  const pendingGames = allGames.filter((g) => !g.has_results);
 
   if (allGames.length === 0) {
     return (
@@ -68,6 +70,9 @@ export function EvaluationPanel({ overall, games, allGames }: Props) {
 
   return (
     <div className="flex flex-col gap-8">
+      {/* Bulk fetch knapp */}
+      <BulkResultsButton pendingGames={pendingGames} />
+
       {/* Alla omgångar — status per omgång */}
       <div className="flex flex-col gap-2">
         <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
