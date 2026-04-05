@@ -21,11 +21,18 @@ export async function TopNav() {
     ? await Promise.all([getProfile(), getMyGroups()])
     : [null, []];
 
+  const adminIds = (process.env.ADMIN_USER_IDS ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const isAdmin = user != null && adminIds.includes(user.id);
+
   return (
     <nav className="hidden md:flex items-center sticky top-0 z-50 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 px-6 gap-6">
       {tabs.map((tab) => (
         <NavActiveLink key={tab.href} href={tab.href} label={tab.label} />
       ))}
+      {isAdmin && <NavActiveLink href="/admin" label="Admin" />}
       <div className="flex-1" />
       <div className="flex items-center gap-2 py-2">
         <ThemeToggle />
