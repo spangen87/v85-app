@@ -1,6 +1,7 @@
 "use client";
 
-import { computeDistanceSignal, type LifeRecord, type DistanceSignal } from "@/lib/analysis";
+import { computeDistanceSignal, computeTrackFactor, type LifeRecord, type DistanceSignal } from "@/lib/analysis";
+import type { TrackConfig } from "@/lib/types";
 
 interface AnalysisStarter {
   start_number: number;
@@ -17,6 +18,7 @@ interface AnalysisPanelProps {
   starters: AnalysisStarter[];
   raceMeters: number;
   raceStartMethod: string;
+  trackConfig?: TrackConfig;
 }
 
 function DistBadge({ factor, label }: { factor: number; label: string }) {
@@ -72,12 +74,16 @@ interface RankedStarter {
   value: number;
   rank: number;
   isValue: boolean;
+  trackFactorBase: number;
+  trackFactorAdjusted: number;
+  trackFactorDelta: number;
 }
 
 function rankStarters(
   starters: AnalysisStarter[],
   raceMeters: number,
-  raceStartMethod: string
+  raceStartMethod: string,
+  trackConfig?: TrackConfig
 ): RankedStarter[] {
   // Beräkna distanssignal per häst (för visning)
   const withDist = starters.map((s) => {
@@ -95,7 +101,16 @@ function rankStarters(
     const value = streckPct > 0 ? Math.round((calcPct - streckPct) * 10) / 10 : 0;
     const isValue = cs > 55 && value > 0;
 
-    return { starter: s, cs, distSignal, calcPct, streckPct, value, rank: 0, isValue };
+    // Beräkna spårfaktordelta (base vs. banspecifikt justerad)
+    const postPos = (s as { post_position?: number | null }).post_position ?? 1;
+    const horseHistory = (s as { horse_starts_history?: unknown[] }).horse_starts_history ?? [];
+    const trackFactorBase = computeTrackFactor(postPos, raceStartMethod, horseHistory as never[]);
+    const trackFactorAdjusted = trackConfig
+      ? computeTrackFactor(postPos, raceStartMethod, horseHistory as never[], trackConfig, raceMeters)
+      : trackFactorBase;
+    const trackFactorDelta = Math.round((trackFactorAdjusted - trackFactorBase) * 100) / 100;
+
+    return { starter: s, cs, distSignal, calcPct, streckPct, value, rank: 0, isValue, trackFactorBase, trackFactorAdjusted, trackFactorDelta };
   });
 
   withDist.sort((a, b) => b.cs - a.cs);
@@ -103,8 +118,8 @@ function rankStarters(
   return withDist;
 }
 
-export function AnalysisPanel({ starters, raceMeters, raceStartMethod }: AnalysisPanelProps) {
-  const ranked = rankStarters(starters, raceMeters, raceStartMethod);
+export function AnalysisPanel({ starters, raceMeters, raceStartMethod, trackConfig }: AnalysisPanelProps) {
+  const ranked = rankStarters(starters, raceMeters, raceStartMethod, trackConfig);
   const hasStreckning = ranked.some((r) => r.streckPct > 0);
 
   const distLabel =
@@ -138,6 +153,7 @@ export function AnalysisPanel({ starters, raceMeters, raceStartMethod }: Analysi
               <th className="text-right py-1 pr-2 font-medium w-20">Beräknad</th>
               <th className="text-right py-1 pr-2 font-medium w-20">Streckning</th>
               <th className="text-left py-1 pr-2 font-medium min-w-[100px]">Distans</th>
+              {trackConfig && <th className="text-right py-1 pr-2 font-medium w-20">Spårfaktor</th>}
               <th className="text-right py-1 pr-2 font-medium min-w-[90px]">Spelvärde</th>
               <th className="text-right py-1 font-medium w-20">Resultat</th>
             </tr>
@@ -185,6 +201,29 @@ export function AnalysisPanel({ starters, raceMeters, raceStartMethod }: Analysi
                 <td className="py-1.5 pr-2">
                   <DistBadge factor={r.distSignal.factor} label={r.distSignal.label} />
                 </td>
+                {trackConfig && (
+                  <td className="py-1.5 pr-2 text-right tabular-nums">
+                    {Math.abs(r.trackFactorDelta) >= 0.01 ? (
+                      <span
+                        className={`text-xs font-bold px-1.5 py-0.5 rounded ${
+                          r.trackFactorDelta > 0
+                            ? "bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400"
+                            : "bg-red-100 dark:bg-red-900/30 text-red-500 dark:text-red-400"
+                        }`}
+                        title={`Spårfaktor: ${r.trackFactorAdjusted.toFixed(2)} (${r.trackFactorDelta >= 0 ? "+" : ""}${r.trackFactorDelta.toFixed(2)})`}
+                      >
+                        {r.trackFactorAdjusted.toFixed(2)}{" "}
+                        <span className="opacity-70">
+                          ({r.trackFactorDelta >= 0 ? "+" : ""}{r.trackFactorDelta.toFixed(2)})
+                        </span>
+                      </span>
+                    ) : (
+                      <span className="text-xs text-gray-400 dark:text-gray-500">
+                        {r.trackFactorBase.toFixed(2)}
+                      </span>
+                    )}
+                  </td>
+                )}
                 <td className="py-1.5 pr-2 text-right">
                   {r.streckPct > 0 ? (
                     r.value >= 5 ? (

@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import type { ReactNode } from "react";
+import { computeTrackFactor } from "@/lib/analysis";
+import type { TrackConfig } from "@/lib/types";
 
 interface LastResult {
   place: string;
@@ -105,6 +107,56 @@ function ScoreBadge({ score }: { score: number | null }) {
           {CS_EXPLANATION}
         </span>
       )}
+    </span>
+  );
+}
+
+function TrackAdjustmentBadge({
+  delta,
+  trackConfig,
+  postPosition,
+  raceDistance,
+}: {
+  delta: number;
+  trackConfig: TrackConfig;
+  postPosition: number;
+  raceDistance?: number;
+}) {
+  const isPositive = delta > 0;
+  const color = isPositive
+    ? "bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400"
+    : "bg-red-100 dark:bg-red-900/30 text-red-500 dark:text-red-400";
+  const arrow = isPositive ? "↑" : "↓";
+
+  const parts: string[] = [];
+  const openStretchApplied =
+    trackConfig.open_stretch && trackConfig.open_stretch_lanes.includes(postPosition);
+  const shortRaceApplied =
+    trackConfig.short_race_threshold > 0 &&
+    raceDistance !== undefined &&
+    raceDistance <= trackConfig.short_race_threshold &&
+    postPosition >= 5;
+
+  if (openStretchApplied) {
+    parts.push(`Open stretch: +0.12 (spår ${postPosition}, ${trackConfig.track_name})`);
+  }
+  if (shortRaceApplied) {
+    parts.push(`Kort lopp: -0.08 (spår ${postPosition})`);
+  }
+  const tooltip = parts.join(" · ");
+
+  const absCs = Math.abs(delta);
+  const ariaLabel = isPositive
+    ? `Spårjustering: +${absCs} CS-poäng (open stretch)`
+    : `Spårjustering: -${absCs} CS-poäng (kort lopp)`;
+
+  return (
+    <span
+      className={`inline-block text-[10px] font-bold px-1.5 py-0.5 rounded ${color}`}
+      title={tooltip}
+      aria-label={ariaLabel}
+    >
+      {arrow}
     </span>
   );
 }
@@ -289,6 +341,7 @@ export function HorseCard({
   sortRank,
   isSelected,
   onSelect,
+  trackConfig,
 }: {
   starter: Starter;
   notesSection?: ReactNode;
@@ -298,6 +351,7 @@ export function HorseCard({
   sortRank?: number;
   isSelected?: boolean;
   onSelect?: () => void;
+  trackConfig?: TrackConfig;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [fetchedStarts, setFetchedStarts] = useState<FetchedStart[] | null>(null);
@@ -366,6 +420,24 @@ export function HorseCard({
     : isValue
     ? "border-green-400 dark:border-green-600"
     : "border-gray-200 dark:border-gray-800";
+
+  // Beräkna spårjusteringsdelta för TrackAdjustmentBadge
+  const trackDelta: number | null = (() => {
+    if (!trackConfig || starter.post_position == null) return null;
+    const history: never[] = [];
+    const startMethod = raceStartMethod ?? "auto";
+    const baseF = computeTrackFactor(starter.post_position, startMethod, history);
+    const adjustedF = computeTrackFactor(
+      starter.post_position,
+      startMethod,
+      history,
+      trackConfig,
+      raceDistance
+    );
+    const csDelta = Math.round((adjustedF - baseF) * 500);
+    if (Math.abs(csDelta) < 1) return null;
+    return csDelta;
+  })();
 
   return (
     <div
@@ -444,6 +516,14 @@ export function HorseCard({
           </div>
           <div className="flex items-center gap-1">
             <ScoreBadge score={starter.formscore} />
+            {trackDelta !== null && trackConfig && starter.post_position != null && (
+              <TrackAdjustmentBadge
+                delta={trackDelta}
+                trackConfig={trackConfig}
+                postPosition={starter.post_position}
+                raceDistance={raceDistance}
+              />
+            )}
           </div>
         </div>
       </div>
