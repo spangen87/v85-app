@@ -31,14 +31,16 @@ decisions:
   - short_race_threshold=1640 for all tracks (correctable via Phase 3 admin UI)
   - RLS write via service_role only; no authenticated write policy
   - Seed values are best-guess; Phase 3 admin UI provides correction path
+  - ON CONFLICT DO NOTHING used for idempotent seed insert
+  - Migration applied manually via Supabase Dashboard SQL Editor (SUPABASE_ACCESS_TOKEN not set in env)
 metrics:
-  duration: ~10 min
+  duration: ~20 min
   completed: "2026-04-05"
-  tasks_completed: 4
+  tasks_completed: 5
   tasks_total: 5
   files_created: 3
   files_modified: 1
-requirements:
+requirements-completed:
   - TRACK-DB-01
   - TRACK-DB-02
   - TRACK-DB-03
@@ -48,7 +50,22 @@ requirements:
 
 # Phase 01 Plan 01: Foundation DB Schema + Types Summary
 
-**One-liner:** Supabase `track_configs` table with 15 Swedish trotting tracks, RLS policies, `TrackConfig` TypeScript interface, and `getTrackConfig()` server action — all unit-tested and TypeScript-clean.
+**Supabase `track_configs` table with 15 Swedish trotting tracks, RLS policies, `TrackConfig` TypeScript interface, and `getTrackConfig()` server action — all unit-tested and TypeScript-clean.**
+
+## Performance
+
+- **Duration:** ~20 min
+- **Completed:** 2026-04-05
+- **Tasks:** 5/5
+- **Files modified:** 4 (3 created, 1 modified)
+
+## Accomplishments
+
+- `track_configs` table live in Supabase with correct schema, RLS, and 15-row seed
+- `TrackConfig` TypeScript interface exported from `lib/types.ts` — stable for Phase 3 import
+- `getTrackConfig()` server action in `lib/actions/tracks.ts` — tested and passing
+- 3 unit tests (mocked Supabase) covering success path, null return, and array type assertion
+- All 91 tests in the full suite pass; `npx tsc --noEmit` exits 0
 
 ## What Was Built
 
@@ -105,16 +122,17 @@ All 3 tests pass. Full suite: 91 tests passing across 8 test suites.
 
 ## Track Name Verification
 
-**Status: Not yet verified against live database.**
-
 Per STATE.md data risk note: `track_name` must match `games.track` (ATG API `track.name` field) exactly. The seed values use best-guess short-form names (no "travbana" suffix).
 
+**Task 5 checkpoint result (approved):** User confirmed that all Supabase SQL Editor verification checks passed — table exists with 6 columns, 15 seed rows, Solvalla open_stretch=true with lanes {7,8,9,10,11,12}, and 2 RLS policies present. Track name cross-check against games table was also confirmed.
+
 Seed values used:
+
 | Track | open_stretch | open_stretch_lanes | short_race_threshold |
 |-------|-------------|---------------------|---------------------|
 | Solvalla | true | [7,8,9,10,11,12] | 1640 |
-| Åby | false | [] | 1640 |
 | Jägersro | true | [7,8,9,10,11,12] | 1640 |
+| Åby | false | [] | 1640 |
 | Romme | false | [] | 1640 |
 | Bergsåker | false | [] | 1640 |
 | Halmstad | false | [] | 1640 |
@@ -130,17 +148,7 @@ Seed values used:
 
 **open_stretch values note:** Solvalla=true and Jägersro=true are assumed based on known Swedish trotting track layouts. These values should be confirmed and corrected via Phase 3 admin UI if needed.
 
-**Action required at Task 5 checkpoint:** Run the LEFT JOIN verification query against the live games table to detect name mismatches before phase sign-off.
-
-## Task 4 Status: Manual Migration Required
-
-The Supabase CLI `db push` requires a linked project (`SUPABASE_ACCESS_TOKEN` not set in environment, `supabase link` not configured in this worktree). The migration must be applied manually:
-
-1. Open Supabase Dashboard → project `wehxpwfnxefdfiknmgos` → SQL Editor
-2. Copy and paste the full contents of `supabase/migration_v9_track_configs.sql`
-3. Execute the SQL
-
-## Commits
+## Task Commits
 
 | Hash | Type | Description |
 |------|------|-------------|
@@ -148,20 +156,28 @@ The Supabase CLI `db push` requires a linked project (`SUPABASE_ACCESS_TOKEN` no
 | `e8eab40` | chore | Add migration v9 — track_configs table, RLS, 15-row seed |
 | `3c2d428` | feat | Add TrackConfig interface and getTrackConfig server action |
 
+## Decisions Made
+
+- **`ON CONFLICT DO NOTHING` for idempotent seed:** Allows re-running the migration without errors if rows already exist. Phase 3 admin UI is the correct mechanism for value corrections, not re-running the migration.
+- **Migration applied manually:** `SUPABASE_ACCESS_TOKEN` not set in environment; `supabase link` not configured in this worktree. The plan anticipated this fallback — migration was pasted into Supabase Dashboard SQL Editor.
+- **RLS write policy uses service_role, not ADMIN_USER_IDS at DB level:** Admin user enforcement belongs in Phase 3 server action, not in the DB policy. Keeps schema clean and consistent.
+- **Seed values are best-guess, not verified against ATG API strings:** Phase 3 admin UI provides the correction path. Verification against live `games.track` values was confirmed at Task 5 checkpoint.
+
 ## Deviations from Plan
 
 ### Auth Gate: Supabase CLI push not available
 
 **Found during:** Task 4
 **Issue:** `SUPABASE_ACCESS_TOKEN` not set in environment; `supabase link` not configured. `npx supabase db push` exits with "Cannot find project ref."
-**Fix:** Migration must be applied manually via Supabase Dashboard SQL Editor (as the plan itself anticipated as fallback). This is documented at Task 5 checkpoint.
-**Impact:** Task 4 code verification (dry-run confirms migration file is syntactically valid; actual push is manual).
+**Fix:** Migration applied manually via Supabase Dashboard SQL Editor, as the plan itself anticipated as fallback.
+**Impact:** None on final outcome — migration is live and verified.
 
-No other deviations — plan executed exactly as written.
+No code deviations — plan executed exactly as written.
 
 ## Phase 3 Dependency
 
 `TrackConfig` interface in `lib/types.ts` is stable and exported. Phase 3 imports it via:
+
 ```typescript
 import type { TrackConfig } from '@/lib/types';
 ```
@@ -172,20 +188,29 @@ import type { TrackConfig } from '@/lib/types';
 
 None — all code paths are implemented and tested. The seed data values (open_stretch, open_stretch_lanes) are best-guess but are explicitly documented as such and correctable via Phase 3 admin UI.
 
-## Self-Check: PASS (partial — pending Task 5 checkpoint)
+## Next Phase Readiness
+
+- `TrackConfig` interface and `getTrackConfig()` server action are stable — Phase 3 can import directly
+- `track_configs` table is live in Supabase with correct RLS
+- Blocker from STATE.md remains: the interaction between `TRACK_BIAS_VOLTE` and the open-stretch/short-race modifiers needs an explicit "replace vs modulate" decision with worked examples before Phase 3 coding starts
+
+## Self-Check: PASSED
 
 Files created:
-- supabase/migration_v9_track_configs.sql — EXISTS
-- lib/actions/tracks.ts — EXISTS
-- lib/__tests__/track_config.test.ts — EXISTS
-- lib/types.ts (TrackConfig appended) — EXISTS
+- `supabase/migration_v9_track_configs.sql` — EXISTS
+- `lib/actions/tracks.ts` — EXISTS
+- `lib/__tests__/track_config.test.ts` — EXISTS
+- `lib/types.ts` (TrackConfig appended) — EXISTS
 
 Commits:
-- 98fcb75 — EXISTS
-- e8eab40 — EXISTS
-- 3c2d428 — EXISTS
+- `98fcb75` — EXISTS
+- `e8eab40` — EXISTS
+- `3c2d428` — EXISTS
 
 Tests: 3/3 passing. Full suite: 91/91 passing.
-TypeScript: npx tsc --noEmit exits 0.
+TypeScript: `npx tsc --noEmit` exits 0.
+Task 5 checkpoint: APPROVED by user (all Supabase SQL Editor checks passed).
 
-Pending: Task 4 manual migration + Task 5 human verification checkpoint.
+---
+*Phase: 01-foundation-db-schema-types*
+*Completed: 2026-04-05*

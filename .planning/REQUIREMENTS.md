@@ -15,11 +15,11 @@
 
 ### Bankonfiguration — Databas & Typer (TRACK-DB)
 
-- [ ] **TRACK-DB-01**: Ny tabell `track_configs` i Supabase med kolumner för bannamn, open stretch (bool), open stretch-spår (array), kort lopp-gräns (int), aktiv (bool)
-- [ ] **TRACK-DB-02**: Tabell förifyld via migration med kända svenska travbanors konfiguration (15 banor)
-- [ ] **TRACK-DB-03**: TypeScript-interface `TrackConfig` definierat i `lib/types.ts`
-- [ ] **TRACK-DB-04**: Server Action `getTrackConfig(trackName)` i `lib/actions/`
-- [ ] **TRACK-DB-05**: RLS-policy: alla autentiserade kan läsa, skrivning kräver admin (via env-var `ADMIN_USER_IDS`)
+- [x] **TRACK-DB-01**: Ny tabell `track_configs` i Supabase med kolumner för bannamn, open stretch (bool), open stretch-spår (array), kort lopp-gräns (int), aktiv (bool)
+- [x] **TRACK-DB-02**: Tabell förifyld via migration med kända svenska travbanors konfiguration (15 banor)
+- [x] **TRACK-DB-03**: TypeScript-interface `TrackConfig` definierat i `lib/types.ts`
+- [x] **TRACK-DB-04**: Server Action `getTrackConfig(trackName)` i `lib/actions/`
+- [x] **TRACK-DB-05**: RLS-policy: alla autentiserade kan läsa, skrivning kräver admin (via env-var `ADMIN_USER_IDS`)
 
 ### Bankonfiguration — CS-justering (TRACK-CS)
 
@@ -70,11 +70,11 @@
 | EVAL-03 | Phase 2 | Pending |
 | EVAL-04 | Phase 2 | Pending |
 | EVAL-05 | Phase 2 | Pending |
-| TRACK-DB-01 | Phase 1 | Pending |
-| TRACK-DB-02 | Phase 1 | Pending |
-| TRACK-DB-03 | Phase 1 | Pending |
-| TRACK-DB-04 | Phase 1 | Pending |
-| TRACK-DB-05 | Phase 1 | Pending |
+| TRACK-DB-01 | Phase 1 | Complete |
+| TRACK-DB-02 | Phase 1 | Complete |
+| TRACK-DB-03 | Phase 1 | Complete |
+| TRACK-DB-04 | Phase 1 | Complete |
+| TRACK-DB-05 | Phase 1 | Complete |
 | TRACK-CS-01 | Phase 3 | Pending |
 | TRACK-CS-02 | Phase 3 | Pending |
 | TRACK-CS-03 | Phase 3 | Pending |

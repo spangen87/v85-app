@@ -1,3 +1,19 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: verifying
+stopped_at: Completed 01-foundation-db-schema-types-01-PLAN.md — all 5 tasks done, Task 5 checkpoint approved
+last_updated: "2026-04-05T12:24:52.978Z"
+last_activity: 2026-04-05
+progress:
+  total_phases: 3
+  completed_phases: 1
+  total_plans: 1
+  completed_plans: 1
+  percent: 100
+---
+
 # Project State
 
 ## Project Reference
@@ -5,20 +21,21 @@
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** Rätt häst på rätt plats — snabb, datadrivet underlag för att ranka hästar i V85 och liknande spel, utan manuellt arbete.
-**Current focus:** Phase 1 — Foundation (DB Schema & Types)
+**Current focus:** Phase 01 — foundation-db-schema-types
 
 ## Current Position
 
-Phase: 1 of 3 (Foundation — DB Schema & Types)
-Plan: 0 of ? in current phase
-Status: Ready to plan
-Last activity: 2026-04-05 — Roadmap created, requirements mapped, STATE.md initialized
+Phase: 01 (foundation-db-schema-types) — EXECUTING
+Plan: 1 of 1
+Status: Phase complete — ready for verification
+Last activity: 2026-04-05
 
 Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
 **Velocity:**
+
 - Total plans completed: 0
 - Average duration: -
 - Total execution time: -
@@ -30,10 +47,12 @@ Progress: [░░░░░░░░░░] 0%
 | - | - | - | - |
 
 **Recent Trend:**
+
 - Last 5 plans: -
 - Trend: -
 
 *Updated after each plan completion*
+| Phase 01-foundation-db-schema-types P01 | 20 | 5 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -46,6 +65,8 @@ Recent decisions affecting current work:
 - Phase 1: RLS write policy uses service_role (not admin user check in DB); server action enforces ADMIN_USER_IDS env var check before calling service client
 - Phase 3: Track-adjusted CS stays client-side only — never stored in `starters` — to prevent cross-algorithm evaluation comparisons
 - Phase 3: Open-stretch modifier modulates (reduces) existing `TRACK_BIAS_VOLTE` outer-post penalty rather than stacking an additional modifier on top
+- [Phase 01-foundation-db-schema-types]: ON CONFLICT DO NOTHING used for idempotent track_configs seed insert; Phase 3 admin UI is the correction path
+- [Phase 01-foundation-db-schema-types]: Migration v9 applied manually via Supabase Dashboard SQL Editor (SUPABASE_ACCESS_TOKEN not set in env)
 
 ### Pending Todos
 
@@ -58,6 +79,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-05
-Stopped at: Roadmap created and written to disk. REQUIREMENTS.md traceability already populated (phase assignments were set during requirements definition). Ready to run /gsd-plan-phase 1.
+Last session: 2026-04-05T12:24:52.976Z
+Stopped at: Completed 01-foundation-db-schema-types-01-PLAN.md — all 5 tasks done, Task 5 checkpoint approved
 Resume file: None

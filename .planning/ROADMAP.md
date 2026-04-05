@@ -17,7 +17,7 @@ codebase patterns without introducing new dependencies or architectural primitiv
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation — DB Schema & Types** - Create `track_configs` table, seed 10 Swedish tracks, define TypeScript interface and server actions
+- [x] **Phase 1: Foundation — DB Schema & Types** - Create `track_configs` table, seed 10 Swedish tracks, define TypeScript interface and server actions (completed 2026-04-05)
 - [ ] **Phase 2: Bulk Results Fetching** - Add "Hämta alla resultat" button to evaluation view with sequential fetching and per-round status
 - [ ] **Phase 3: Track CS Adjustment & Admin UI** - Wire track config into `computeTrackFactor()`, add HorseCard visual indicator, and global admin page
 
@@ -72,6 +72,6 @@ Phases execute in numeric order: 1 → 2 → 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation — DB Schema & Types | 0/1 | Ready to execute | - |
+| 1. Foundation — DB Schema & Types | 1/1 | Complete   | 2026-04-05 |
 | 2. Bulk Results Fetching | 0/? | Not started | - |
 | 3. Track CS Adjustment & Admin UI | 0/? | Not started | - |
