@@ -43,7 +43,6 @@ Declared values (all multiples of 4):
 | 3xl | 64px | Not used in this phase |
 
 Exceptions:
-- Horse card compact header: `px-3 py-2.5` (10px vertical — existing pattern from HorseCard.tsx, preserved as-is)
 - Admin table row height: minimum 44px to meet touch target requirement on mobile
 - BottomNav height: 64px fixed (existing, unchanged)
 
@@ -56,9 +55,9 @@ Exceptions:
 | Body / stat labels | 12px (`text-xs`) | 400 (normal) | 1.5 |
 | Sub-labels / badges | 10px (`text-[10px]`) | 700 (bold) | 1.0 (leading-none) |
 | Horse name / row labels | 13px (`text-[13px]`) | 700 (bold) | tight (1.25) |
-| Admin section heading | 14px (`text-sm`) | 600 (semibold) | 1.5 |
+| Admin section heading | 14px (`text-sm`) | 700 (bold) | 1.5 |
 
-**Source:** Detected from HorseCard.tsx and AdminTab.tsx existing patterns. These four sizes cover the full range used in this phase. No new sizes introduced.
+**Source:** Detected from HorseCard.tsx and AdminTab.tsx existing patterns. These four sizes cover the full range used in this phase. No new sizes introduced. Exactly 2 declared weights: 400 and 700.
 
 ---
 
@@ -126,7 +125,7 @@ Per-track section (mobile card and desktop row share same fields):
 
 | Field | Input type | Details |
 |-------|-----------|---------|
-| `track_name` | Read-only label | `text-sm font-semibold text-gray-900 dark:text-white` |
+| `track_name` | Read-only label | `text-sm font-bold text-gray-900 dark:text-white` |
 | `open_stretch` | Toggle (checkbox styled as switch) | Label: `"Open stretch"`. Checked = indigo, unchecked = gray-300 |
 | `open_stretch_lanes` | Text input | Placeholder: `"t.ex. 7,8,9,10"`. Accepts comma-separated integers. Visible/editable only when `open_stretch` is true. Validation: each token must parse as integer 1–20 |
 | `short_race_threshold` | Number input | Placeholder: `"0 = inaktiv"`. Unit label `"m"` appended inline. Min: 0, Max: 9999 |
@@ -134,8 +133,9 @@ Per-track section (mobile card and desktop row share same fields):
 
 Section header pattern (matches AdminTab.tsx exactly):
 ```
-text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide
+text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide
 ```
+Note: this is the gray uppercase category label used in AdminTab.tsx and inherited here as-is.
 
 #### 3. "Spara"-knapp (per track row)
 
