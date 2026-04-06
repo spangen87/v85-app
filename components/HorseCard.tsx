@@ -330,6 +330,8 @@ interface FetchedStart {
   date: string;
   track: string;
   time: string;
+  driver: string | null;
+  post_position: number | null;
 }
 
 export function HorseCard({
@@ -342,6 +344,7 @@ export function HorseCard({
   isSelected,
   onSelect,
   trackConfig,
+  internalRaceId,
 }: {
   starter: Starter;
   notesSection?: ReactNode;
@@ -352,6 +355,7 @@ export function HorseCard({
   isSelected?: boolean;
   onSelect?: () => void;
   trackConfig?: TrackConfig;
+  internalRaceId?: string;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [fetchedStarts, setFetchedStarts] = useState<FetchedStart[] | null>(null);
@@ -362,7 +366,10 @@ export function HorseCard({
     setFetchingStarts(true);
     setStartsError(null);
     try {
-      const res = await fetch(`/api/horses/${starter.horse_id}/starts`);
+      const params = new URLSearchParams();
+      if (internalRaceId) params.set("raceId", internalRaceId);
+      params.set("startNumber", String(starter.start_number));
+      const res = await fetch(`/api/horses/${starter.horse_id}/starts?${params}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Okänt fel");
       setFetchedStarts(data.starts);
@@ -814,6 +821,8 @@ export function HorseCard({
                     <tr className="text-gray-400 dark:text-gray-500">
                       <th className="text-left pb-1 font-normal">Datum</th>
                       <th className="text-left pb-1 font-normal">Bana</th>
+                      <th className="text-left pb-1 font-normal">Kusk</th>
+                      <th className="text-center pb-1 font-normal">Sp</th>
                       <th className="text-center pb-1 font-normal">Plac</th>
                       <th className="text-right pb-1 font-normal">Tid</th>
                     </tr>
@@ -823,6 +832,10 @@ export function HorseCard({
                       <tr key={i} className="border-t border-gray-200 dark:border-gray-700">
                         <td className="py-1 text-gray-500 dark:text-gray-400">{r.date}</td>
                         <td className="py-1 text-gray-700 dark:text-gray-300">{r.track}</td>
+                        <td className="py-1 text-gray-700 dark:text-gray-300">{r.driver || "–"}</td>
+                        <td className="py-1 text-center text-gray-500 dark:text-gray-400">
+                          {r.post_position ?? "–"}
+                        </td>
                         <td className="py-1 text-center font-bold text-gray-900 dark:text-white">
                           {r.place || "–"}
                         </td>

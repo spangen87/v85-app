@@ -294,6 +294,7 @@ export function RaceList({
             >
               <HorseCard
                 starter={s}
+                internalRaceId={activeRace.id}
                 raceDistance={activeRace.distance}
                 raceStartMethod={activeRace.start_method ?? "auto"}
                 isValue={valueMap[s.start_number] ?? false}
