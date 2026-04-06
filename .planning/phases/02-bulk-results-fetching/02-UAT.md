@@ -81,22 +81,17 @@ blocked: 0
   fix_commit: "8e7a2c0"
 
 - truth: "Omgångar som inte kan hämtas (t.ex. norska tävlingar) markeras med permanent felstatus och kan tas bort"
-  status: failed
+  status: closed
   reason: "User reported: Norska tävlingar hämtas inte — de ligger kvar som 'Saknar resultat' och nya försök görs varje gång. Det framgår aldrig att det inte går. Borde markeras som fel och kunna tas bort."
   severity: major
   test: 6b
-  root_cause: ""
-  artifacts: []
-  missing:
-    - "Permanent error state i BulkResultsButton när fetch misslyckas med icke-422 fel"
-    - "Möjlighet att ta bort/dölja enskilda omgångar från listan"
+  resolution: "Added ✕ delete button on each 'Saknar resultat' row — calls deleteGame server action (lib/actions/games.ts)"
+  closed_by: "02-03-SUMMARY.md"
 
 - truth: "Listan 'Laddade omgångar' är minimerad/kollapsad som standard"
-  status: failed
+  status: closed
   reason: "User reported: Listan blir för lång — vill att den är minimerad som standard."
   severity: minor
   test: 6c
-  root_cause: ""
-  artifacts: []
-  missing:
-    - "Kollapsbar sektion för 'Laddade omgångar' med collapsed som defaulttillstånd"
+  resolution: "Wrapped 'Laddade omgångar' in collapsible section with showAllGames=false default"
+  closed_by: "02-03-SUMMARY.md"

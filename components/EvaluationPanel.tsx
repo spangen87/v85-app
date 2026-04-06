@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { BulkResultsButton } from "@/components/BulkResultsButton";
+import { deleteGame } from "@/lib/actions/games";
 
 interface RaceEval {
   race_number: number;
@@ -54,8 +56,22 @@ function StatCard({ label, value, sub }: { label: string; value: string; sub?: s
 }
 
 export function EvaluationPanel({ overall, games, allGames }: Props) {
+  const router = useRouter();
   const [openGame, setOpenGame] = useState<string | null>(null);
-  const pendingGames = allGames.filter((g) => !g.has_results);
+  const [showAllGames, setShowAllGames] = useState(false);
+  const [localGames, setLocalGames] = useState(allGames);
+  const pendingGames = localGames.filter((g) => !g.has_results);
+
+  async function handleDeleteGame(gameId: string) {
+    setLocalGames((prev) => prev.filter((g) => g.game_id !== gameId));
+    const result = await deleteGame(gameId);
+    if (result.error) {
+      setLocalGames(allGames);
+      alert(`Kunde inte ta bort omgången: ${result.error}`);
+    } else {
+      router.refresh();
+    }
+  }
 
   if (allGames.length === 0) {
     return (
@@ -73,32 +89,54 @@ export function EvaluationPanel({ overall, games, allGames }: Props) {
       {/* Bulk fetch knapp */}
       <BulkResultsButton pendingGames={pendingGames} />
 
-      {/* Alla omgångar — status per omgång */}
+      {/* Alla omgångar — kollapsibel status per omgång */}
       <div className="flex flex-col gap-2">
-        <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-          Laddade omgångar
-        </h2>
-        <div className="flex flex-col gap-1">
-          {allGames.map((g) => (
-            <div
-              key={g.game_id}
-              className="flex items-center justify-between px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800"
-            >
-              <span className="text-sm text-gray-800 dark:text-gray-200">
-                {g.date} · {g.game_type} · {g.track}
-              </span>
-              {g.has_results ? (
-                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400">
-                  Klar
+        <button
+          onClick={() => setShowAllGames((v) => !v)}
+          className="flex items-center gap-2 text-left group"
+        >
+          <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide group-hover:text-gray-700 dark:group-hover:text-gray-200 transition">
+            Laddade omgångar ({localGames.length})
+          </h2>
+          <span className="text-gray-400 dark:text-gray-500 text-xs">
+            {showAllGames ? "▼" : "▶"}
+          </span>
+        </button>
+
+        {showAllGames && (
+          <div className="flex flex-col gap-1">
+            {localGames.map((g) => (
+              <div
+                key={g.game_id}
+                className="flex items-center justify-between px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800"
+              >
+                <span className="text-sm text-gray-800 dark:text-gray-200">
+                  {g.date} · {g.game_type} · {g.track}
                 </span>
-              ) : (
-                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-400">
-                  Saknar resultat
-                </span>
-              )}
-            </div>
-          ))}
-        </div>
+                <div className="flex items-center gap-2">
+                  {g.has_results ? (
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400">
+                      Klar
+                    </span>
+                  ) : (
+                    <>
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-400">
+                        Saknar resultat
+                      </span>
+                      <button
+                        onClick={() => handleDeleteGame(g.game_id)}
+                        title="Ta bort omgång"
+                        className="text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition text-sm leading-none px-1"
+                      >
+                        ×
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {overall.races_evaluated > 0 && (
