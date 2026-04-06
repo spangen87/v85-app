@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { BulkResultsButton } from "@/components/BulkResultsButton";
+import { deleteGame } from "@/lib/actions/games";
 
 interface RaceEval {
   race_number: number;
@@ -28,9 +31,18 @@ interface Overall {
   top_3_coverage_rate: number;
 }
 
+export interface GameSummary {
+  game_id: string;
+  date: string;
+  game_type: string;
+  track: string;
+  has_results: boolean;
+}
+
 interface Props {
   overall: Overall;
   games: GameEval[];
+  allGames: GameSummary[]; // alla laddade omgångar, inkl. de utan resultat
 }
 
 function StatCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
@@ -43,15 +55,30 @@ function StatCard({ label, value, sub }: { label: string; value: string; sub?: s
   );
 }
 
-export function EvaluationPanel({ overall, games }: Props) {
+export function EvaluationPanel({ overall, games, allGames }: Props) {
+  const router = useRouter();
   const [openGame, setOpenGame] = useState<string | null>(null);
+  const [showAllGames, setShowAllGames] = useState(false);
+  const [localGames, setLocalGames] = useState(allGames);
+  const pendingGames = localGames.filter((g) => !g.has_results);
 
-  if (overall.races_evaluated === 0) {
+  async function handleDeleteGame(gameId: string) {
+    setLocalGames((prev) => prev.filter((g) => g.game_id !== gameId));
+    const result = await deleteGame(gameId);
+    if (result.error) {
+      setLocalGames(allGames);
+      alert(`Kunde inte ta bort omgången: ${result.error}`);
+    } else {
+      router.refresh();
+    }
+  }
+
+  if (allGames.length === 0) {
     return (
       <div className="text-center py-20 text-gray-400 dark:text-gray-500">
-        <p className="text-lg mb-2">Inga utvärderade lopp ännu.</p>
+        <p className="text-lg mb-2">Inga laddade omgångar ännu.</p>
         <p className="text-sm">
-          Hämta resultat för avgjorda spel via &quot;Hämta resultat&quot;-knappen på startsidan.
+          Hämta en omgång via startsidan för att börja analysera.
         </p>
       </div>
     );
@@ -59,127 +86,184 @@ export function EvaluationPanel({ overall, games }: Props) {
 
   return (
     <div className="flex flex-col gap-8">
-      {/* Förklaring */}
-      <p className="text-sm text-gray-500 dark:text-gray-400">
-        Utvärderar hur ofta hästarna med högst Composite Score (CS) vinner loppet.
-        Topp-3 = de tre hästar med högst CS i varje avdelning.
-      </p>
+      {/* Bulk fetch knapp */}
+      <BulkResultsButton pendingGames={pendingGames} />
 
-      {/* Totalstatistik */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard
-          label="Topprankad (CS) vinner"
-          value={`${overall.top_pick_win_rate.toFixed(0)}%`}
-          sub={`av ${overall.races_evaluated} avdelningar`}
-        />
-        <StatCard
-          label="Vinnare bland topp 3 (CS)"
-          value={`${overall.top_3_coverage_rate.toFixed(0)}%`}
-          sub="av avdelningarna"
-        />
-        <StatCard
-          label="Spel utvärderade"
-          value={String(overall.games_evaluated)}
-          sub={`${overall.races_evaluated} avdelningar totalt`}
-        />
-      </div>
+      {/* Alla omgångar — kollapsibel status per omgång */}
+      <div className="flex flex-col gap-2">
+        <button
+          onClick={() => setShowAllGames((v) => !v)}
+          className="flex items-center gap-2 text-left group"
+        >
+          <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide group-hover:text-gray-700 dark:group-hover:text-gray-200 transition">
+            Laddade omgångar ({localGames.length})
+          </h2>
+          <span className="text-gray-400 dark:text-gray-500 text-xs">
+            {showAllGames ? "▼" : "▶"}
+          </span>
+        </button>
 
-      {/* Per spel */}
-      <div className="flex flex-col gap-3">
-        {games.map((game) => {
-          const isOpen = openGame === game.game_id;
-          return (
-            <div
-              key={game.game_id}
-              className="bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden"
-            >
-              <button
-                onClick={() => setOpenGame(isOpen ? null : game.game_id)}
-                className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+        {showAllGames && (
+          <div className="flex flex-col gap-1">
+            {localGames.map((g) => (
+              <div
+                key={g.game_id}
+                className="flex items-center justify-between px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800"
               >
-                <div className="flex items-center gap-3">
-                  <span className="text-gray-900 dark:text-white font-semibold">
-                    {game.date} · {game.game_type} · {game.track}
-                  </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {game.races_evaluated} avd
-                  </span>
+                <span className="text-sm text-gray-800 dark:text-gray-200">
+                  {g.date} · {g.game_type} · {g.track}
+                </span>
+                <div className="flex items-center gap-2">
+                  {g.has_results ? (
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400">
+                      Klar
+                    </span>
+                  ) : (
+                    <>
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-400">
+                        Saknar resultat
+                      </span>
+                      <button
+                        onClick={() => handleDeleteGame(g.game_id)}
+                        title="Ta bort omgång"
+                        className="text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition text-sm leading-none px-1"
+                      >
+                        ×
+                      </button>
+                    </>
+                  )}
                 </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  <span
-                    className={`text-xs font-bold px-2 py-1 rounded-full ${
-                      game.top_pick_win_rate >= 40
-                        ? "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400"
-                        : game.top_pick_win_rate >= 20
-                        ? "bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-400"
-                        : "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400"
-                    }`}
-                  >
-                    Topp {game.top_pick_win_rate.toFixed(0)}%
-                  </span>
-                  <span className="text-gray-400 dark:text-gray-500 text-sm">
-                    {isOpen ? "▲" : "▼"}
-                  </span>
-                </div>
-              </button>
-
-              {isOpen && (
-                <div className="border-t border-gray-200 dark:border-gray-700 overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-gray-400 dark:text-gray-500 text-xs">
-                        <th className="text-left px-5 py-2 font-normal">Avd</th>
-                        <th className="text-left px-3 py-2 font-normal">Vinnare</th>
-                        <th className="text-left px-3 py-2 font-normal">Toppval (CS)</th>
-                        <th className="text-center px-3 py-2 font-normal">Toppval vann?</th>
-                        <th className="text-center px-3 py-2 font-normal">Vinnare i topp 3?</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {game.races.map((race) => (
-                        <tr
-                          key={race.race_number}
-                          className={`border-t border-gray-200 dark:border-gray-700 ${
-                            race.top_pick_won
-                              ? "bg-green-50 dark:bg-green-900/20"
-                              : race.top_3_covered_winner
-                              ? "bg-yellow-50 dark:bg-yellow-900/20"
-                              : "bg-red-50 dark:bg-red-900/10"
-                          }`}
-                        >
-                          <td className="px-5 py-2 text-gray-500 dark:text-gray-400">
-                            {race.race_number}
-                          </td>
-                          <td className="px-3 py-2 font-medium text-gray-900 dark:text-white">
-                            {race.winner_name || "–"}
-                          </td>
-                          <td className="px-3 py-2 text-gray-700 dark:text-gray-300">
-                            {race.top_pick_name || "–"}
-                          </td>
-                          <td className="px-3 py-2 text-center">
-                            {race.top_pick_won ? (
-                              <span className="text-green-600 dark:text-green-400 font-bold">Ja</span>
-                            ) : (
-                              <span className="text-red-500 dark:text-red-400">Nej</span>
-                            )}
-                          </td>
-                          <td className="px-3 py-2 text-center">
-                            {race.top_3_covered_winner ? (
-                              <span className="text-green-600 dark:text-green-400 font-bold">Ja</span>
-                            ) : (
-                              <span className="text-red-500 dark:text-red-400">Nej</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          );
-        })}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
+
+      {overall.races_evaluated > 0 && (
+        <>
+          {/* Förklaring */}
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Utvärderar hur ofta hästarna med högst Composite Score (CS) vinner loppet.
+            Topp-3 = de tre hästar med högst CS i varje avdelning.
+          </p>
+
+          {/* Totalstatistik */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <StatCard
+              label="Topprankad (CS) vinner"
+              value={`${overall.top_pick_win_rate.toFixed(0)}%`}
+              sub={`av ${overall.races_evaluated} avdelningar`}
+            />
+            <StatCard
+              label="Vinnare bland topp 3 (CS)"
+              value={`${overall.top_3_coverage_rate.toFixed(0)}%`}
+              sub="av avdelningarna"
+            />
+            <StatCard
+              label="Spel utvärderade"
+              value={String(overall.games_evaluated)}
+              sub={`${overall.races_evaluated} avdelningar totalt`}
+            />
+          </div>
+
+          {/* Per spel */}
+          <div className="flex flex-col gap-3">
+            {games.map((game) => {
+              const isOpen = openGame === game.game_id;
+              return (
+                <div
+                  key={game.game_id}
+                  className="bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden"
+                >
+                  <button
+                    onClick={() => setOpenGame(isOpen ? null : game.game_id)}
+                    className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-gray-900 dark:text-white font-semibold">
+                        {game.date} · {game.game_type} · {game.track}
+                      </span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {game.races_evaluated} avd
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span
+                        className={`text-xs font-bold px-2 py-1 rounded-full ${
+                          game.top_pick_win_rate >= 40
+                            ? "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400"
+                            : game.top_pick_win_rate >= 20
+                            ? "bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-400"
+                            : "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400"
+                        }`}
+                      >
+                        Topp {game.top_pick_win_rate.toFixed(0)}%
+                      </span>
+                      <span className="text-gray-400 dark:text-gray-500 text-sm">
+                        {isOpen ? "▲" : "▼"}
+                      </span>
+                    </div>
+                  </button>
+
+                  {isOpen && (
+                    <div className="border-t border-gray-200 dark:border-gray-700 overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="text-gray-400 dark:text-gray-500 text-xs">
+                            <th className="text-left px-5 py-2 font-normal">Avd</th>
+                            <th className="text-left px-3 py-2 font-normal">Vinnare</th>
+                            <th className="text-left px-3 py-2 font-normal">Toppval (CS)</th>
+                            <th className="text-center px-3 py-2 font-normal">Toppval vann?</th>
+                            <th className="text-center px-3 py-2 font-normal">Vinnare i topp 3?</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {game.races.map((race) => (
+                            <tr
+                              key={race.race_number}
+                              className={`border-t border-gray-200 dark:border-gray-700 ${
+                                race.top_pick_won
+                                  ? "bg-green-50 dark:bg-green-900/20"
+                                  : race.top_3_covered_winner
+                                  ? "bg-yellow-50 dark:bg-yellow-900/20"
+                                  : "bg-red-50 dark:bg-red-900/10"
+                              }`}
+                            >
+                              <td className="px-5 py-2 text-gray-500 dark:text-gray-400">
+                                {race.race_number}
+                              </td>
+                              <td className="px-3 py-2 font-medium text-gray-900 dark:text-white">
+                                {race.winner_name || "–"}
+                              </td>
+                              <td className="px-3 py-2 text-gray-700 dark:text-gray-300">
+                                {race.top_pick_name || "–"}
+                              </td>
+                              <td className="px-3 py-2 text-center">
+                                {race.top_pick_won ? (
+                                  <span className="text-green-600 dark:text-green-400 font-bold">Ja</span>
+                                ) : (
+                                  <span className="text-red-500 dark:text-red-400">Nej</span>
+                                )}
+                              </td>
+                              <td className="px-3 py-2 text-center">
+                                {race.top_3_covered_winner ? (
+                                  <span className="text-green-600 dark:text-green-400 font-bold">Ja</span>
+                                ) : (
+                                  <span className="text-red-500 dark:text-red-400">Nej</span>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
     </div>
   );
 }

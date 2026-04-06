@@ -11,9 +11,10 @@ import { RaceTabBar } from "@/components/RaceTabBar";
 import { RaceTabProvider } from "@/components/RaceTabContext";
 import { getProfile, getMyGroups } from "@/lib/actions/groups";
 import { getDraftForGame } from "@/lib/actions/systems";
+import { getTrackConfig } from "@/lib/actions/tracks";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import type { SystemSelection } from "@/lib/types";
+import type { SystemSelection, TrackConfig } from "@/lib/types";
 
 async function getAllGames(supabase: Awaited<ReturnType<typeof createClient>>) {
   const { data } = await supabase
@@ -72,6 +73,10 @@ export default async function HomePage({
 
   const selectedGame = games.find((g) => g.id === selectedId) ?? null;
   const races = selectedId ? await getRaces(supabase, selectedId) : [];
+
+  const trackConfig: TrackConfig | null = selectedGame
+    ? await getTrackConfig(selectedGame.track)
+    : null;
 
   const initialSystemMode = params.systemMode === '1'
   const initialGroupId = params.groupId ?? null
@@ -152,6 +157,7 @@ export default async function HomePage({
           gameType={selectedGame?.game_type ?? null}
           draftId={draftId}
           initialSelections={initialSelections}
+          trackConfig={trackConfig}
         />
       </div>
     </main>

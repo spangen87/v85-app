@@ -5,7 +5,7 @@ import { HorseCard } from "./HorseCard";
 import { AnalysisPanel } from "./AnalysisPanel";
 import { HorseNotes } from "./notes/HorseNotes";
 import { TopFiveRanking } from "./TopFiveRanking";
-import type { Group, SystemSelection, SystemHorse } from "@/lib/types";
+import type { Group, SystemSelection, SystemHorse, TrackConfig } from "@/lib/types";
 
 interface LifeRecord {
   start_method: string;
@@ -80,6 +80,7 @@ export function RaceList({
   systemSelections,
   onToggleHorse,
   onHorseClick,
+  trackConfig,
 }: {
   races: Race[];
   activeRaceNumber: number;
@@ -89,6 +90,7 @@ export function RaceList({
   systemSelections?: SystemSelection[];
   onToggleHorse?: (raceNumber: number, horse: SystemHorse) => void;
   onHorseClick?: (raceNumber: number, startNumber: number) => void;
+  trackConfig?: TrackConfig | null;
 }) {
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>("composite");
@@ -271,6 +273,7 @@ export function RaceList({
           starters={sorted}
           raceMeters={activeRace.distance}
           raceStartMethod={activeRace.start_method ?? "auto"}
+          trackConfig={trackConfig ?? undefined}
         />
       )}
 
@@ -295,6 +298,7 @@ export function RaceList({
                 raceStartMethod={activeRace.start_method ?? "auto"}
                 isValue={valueMap[s.start_number] ?? false}
                 sortRank={sortKey !== "number" ? idx + 1 : undefined}
+                trackConfig={trackConfig ?? undefined}
                 isSelected={
                   systemMode
                     ? (raceSelections?.horses.some((h) => h.horse_id === s.horse_id) ?? false)

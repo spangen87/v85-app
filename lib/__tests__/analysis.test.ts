@@ -5,6 +5,7 @@ import {
   computeDistanceSignal,
 } from "../analysis";
 import type { HorseStart } from "../atg";
+import type { TrackConfig } from "../types";
 
 describe("parseTimeToSeconds", () => {
   it("parsar 1:12,4 korrekt", () => {
@@ -151,5 +152,64 @@ describe("computeTrackFactor", () => {
     const factor = computeTrackFactor(3, "volte", mixed);
     const staticOnly = computeTrackFactor(3, "volte", []);
     expect(factor).toBeCloseTo(staticOnly, 5);
+  });
+
+  // --- Track config modifier tests ---
+
+  const solvalla: TrackConfig = {
+    track_name: "Solvalla",
+    open_stretch: true,
+    open_stretch_lanes: [7, 8, 9, 10],
+    short_race_threshold: 1640,
+    active: true,
+    updated_at: "2026-01-01T00:00:00Z",
+  };
+
+  it("open stretch +0.12 delta appliceras för konfigurerat yttre spår", () => {
+    // Spår 7 = 0.58, plus 0.12 = 0.70
+    const factor = computeTrackFactor(7, "volte", [], solvalla, undefined);
+    expect(factor).toBeCloseTo(0.70, 5);
+  });
+
+  it("open stretch delta appliceras INTE för spår utanför open_stretch_lanes", () => {
+    // Spår 3 inte i [7,8,9,10] — ingen delta
+    const factor = computeTrackFactor(3, "volte", [], solvalla, undefined);
+    expect(factor).toBeCloseTo(0.88, 5);
+  });
+
+  it("open stretch delta appliceras INTE när open_stretch === false", () => {
+    // Spår 7 men open_stretch=false — ingen delta
+    const factor = computeTrackFactor(7, "volte", [], { ...solvalla, open_stretch: false }, undefined);
+    expect(factor).toBeCloseTo(0.58, 5);
+  });
+
+  it("kort lopp -0.08 delta för postPosition >= 5 och race.distance < threshold", () => {
+    // Spår 5 = 0.72, 1600 < 1640, pos >= 5 → 0.72 - 0.08 = 0.64
+    const factor = computeTrackFactor(5, "volte", [], solvalla, 1600);
+    expect(factor).toBeCloseTo(0.64, 5);
+  });
+
+  it("kort lopp delta appliceras vid race.distance === threshold (inklusiv gräns)", () => {
+    // 1640 <= 1640 är sant → delta appliceras: 0.72 - 0.08 = 0.64
+    const factor = computeTrackFactor(5, "volte", [], solvalla, 1640);
+    expect(factor).toBeCloseTo(0.64, 5);
+  });
+
+  it("kort lopp delta appliceras INTE för postPosition < 5", () => {
+    // Spår 4 = 0.80, pos < 5 → ingen delta
+    const factor = computeTrackFactor(4, "volte", [], solvalla, 1600);
+    expect(factor).toBeCloseTo(0.80, 5);
+  });
+
+  it("båda modifierare appliceras simultant (open stretch OCH kort lopp)", () => {
+    // Spår 7: 0.58 + 0.12 - 0.08 = 0.62
+    const factor = computeTrackFactor(7, "volte", [], solvalla, 1600);
+    expect(factor).toBeCloseTo(0.62, 5);
+  });
+
+  it("ingen trackConfig → identisk output som nuvarande statisk (bakåtkompatibel)", () => {
+    // Inga 4:e/5:e args — ska vara samma som TRACK_BIAS_VOLTE[7] = 0.58
+    const factor = computeTrackFactor(7, "volte", []);
+    expect(factor).toBeCloseTo(0.58, 5);
   });
 });

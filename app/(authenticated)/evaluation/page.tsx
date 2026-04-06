@@ -3,6 +3,14 @@ import { EvaluationPanel } from "@/components/EvaluationPanel";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { redirect } from "next/navigation";
 
+interface GameSummary {
+  game_id: string;
+  date: string;
+  game_type: string;
+  track: string;
+  has_results: boolean; // true only when ALL races in the game have at least one finish_position
+}
+
 interface StarterRow {
   race_id: string;
   start_number: number;
@@ -145,6 +153,14 @@ export default async function EvaluationPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  // Query A — all games ordered by date descending (limit 100 to prevent unbounded results)
+  const { data: allGamesData } = await supabase
+    .from("games")
+    .select("id, date, game_type, track")
+    .order("date", { ascending: false })
+    .limit(100);
+
+  // Query B — starters with finish_position to determine which games have results
   const { data } = await supabase
     .from("starters")
     .select(`
@@ -155,8 +171,49 @@ export default async function EvaluationPage() {
     .not("formscore", "is", null)
     .not("finish_position", "is", null);
 
+  // Query C — all races to know total race count per game (needed for completeness check)
+  const { data: allRacesData } = await supabase
+    .from("races")
+    .select("id, game_id");
+
+  // Query D — races with any finish result, no formscore filter (covers V65/V64/V75 where
+  // starters may lack formscores but results are fully fetched)
+  const { data: resultedRacesData } = await supabase
+    .from("starters")
+    .select("race_id, races(game_id)")
+    .not("finish_position", "is", null);
+
   const rows = (data ?? []) as unknown as StarterRow[];
   const { overall, games } = computeEvaluation(rows);
+
+  // Races with at least one result per game (from Query D — finish_position only, no formscore)
+  const racesWithResultsByGame = new Map<string, Set<string>>();
+  for (const row of (resultedRacesData ?? []) as unknown as { race_id: string; races: { game_id: string } | null }[]) {
+    const gameId = row.races?.game_id;
+    const raceId = row.race_id;
+    if (gameId && raceId) {
+      if (!racesWithResultsByGame.has(gameId)) racesWithResultsByGame.set(gameId, new Set());
+      racesWithResultsByGame.get(gameId)!.add(raceId);
+    }
+  }
+
+  // Total races per game (from Query C)
+  const totalRacesByGame = new Map<string, number>();
+  for (const race of (allRacesData ?? [])) {
+    totalRacesByGame.set(race.game_id, (totalRacesByGame.get(race.game_id) ?? 0) + 1);
+  }
+
+  const allGames: GameSummary[] = (allGamesData ?? []).map((g) => {
+    const resultRaceCount = racesWithResultsByGame.get(g.id)?.size ?? 0;
+    const totalRaceCount = totalRacesByGame.get(g.id) ?? 0;
+    return {
+      game_id: g.id,
+      date: g.date,
+      game_type: g.game_type,
+      track: g.track,
+      has_results: totalRaceCount > 0 && resultRaceCount >= totalRaceCount,
+    };
+  });
 
   return (
     <main className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white">
@@ -166,7 +223,7 @@ export default async function EvaluationPage() {
       </header>
 
       <div className="max-w-4xl mx-auto px-4 py-6">
-        <EvaluationPanel overall={overall} games={games} />
+        <EvaluationPanel overall={overall} games={games} allGames={allGames} />
       </div>
     </main>
   );

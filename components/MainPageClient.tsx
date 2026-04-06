@@ -5,7 +5,7 @@ import { RaceList } from '@/components/RaceList'
 import { SaveSystemDialog } from '@/components/SaveSystemDialog'
 import { SystemSidebar } from '@/components/SystemSidebar'
 import { SystemDrawer } from '@/components/SystemDrawer'
-import type { SystemSelection, SystemHorse, Group, GameSystem } from '@/lib/types'
+import type { SystemSelection, SystemHorse, Group, GameSystem, TrackConfig } from '@/lib/types'
 import { formatRowCost } from '@/lib/atg'
 import { createSystem, updateDraft, getUserDraftsForGame } from '@/lib/actions/systems'
 import { useRaceTab } from '@/components/RaceTabContext'
@@ -29,6 +29,8 @@ interface MainPageClientProps {
   draftId?: string | null
   /** Förvalda hästar från ett utkast */
   initialSelections?: SystemSelection[]
+  /** Banspecifik konfiguration för spårfaktorjustering */
+  trackConfig?: TrackConfig | null
 }
 
 export function MainPageClient({
@@ -41,6 +43,7 @@ export function MainPageClient({
   gameType,
   draftId = null,
   initialSelections = [],
+  trackConfig = null,
 }: MainPageClientProps) {
   const [systemMode, setSystemMode] = useState(initialSystemMode)
   const { activeRaceNumber: activeRace, setActiveRaceNumber: setActiveRace } = useRaceTab()
@@ -192,6 +195,7 @@ export function MainPageClient({
             systemSelections={systemSelections}
             onToggleHorse={handleToggleHorse}
             onHorseClick={handleHorseClick}
+            trackConfig={trackConfig}
           />
         )}
       </div>
