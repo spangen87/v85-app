@@ -63,27 +63,32 @@ export function TrackConfigRow({ initialConfig }: { initialConfig: TrackConfig }
       </h2>
 
       {/* Open stretch toggle */}
-      <div className="flex items-center gap-3">
-        <label className="flex items-center gap-2 cursor-pointer select-none">
-          <button
-            type="button"
-            role="switch"
-            aria-checked={openStretch}
-            onClick={() => setOpenStretch((v) => !v)}
-            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 ${
-              openStretch
-                ? "bg-indigo-600"
-                : "bg-gray-300 dark:bg-gray-600"
-            }`}
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-                openStretch ? "translate-x-4" : "translate-x-0.5"
+      <div className="space-y-1">
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={openStretch}
+              onClick={() => setOpenStretch((v) => !v)}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 ${
+                openStretch
+                  ? "bg-indigo-600"
+                  : "bg-gray-300 dark:bg-gray-600"
               }`}
-            />
-          </button>
-          <span className="text-sm text-gray-700 dark:text-gray-300">Open stretch</span>
-        </label>
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                  openStretch ? "translate-x-4" : "translate-x-0.5"
+                }`}
+              />
+            </button>
+            <span className="text-sm text-gray-700 dark:text-gray-300">Open stretch</span>
+          </label>
+        </div>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Hästar på gynnade spår får +0.12 CS. Aktiverar spårinställningen nedan.
+        </p>
       </div>
 
       {/* Gynnade spår (open_stretch_lanes) — visible only when open_stretch is on */}
@@ -91,6 +96,9 @@ export function TrackConfigRow({ initialConfig }: { initialConfig: TrackConfig }
         <label className="block text-xs font-medium text-gray-600 dark:text-gray-400">
           Gynnade spår
         </label>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Ange spårnummer 1–20, kommaseparerade. Gäller bara när Open stretch är på.
+        </p>
         <input
           type="text"
           value={lanesInput}
@@ -109,6 +117,9 @@ export function TrackConfigRow({ initialConfig }: { initialConfig: TrackConfig }
         <label className="block text-xs font-medium text-gray-600 dark:text-gray-400">
           Distansgräns
         </label>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Lopp kortare än detta värde sänker CS med 0.08. Sätt 0 för att inaktivera.
+        </p>
         <div className="flex items-center gap-2">
           <input
             type="number"

@@ -59,14 +59,9 @@ blocked: 0
 ## Gaps
 
 - truth: "Admin-sidan visar tydligt vad varje inställning gör"
-  status: failed
+  status: closed
   reason: "User reported: Det framgår inte riktigt vad de olika inställningarna gör. Behöver vara tydligare."
   severity: minor
   test: 5
-  root_cause: "TrackConfigRow.tsx har bara korta etiketter (Open stretch, Gynnade spår, Distansgräns) utan förklaringstext om vad inställningarna påverkar. Saknas hjälptext som förklarar CS-effekten (+0.12 / -0.08) och när respektive inställning aktiveras."
-  artifacts:
-    - path: "components/admin/TrackConfigRow.tsx"
-      issue: "Etiketter saknar beskrivning av vad varje fält kontrollerar och dess CS-effekt"
-  missing:
-    - "Lägg till kort hjälptext under varje fältetikett: Open stretch-förklaring, spårnummerformat, distansgräns-effekt"
-  debug_session: ""
+  resolution: "Added help text under each label in TrackConfigRow.tsx (03-05-PLAN.md)"
+  closed_by: "03-05-SUMMARY.md"
