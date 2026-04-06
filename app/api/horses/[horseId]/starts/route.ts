@@ -6,7 +6,7 @@ const HEADERS = {
   Accept: "application/json",
 };
 
-function formatTime(timeObj: Record<string, number> | null | undefined): string {
+function formatKmTime(timeObj: Record<string, number> | null | undefined): string {
   if (!timeObj) return "–";
   const m = timeObj["minutes"] ?? 0;
   const s = timeObj["seconds"] ?? 0;
@@ -14,8 +14,29 @@ function formatTime(timeObj: Record<string, number> | null | undefined): string 
   return `${m}:${String(s).padStart(2, "0")},${t}`;
 }
 
+/**
+ * Derive the ATG race ID from our internal race ID.
+ * Our format:  "{gameType}_{date}_{trackId}_{firstRaceNum}_{ourRaceNum}"
+ * e.g.         "V85_2026-04-05_23_5_1"
+ * ATG format:  "{date}_{trackId}_{firstRaceNum + ourRaceNum - 1}"
+ * e.g.         "2026-04-05_23_5"
+ */
+function deriveAtgRaceId(internalRaceId: string): string | null {
+  // Split on _ — date segment contains hyphens so splitting by _ is safe
+  const parts = internalRaceId.split("_");
+  // Expected: [gameType, date, trackId, firstRaceNum, ourRaceNum]
+  if (parts.length < 5) return null;
+  const date = parts[1];          // "2026-04-05"
+  const trackId = parts[2];       // "23"
+  const firstRaceNum = parseInt(parts[3], 10); // 5
+  const ourRaceNum = parseInt(parts[4], 10);   // 1, 2, 3 …
+  if (isNaN(firstRaceNum) || isNaN(ourRaceNum)) return null;
+  const atgRaceNum = firstRaceNum + ourRaceNum - 1;
+  return `${date}_${trackId}_${atgRaceNum}`;
+}
+
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ horseId: string }> }
 ) {
   const { horseId } = await params;
@@ -24,11 +45,24 @@ export async function GET(
     return NextResponse.json({ error: "horseId saknas" }, { status: 400 });
   }
 
+  const { searchParams } = new URL(request.url);
+  const internalRaceId = searchParams.get("raceId");
+  const startNumber = searchParams.get("startNumber");
+
+  if (!internalRaceId || !startNumber) {
+    return NextResponse.json({ starts: [] });
+  }
+
+  const atgRaceId = deriveAtgRaceId(internalRaceId);
+  if (!atgRaceId) {
+    return NextResponse.json({ error: "Ogiltigt raceId-format" }, { status: 400 });
+  }
+
   try {
-    const res = await fetch(`${ATG_BASE}/horses/${horseId}`, {
-      headers: HEADERS,
-      next: { revalidate: 0 },
-    });
+    const res = await fetch(
+      `${ATG_BASE}/races/${atgRaceId}/start/${startNumber}`,
+      { headers: HEADERS, next: { revalidate: 0 } }
+    );
 
     if (!res.ok) {
       throw new Error(`ATG API svarade ${res.status}`);
@@ -36,22 +70,50 @@ export async function GET(
 
     const raw = await res.json();
 
-    // ATG returnerar starts som en lista under horse.starts eller direkt
-    const startsRaw = (raw["starts"] as Record<string, unknown>[]) ?? [];
+    // API returns either a single object or an array — normalise to array
+    const items: Record<string, unknown>[] = Array.isArray(raw) ? raw : [raw];
+    if (items.length === 0) return NextResponse.json({ starts: [] });
 
-    const starts = startsRaw.slice(0, 5).map((s) => {
-      const race = (s["race"] as Record<string, unknown>) ?? {};
-      const track = (race["track"] as Record<string, unknown>) ?? {};
-      const startDate = String(race["date"] ?? s["date"] ?? "");
-      const trackName = String(track["name"] ?? race["name"] ?? "");
-      const place = String(s["place"] ?? "–");
-      const timeRaw = s["time"] as Record<string, number> | null | undefined;
+    const horseData = (items[0]["horse"] as Record<string, unknown>) ?? {};
+    const results = (horseData["results"] as Record<string, unknown>) ?? {};
+    const records = (results["records"] as Record<string, unknown>[]) ?? [];
+
+    const starts = records.slice(0, 10).map((r) => {
+      const track = (r["track"] as Record<string, unknown>) ?? {};
+      const kmTime = r["kmTime"] as Record<string, number> | null | undefined;
+      const start = (r["start"] as Record<string, unknown>) ?? {};
+
+      const driverRaw = start["driver"];
+      let driverName = "";
+      if (typeof driverRaw === "string") {
+        driverName = driverRaw;
+      } else if (typeof driverRaw === "object" && driverRaw !== null) {
+        const d = driverRaw as Record<string, unknown>;
+        driverName = `${d["firstName"] ?? ""} ${d["lastName"] ?? ""}`.trim();
+      }
+
+      const postPos = start["postPosition"] != null ? Number(start["postPosition"]) : null;
+      const distance = start["distance"] != null ? Number(start["distance"]) : null;
+
+      const race = (r["race"] as Record<string, unknown>) ?? {};
+      const startMethod = String(race["startMethod"] ?? "") || null;
+
+      const horseInStart = (start["horse"] as Record<string, unknown>) ?? {};
+      const shoesInStart = (horseInStart["shoes"] as Record<string, unknown>) ?? {};
+      const shoesFront = "front" in shoesInStart ? Boolean(shoesInStart["front"]) : null;
+      const shoesBack = "back" in shoesInStart ? Boolean(shoesInStart["back"]) : null;
 
       return {
-        date: startDate,
-        track: trackName,
-        place,
-        time: formatTime(timeRaw),
+        date: String(r["date"] ?? ""),
+        track: String(track["name"] ?? ""),
+        place: String(r["place"] ?? "–"),
+        time: formatKmTime(kmTime),
+        driver: driverName || null,
+        post_position: postPos,
+        distance,
+        start_method: startMethod,
+        shoes_front: shoesFront,
+        shoes_back: shoesBack,
       };
     });
 

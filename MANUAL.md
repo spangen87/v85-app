@@ -55,6 +55,8 @@ Appen är byggd för att ge dig ett bättre beslutsunderlag – den ersätter in
 
 Innan du kan analysera en omgång måste du hämta data från ATG.
 
+> **Snabbväg:** Om nästa V86/V85/V75 är tillgänglig visas en **Hämta**-knapp direkt på startsidan – klicka på den för att hämta utan att välja datum manuellt.
+
 1. Välj ett **datum** i datumväljaren högst upp på sidan.
 2. Tillgängliga spel för det datumet laddas automatiskt och visas som knappar (t.ex. **Hämta V85**, **Hämta V75**).
 3. Om inga spel finns för valt datum visas texten "Inga spel".
@@ -89,7 +91,7 @@ Ovanför härtlistan finns tre rader med kontroller:
 | Knapp | Beskrivning |
 |-------|-------------|
 | **Nr** | Startnummer (standard ATG-ordning) |
-| **CS – sammansatt poäng** | Kombinerar form, värde, konsistens, tid och spårfaktor (standardval) |
+| **CS – sammansatt poäng** | Kombinerar form, vinstprocent, odds, tid, konsistens, distans och spårfaktor (standardval) |
 | **FS – formscore** | Formpoäng baserat på vinstprocent, odds och tid |
 | **Odds** | Lägst odds först |
 | **Streck%** | Högst streckprocent i V85-poolen först |
@@ -147,7 +149,7 @@ Klicka på **▼ Visa detaljer** på ett hästkort för att se mer information:
 
 **FS – Formscore (0–100):** viktat index baserat på senaste form (40%), vinstprocent år (20%), odds (20%) och bästa tid (20%). Innevarande år prioriteras; föregående år kompletterar vid få starter.
 
-**CS – Composite Score (0–100):** bredare helhetsbedömning som kombinerar form, värdeindex, konsistens, tid och spårfaktor. Se sektion 6.2 för viktning.
+**CS – Composite Score (0–100):** bredare helhetsbedömning som kombinerar form (30%), vinstprocent (20%), odds (15%), tid (15%), konsistens (10%), distans (5%) och spårfaktor (5%). Se sektion 6.2 för detaljer.
 
 Färgkoder för båda poäng:
 - **Grön** (≥70) – stark häst
@@ -222,10 +224,12 @@ En andra tabell med mer detaljerade komponenter:
 #### Formel för sammansatt poäng (CS)
 
 ```
-CS = 35% × form
-   + 25% × värdeindex
-   + 25% × konsistens
-   + 10% × tidsjustering
+CS = 30% × form
+   + 20% × vinstprocent
+   + 15% × odds
+   + 15% × tid
+   + 10% × konsistens
+   +  5% × distans
    +  5% × spårfaktor
 ```
 
@@ -351,6 +355,8 @@ Sidan visar:
 
 > Utvärderingen kräver att loppresultat har hämtats. Hämta om en omgång efter att loppen körts för att uppdatera resultaten.
 
+> **Tips:** Knappen **Hämta alla resultat** på startsidan hämtar resultat för alla omgångar som saknar dem i ett svep – praktiskt efter en speldag.
+
 ---
 
 ## 10. Ordlista
@@ -362,7 +368,7 @@ Sidan visar:
 | **Odds** | ATG:s vinnarodds på hästen |
 | **Streckning / Streck%** | Hästens procentuella andel av V85-poolens insatser |
 | **Formscore (FS)** | Systemets samlade formpoäng (0–100) baserat på senaste form, vinstprocent, odds och tid |
-| **Composite Score (CS)** | Bredare helhetsbedömning (0–100) som väger in form, värdeindex, konsistens och tid |
+| **Composite Score (CS)** | Bredare helhetsbedömning (0–100) som väger in form, vinstprocent, odds, tid, konsistens, distans och spårfaktor |
 | **Värdeindex (VI)** | Skillnad i procentenheter mellan systemets beräknade vinstchans och odds-implicit sannolikhet |
 | **Spelvärde** | Beräknad chans minus streckprocent – positivt värde indikerar potentiellt värdebet |
 | **Värdebet** | En häst vars verkliga chanser bedöms vara högre än vad marknaden prissätter |
@@ -377,4 +383,4 @@ Sidan visar:
 
 ---
 
-*Manual version 2.0 – V85 Analys*
+*Manual version 2.1 – V85 Analys*

@@ -40,14 +40,17 @@ app/
   (authenticated)/          # Skyddade sidor (kräver inloggning)
     layout.tsx              # Lägger till BottomNav + InstallPrompt
     page.tsx                # Startsida: omgångslista, hästkort, Top 5
+    admin/                  # Adminsida
     evaluation/             # Utvärderingssida (systemets träffsäkerhet)
     manual/                 # Manualsida (renderar MANUAL.md)
     sallskap/               # Sällskapssidor
+    system/                 # Spelsystem-sida (bygga/spara system)
     groups.ts               # (äldre, ev. under avveckling)
   api/
     games/
       available/            # GET ?date=YYYY-MM-DD → tillgängliga ATG-spel
       fetch/                # POST { gameType, gameId } → hämtar omgång från ATG
+      upcoming/             # GET → kommande ATG-spel (används av AutoLoadUpcoming)
       [gameId]/             # GET → hämtar sparad omgång
     horses/
       [horseId]/starts/     # GET → hämtar häststarter från ATG
@@ -63,9 +66,26 @@ components/
   GameSelector.tsx          # Rullgardinsmeny för omgångsval
   BottomNav.tsx             # Mobil-nav: Analys | Utvärdering | Manual
   EvaluationPanel.tsx       # Utvärderingssida-innehåll
+  AutoLoadUpcoming.tsx      # Laddar automatiskt kommande omgångar
+  BulkResultsButton.tsx     # Hämtar resultat för flera omgångar
+  GamePickerBar.tsx         # Spelpickerbar (välj spel i toppnavigering)
+  MainPageClient.tsx        # Client-wrapper för startsidan
+  NavActiveLink.tsx         # Aktiv länkindikator i navigering
+  RaceList.tsx              # Lista med avdelningar och starter
+  RaceTabBar.tsx            # Flikar per avdelning
+  RaceTabContext.tsx        # Context för aktiv avdelningsflik
   ResultsButton.tsx         # Knapp för att hämta loppresultat
-  ThemeToggle.tsx           # Mörkt/ljust tema
+  SaveSystemDialog.tsx      # Dialog för att spara spelsystem
+  StartCountdown.tsx        # Nedräkning till start
+  SystemDrawer.tsx          # Drawer-panel för systemkonfiguration
+  SystemSidebar.tsx         # Sidebar för systembyggaren
+  SystemsPageClient.tsx     # Client-wrapper för systemsidan
+  ThemeProvider.tsx         # Tema-provider (mörkt/ljust)
+  ThemeToggle.tsx           # Mörkt/ljust tema-växlare
+  TopNav.tsx                # Övre navigering (desktop)
   InstallPrompt.tsx         # PWA-installationsprompt
+  UsefulLinks.tsx           # Hjälplänkar
+  admin/                    # Adminkomponenter
   notes/
     HorseNotes.tsx          # Toggle-knapp + anteckningslista per häst
     NoteForm.tsx            # Formulär: text + etikett + sällskapsval
@@ -90,10 +110,14 @@ lib/
   types.ts                  # Delade TS-typer (Group, GroupMember, HorseNote, m.m.)
   supabase/                 # Supabase-klienter (server/browser)
   actions/
+    bets.ts                 # Server actions: spelförslag/bets
+    games.ts                # Server actions: spel
     groups.ts               # Server actions: skapa/lämna sällskap
     notes.ts                # Server actions: hämta/skapa/ta bort anteckningar
     posts.ts                # Server actions: foruminlägg
     sallskap.ts             # Server actions: sällskapsdata
+    systems.ts              # Server actions: spelsystem (game_systems, drafts)
+    tracks.ts               # Server actions: bandata/TrackConfig
 
 supabase/
   schema.sql                # Komplett databasschema
@@ -113,6 +137,10 @@ supabase/
 **group_members** – koppling användare↔sällskap
 **horse_notes** – anteckningar (horse_id, group_id nullable, label, parent_id)
 **group_posts** – foruminlägg (group_id, game_id, parent_id)
+**bets** – spelförslag per omgång (game_id, user_id, horse selections)
+**game_systems** – sparade spelsystem (name, game_id, selections)
+**drafts** – utkast till spelsystem
+**track_configs** – banspecifik konfiguration (open_stretch, short_race_threshold)
 
 ---
 
@@ -133,7 +161,7 @@ spelvärde = beräknad chans − streckning%
 
 ### Utökad analys / Composite Score (CS) – `lib/analysis.ts → analyzeRaceEnhanced()`
 ```
-CS = 35% form + 25% värdeindex + 25% konsistens + 10% tidsjustering + 5% spårfaktor
+CS = 30% form + 20% vinstprocent + 15% odds + 15% tid + 10% konsistens + 5% distans + 5% spårfaktor
 ```
 Häst markeras som "Värde" om CS > 55 och värdeindex > 0.
 
@@ -180,3 +208,5 @@ Pusha med `git push -u origin <branch>`.
 | Nytt sällskapsfunktion | `lib/actions/sallskap.ts`, `components/sallskap/` |
 | Databasändring | Lägg till migration i `supabase/migration_v<N>_<namn>.sql` |
 | Uppdatera manualen | `MANUAL.md` |
+| Ny systemfunktion | `lib/actions/systems.ts`, `components/SystemSidebar.tsx`, `SystemDrawer.tsx` |
+| Banspecifik konfiguration | `lib/actions/tracks.ts`, `supabase/migration_v9_track_configs.sql` |
