@@ -93,6 +93,15 @@ export async function GET(
       }
 
       const postPos = start["postPosition"] != null ? Number(start["postPosition"]) : null;
+      const distance = start["distance"] != null ? Number(start["distance"]) : null;
+
+      const race = (r["race"] as Record<string, unknown>) ?? {};
+      const startMethod = String(race["startMethod"] ?? "") || null;
+
+      const horseInStart = (start["horse"] as Record<string, unknown>) ?? {};
+      const shoesInStart = (horseInStart["shoes"] as Record<string, unknown>) ?? {};
+      const shoesFront = "front" in shoesInStart ? Boolean(shoesInStart["front"]) : null;
+      const shoesBack = "back" in shoesInStart ? Boolean(shoesInStart["back"]) : null;
 
       return {
         date: String(r["date"] ?? ""),
@@ -101,6 +110,10 @@ export async function GET(
         time: formatKmTime(kmTime),
         driver: driverName || null,
         post_position: postPos,
+        distance,
+        start_method: startMethod,
+        shoes_front: shoesFront,
+        shoes_back: shoesBack,
       };
     });
 
