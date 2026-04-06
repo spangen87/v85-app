@@ -2,7 +2,7 @@
 
 ## What This Is
 
-Next.js-app för analys av ATG-travspel (V85 m.fl.). Ger spelare verktyg för att ranka hästar via Formscore (FS) och Composite Score (CS), föra anteckningar i sällskap, diskutera omgångar i ett forum och utvärdera systemets träffsäkerhet mot verkliga resultat. Målgruppen är travspelande sällskap som delar analys och vill fatta bättre beslut inför spel.
+Next.js-app för analys av ATG-travspel (V85 m.fl.). Ger spelare verktyg för att ranka hästar via Formscore (FS) och Composite Score (CS) — nu med banspecifika faktorer (open stretch, korta lopp) — föra anteckningar i sällskap, diskutera omgångar i ett forum och utvärdera systemets träffsäkerhet mot verkliga resultat. Målgruppen är travspelande sällskap som delar analys och vill fatta bättre beslut inför spel.
 
 ## Core Value
 
@@ -26,46 +26,63 @@ Rätt häst på rätt plats — snabb, datadrivet underlag för att ranka hästa
 - ✓ PWA (installerbar, offline-redo) — existing
 - ✓ Mörkt/ljust tema — existing
 - ✓ Manual-sida (renderar MANUAL.md) — existing
+- ✓ Masskämtning av resultat direkt i utvärderingsvyn (en knapp för alla omgångar utan fullständiga resultat) — v1.0
+- ✓ Banstatistik: admin-vy för att konfigurera spårfaktorer per bana (förifyld med känd data) — v1.0
+- ✓ Open stretch-faktor: konfigurerbart vilka spår som gynnas per bana — v1.0
+- ✓ Kort lopp-faktor: konfigurerbar distansgräns per bana — v1.0
+- ✓ CS justeras av banspecifika faktorer (spårbonus/malus) — v1.0
+- ✓ Visuell indikation i hästkortet när banfaktorer påverkat CS — v1.0
 
 ### Active
 
-- [ ] Masskämtning av resultat direkt i utvärderingsvyn (en knapp för alla omgångar utan fullständiga resultat)
-- [ ] Banstatistik: admin-vy för att konfigurera spårfaktorer per bana (förifyld med känd data)
-- [ ] Open stretch-faktor: konfigurerbart vilka spår som gynnas per bana
-- [ ] Kort lopp-faktor: konfigurerbar distansgräns (per bana eller globalt)
-- [ ] CS justeras av banspecifika faktorer (spårbonus/malus)
-- [ ] Visuell indikation i hästkortet när banfaktorer påverkat CS
+*(Inga aktiva krav för v1.1 ännu — definieras i nästa milestone)*
 
 ### Out of Scope
 
-- Startvinge-faktor — prioriteras bort för v1, kan läggas till i v2
-- Realtidsnotiser — hög komplexitet, ej kärna för v1
+- Startvinge-faktor — prioriteras bort för v1, kan läggas till i v2 (STARTVINGE-01/02)
+- Realtidsnotiser — hög komplexitet, ej kärna
 - Mobilapp (native) — webb-först, mobil senare
 - Videomaterial / mediainbäddning — inte relevant för domänen
+- Lagring av track-justerat CS i DB — CS förblir client-computed för att undvika cross-algorithm dataproblem
+- Per-sällskap bankonfiguration — global konfiguration räcker för v1
 
 ## Context
 
-Brownfield-projekt med befintlig kodbas. Analysalgoritmerna finns i `lib/analysis.ts` och `lib/formscore.ts`. CS beräknas client-side i `AnalysisPanel.tsx` med stöd av `computeTrackFactor()` som redan finns i `lib/analysis.ts` men ännu inte hämtar banspecifik konfiguration.
+**v1.0 skeppat 2026-04-06.**
 
-Utvärderingssidan (`app/(authenticated)/evaluation/`) och `EvaluationPanel.tsx` hanterar redan resultatvisning men saknar bulk-hämtning. Resultat hämtas idag via `ResultsButton.tsx` per omgång på startsidan.
+Brownfield-projekt med befintlig kodbas. v1.0 lade till:
+- `track_configs` Supabase-tabell (migration v9) med 15 svenska travbanor
+- Bulk results-knapp i utvärderingsvyn med sekventiell hämtning och tre-status-feedback
+- Banspecifika CS-justeringar i `computeTrackFactor()` (open stretch +0.12, korta lopp -0.08)
+- Admin-sida `/admin` åtkomstskyddad via `ADMIN_USER_IDS` env-var
+- `TrackAdjustmentBadge` i HorseCard + Spårfaktor-kolumn i AnalysisPanel
 
-Supabase-schemat utökas med en ny tabell för bankonfiguration. Alla databasändringar görs som migrationer i `supabase/migration_v<N>_<namn>.sql`.
+Analysalgoritmerna finns i `lib/analysis.ts` och `lib/formscore.ts`. CS beräknas client-side — bankonfigurerade justeringar läses från `track_configs` via server action och skickas ned som prop.
+
+Supabase-schemat utökas med migrationer i `supabase/migration_v<N>_<namn>.sql`.
+
+Uppskattad kodbas: ~69 filer ändrade i v1.0, ~11k rader tillagda.
 
 ## Constraints
 
 - **Tech stack**: Next.js 16 + React 19 + TypeScript + Supabase + Tailwind CSS v4 — ingen ny teknik
 - **Databas**: Alla ändringar via migration-filer, inte direkta schema-redigeringar
 - **Språk**: Allt UI-text på svenska
-- **Säkerhet**: Bankonfiguration kräver att användaren är admin/ägare av sällskap (RLS)
+- **Säkerhet**: Admin-funktioner kräver `ADMIN_USER_IDS` env-var (server-side check + RLS service_role)
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Banfaktorer konfigurerbara (ej hårdkodade) | Bandata kan vara felaktig eller ändras; admin ska kunna korrigera | — Pending |
-| Förifylla med känd bandata | Minskar manuellt arbete; admin behöver bara korrigera avvikelser | — Pending |
-| CS-justering + visuell indikation | Påverkar ranking OCH visar tydligt varför — bättre beslutsstöd | — Pending |
-| Open stretch + korta lopp för v1 | Mest påtagliga faktorer; startvinge deferred till v2 | — Pending |
+| Banfaktorer konfigurerbara (ej hårdkodade) | Bandata kan vara felaktig eller ändras; admin ska kunna korrigera | ✓ Fungerade — 15 banor seedade, admin kan korrigera |
+| Förifylla med känd bandata | Minskar manuellt arbete; admin behöver bara korrigera avvikelser | ✓ Bekräftat — seed + admin-UI är rätt mönster |
+| CS-justering client-side only | CS lagras aldrig i DB — undviker cross-algorithm dataproblem | ✓ Bra beslut, prop-threading fungerade rent |
+| Open stretch reducerar inner-banebias (modifierar TRACK_BIAS_VOLTE) | Ersätter, staplas inte — D-01 i CONTEXT.md | ✓ Implementerat, 8 TDD-tester gröna |
+| Open stretch + korta lopp för v1, startvinge till v2 | Mest påtagliga faktorer för v1 | ✓ Rätt prioritering |
+| `track_name` TEXT PRIMARY KEY (matchar games.track exakt) | Enkel join utan extra ID-kolumn | ✓ Verifierat mot live games-tabell |
+| Migration appliceras manuellt via Supabase Dashboard | SUPABASE_ACCESS_TOKEN ej satt i env | ✓ Accepterad begränsning — dokumenterat i deferred-items |
+| BulkResultsButton: router.refresh() en gång efter hela batchen | Undviker onödiga server-rerenders | ✓ Fungerade — UX smidig |
+| deleteGame server action: service client (bypass RLS) + auth-gate | games-tabellen tillåter endast service_role-skrivning | ✓ Rätt mönster — återanvänder tracks.ts-mönster |
 
 ## Evolution
 
@@ -85,4 +102,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-05 after initialization*
+*Last updated: 2026-04-06 after v1.0 milestone*

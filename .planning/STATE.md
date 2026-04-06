@@ -1,84 +1,60 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: executing
-stopped_at: Phase 3 UI-SPEC approved
-last_updated: "2026-04-05T20:38:30.539Z"
-last_activity: 2026-04-05 -- Phase 03 execution started
+milestone: v1.1
+milestone_name: next
+status: idle
+stopped_at: v1.0 milestone complete
+last_updated: "2026-04-06"
+last_activity: 2026-04-06 — v1.0 milestone shipped
 progress:
   total_phases: 3
-  completed_phases: 2
-  total_plans: 7
-  completed_plans: 3
-  percent: 43
+  completed_phases: 3
+  total_plans: 9
+  completed_plans: 9
+  percent: 100
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-05)
+See: .planning/PROJECT.md (updated 2026-04-06 after v1.0 milestone)
 
 **Core value:** Rätt häst på rätt plats — snabb, datadrivet underlag för att ranka hästar i V85 och liknande spel, utan manuellt arbete.
-**Current focus:** Phase 03 — track-cs-adjustment-admin-ui
+**Current focus:** Planning next milestone (v1.1)
 
 ## Current Position
 
-Phase: 03 (track-cs-adjustment-admin-ui) — EXECUTING
-Plan: 1 of 4
-Status: Executing Phase 03
-Last activity: 2026-04-05 -- Phase 03 execution started
+Milestone v1.0 complete — shipped 2026-04-06.
+Phase: — (idle, between milestones)
+Status: Ready for next milestone planning
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
-**Velocity:**
+**v1.0 Velocity:**
 
-- Total plans completed: 0
-- Average duration: -
-- Total execution time: -
-
-**By Phase:**
-
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| - | - | - | - |
-
-**Recent Trend:**
-
-- Last 5 plans: -
-- Trend: -
-
-*Updated after each plan completion*
-| Phase 01-foundation-db-schema-types P01 | 20 | 5 tasks | 4 files |
+- Total plans completed: 9
+- Phases: 3
+- Timeline: 2026-04-05 → 2026-04-06
 
 ## Accumulated Context
 
 ### Decisions
 
-Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting current work:
+See PROJECT.md Key Decisions table for full log.
 
-- Phase 1: `track_name` is the join key to `games.track` — must match ATG API string exactly; verify against existing `games` rows before seeding migration
-- Phase 1: RLS write policy uses service_role (not admin user check in DB); server action enforces ADMIN_USER_IDS env var check before calling service client
-- Phase 3: Track-adjusted CS stays client-side only — never stored in `starters` — to prevent cross-algorithm evaluation comparisons
-- Phase 3: Open-stretch modifier modulates (reduces) existing `TRACK_BIAS_VOLTE` outer-post penalty rather than stacking an additional modifier on top
-- [Phase 01-foundation-db-schema-types]: ON CONFLICT DO NOTHING used for idempotent track_configs seed insert; Phase 3 admin UI is the correction path
-- [Phase 01-foundation-db-schema-types]: Migration v9 applied manually via Supabase Dashboard SQL Editor (SUPABASE_ACCESS_TOKEN not set in env)
+Key decisions from v1.0:
+- CS-justering är client-side only — lagras aldrig i DB
+- `track_name` TEXT PRIMARY KEY — matchar ATG API `games.track` exakt
+- Admin-åtkomst via `ADMIN_USER_IDS` env-var (server-side check)
+- Migration appliceras manuellt via Supabase Dashboard (SUPABASE_ACCESS_TOKEN ej konfigurerat)
 
 ### Pending Todos
 
-None yet.
+None.
 
 ### Blockers/Concerns
 
-- **Phase 3 pre-req:** The interaction between `TRACK_BIAS_VOLTE` and the open-stretch/short-race modifiers needs an explicit "replace vs modulate" decision with worked examples before Phase 3 coding starts. Captured as research flag in SUMMARY.md.
-- **Phase 1 data risk:** ATG API track name strings (e.g. "Åby" vs "Åby travbana") must be verified against the live `games` table before writing migration seed data. A mismatch silently breaks all track config lookups.
-
-## Session Continuity
-
-Last session: 2026-04-05T19:40:13.072Z
-Stopped at: Phase 3 UI-SPEC approved
-Resume file: .planning/phases/03-track-cs-adjustment-admin-ui/03-UI-SPEC.md
+None — v1.0 complete, clean slate for v1.1.
