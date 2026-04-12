@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { fetchAvailableGames } from "@/lib/atg";
 
 // Prioritetsordning för speltyper vi vill auto-ladda
-const PRIORITY_TYPES = ["V86", "V85", "V75", "V65", "V64"];
+const PRIORITY_TYPES = ["V86", "V85", "V75", "GS75", "V65", "V64"];
 
 function todayLocal(): string {
   const d = new Date();

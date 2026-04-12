@@ -8,6 +8,7 @@ export function getRowPrice(gameType: string): number {
     case 'V85': return 0.50
     case 'V65': return 0.50
     case 'V64': return 1.00
+    case 'GS75': return 1.00
     default:    return 1.00
   }
 }
@@ -106,7 +107,7 @@ export interface AtgGame {
   races: AtgRace[];
 }
 
-const SUPPORTED_GAME_TYPES = ["V75", "V86", "V85", "V64", "V65"] as const;
+const SUPPORTED_GAME_TYPES = ["V75", "V86", "V85", "V64", "V65", "GS75"] as const;
 
 export interface AtgStarterResult {
   race_index: number;        // 0-baserat, matchar races[]-arrayen
