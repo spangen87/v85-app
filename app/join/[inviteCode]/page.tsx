@@ -15,7 +15,6 @@ export default async function InvitePage({ params, searchParams }: Props) {
   const { inviteCode } = await params;
   const { setupName } = await searchParams;
 
-  // Hämta grupp-info med service client (ingen auth behövs för att visa info)
   const db = createServiceClient();
   const { data: group } = await db
     .from("groups")
@@ -25,13 +24,15 @@ export default async function InvitePage({ params, searchParams }: Props) {
 
   if (!group) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950">
-        <div className="w-full max-w-sm bg-gray-50 dark:bg-gray-900 rounded-xl p-8 shadow-xl text-center">
-          <p className="text-2xl mb-2">🔗</p>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--tn-bg)" }}>
+        <div
+          className="w-full max-w-sm rounded-xl p-8 text-center"
+          style={{ background: "var(--tn-bg-card)", border: "1px solid var(--tn-border)" }}
+        >
+          <h1 className="text-xl font-bold mb-2" style={{ color: "var(--tn-text)" }}>
             Ogiltig inbjudningslänk
           </h1>
-          <p className="text-gray-500 dark:text-gray-400 text-sm">
+          <p className="text-sm" style={{ color: "var(--tn-text-faint)" }}>
             Länken fungerar inte. Be om en ny länk av den som bjöd in dig.
           </p>
         </div>
@@ -39,22 +40,18 @@ export default async function InvitePage({ params, searchParams }: Props) {
     );
   }
 
-  // Kolla om användaren redan är inloggad
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (user) {
-    // Sätt visningsnamn om det skickades med (t.ex. efter nyregistrering)
     if (setupName) {
       await updateProfile(decodeURIComponent(setupName));
     }
-    // Gå med i gruppen automatiskt (ignorera fel om redan med)
     await joinGroup(inviteCode);
     redirect("/");
   }
 
-  // Visa registrerings-/login-sida
   return <JoinPage group={group as Group} inviteCode={inviteCode} />;
 }

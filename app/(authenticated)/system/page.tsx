@@ -25,12 +25,12 @@ export default async function SystemPage({
 
   if (games.length === 0) {
     return (
-      <main className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white">
+      <main className="min-h-screen" style={{ background: "var(--tn-bg)", color: "var(--tn-text)" }}>
         <div className="px-4 py-6 max-w-2xl mx-auto">
           <h1 className="text-xl font-bold mb-6">Mina system</h1>
-          <div className="text-center py-16 text-gray-400 dark:text-gray-500">
-            <p className="text-base mb-1">Ingen omgång inladdad ännu.</p>
-            <p className="text-sm">Gå till Analys-fliken för att hämta ett spel.</p>
+          <div className="text-center py-16">
+            <p className="text-base mb-1" style={{ color: "var(--tn-text-faint)" }}>Ingen omgång inladdad ännu.</p>
+            <p className="text-sm" style={{ color: "var(--tn-text-faint)" }}>Gå till Analys-fliken för att hämta ett spel.</p>
           </div>
         </div>
       </main>
@@ -47,7 +47,7 @@ export default async function SystemPage({
   ])
 
   return (
-    <main className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white">
+    <main className="min-h-screen" style={{ background: "var(--tn-bg)", color: "var(--tn-text)" }}>
       <div className="px-4 pt-6 max-w-2xl mx-auto">
         <h1 className="text-xl font-bold mb-4">Mina system</h1>
       </div>

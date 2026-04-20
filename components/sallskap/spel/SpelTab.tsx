@@ -52,12 +52,10 @@ export function SpelTab({ groupId, games, initialGameId, initialSystems, current
   const selectedGame = games.find(g => g.id === selectedGameId)
   const gameType = selectedGame?.game_type ?? ''
 
-  // Dela upp: utkast (egna) och sparade system (hela gruppen)
   const myDrafts = systems.filter(s => s.is_draft && s.user_id === currentUserId)
   const groupDrafts = systems.filter(s => s.is_draft && s.user_id !== currentUserId)
   const savedSystems = systems.filter(s => !s.is_draft)
 
-  // Sortera sparade: egna system först, sedan andras
   const sortedSaved = [...savedSystems].sort((a, b) => {
     if (a.user_id === currentUserId && b.user_id !== currentUserId) return -1
     if (a.user_id !== currentUserId && b.user_id === currentUserId) return 1
@@ -69,12 +67,16 @@ export function SpelTab({ groupId, games, initialGameId, initialSystems, current
 
   return (
     <div className="px-4 py-4 max-w-2xl mx-auto">
-      {/* Omgångsväljare */}
       <div className="flex items-center gap-3 mb-4">
         <select
           value={selectedGameId ?? ''}
           onChange={e => handleGameChange(e.target.value)}
-          className="flex-1 text-sm px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          className="flex-1 text-sm px-3 py-2 rounded-lg focus:outline-none"
+          style={{
+            background: "var(--tn-bg-chip)",
+            border: "1px solid var(--tn-border)",
+            color: "var(--tn-text)",
+          }}
         >
           {games.map(g => (
             <option key={g.id} value={g.id}>
@@ -85,23 +87,32 @@ export function SpelTab({ groupId, games, initialGameId, initialSystems, current
         {selectedGame && (
           <Link
             href={`/?systemMode=1&groupId=${groupId}&game=${selectedGameId}`}
-            className="shrink-0 px-3 py-2 text-sm font-semibold bg-emerald-900 hover:bg-emerald-800 text-white rounded-lg transition"
+            className="shrink-0 px-3 py-2 text-sm font-semibold rounded-lg transition"
+            style={{
+              background: "var(--tn-accent-faint)",
+              color: "var(--tn-accent)",
+              border: "1px solid var(--tn-accent-soft)",
+            }}
           >
             + Bygg system
           </Link>
         )}
       </div>
 
-      {/* Systemlista */}
       {loading ? (
-        <div className="text-center py-10 text-gray-400 text-sm">Laddar system...</div>
+        <div className="text-center py-10 text-sm" style={{ color: "var(--tn-text-faint)" }}>
+          Laddar system...
+        </div>
       ) : isEmpty ? (
-        <div className="text-center py-10 text-gray-400 dark:text-gray-500">
-          <p className="mb-2">Inga system sparade för denna omgång ännu.</p>
+        <div className="text-center py-10">
+          <p className="mb-2 text-sm" style={{ color: "var(--tn-text-faint)" }}>
+            Inga system sparade för denna omgång ännu.
+          </p>
           {selectedGame && (
             <Link
               href={`/?systemMode=1&groupId=${groupId}&game=${selectedGameId}`}
-              className="text-sm text-emerald-600 dark:text-emerald-400 underline"
+              className="text-sm hover:underline"
+              style={{ color: "var(--tn-accent)" }}
             >
               Bygg ett system
             </Link>
@@ -109,11 +120,13 @@ export function SpelTab({ groupId, games, initialGameId, initialSystems, current
         </div>
       ) : (
         <div className="flex flex-col gap-6">
-          {/* Utkast */}
           {allDrafts.length > 0 && (
             <section>
-              <h2 className="text-sm font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide mb-3 flex items-center gap-2">
-                <span>✏️</span> Utkast
+              <h2
+                className="text-sm font-semibold uppercase tracking-wide mb-3 flex items-center gap-2 tn-eyebrow"
+                style={{ color: "var(--tn-warn)" }}
+              >
+                Utkast
               </h2>
               <div className="flex flex-col gap-4">
                 {allDrafts.map(system => (
@@ -131,11 +144,13 @@ export function SpelTab({ groupId, games, initialGameId, initialSystems, current
             </section>
           )}
 
-          {/* Sparade system */}
           {sortedSaved.length > 0 && (
             <section>
               {allDrafts.length > 0 && (
-                <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+                <h2
+                  className="text-sm font-semibold uppercase tracking-wide mb-3 tn-eyebrow"
+                  style={{ color: "var(--tn-text-dim)" }}
+                >
                   Sparade system
                 </h2>
               )}

@@ -8,7 +8,7 @@ interface GameSummary {
   date: string;
   game_type: string;
   track: string;
-  has_results: boolean; // true only when ALL races in the game have at least one finish_position
+  has_results: boolean;
 }
 
 interface StarterRow {
@@ -49,7 +49,6 @@ interface GameEval {
 }
 
 function computeEvaluation(rows: StarterRow[]) {
-  // Gruppera per lopp
   const byRace = new Map<string, StarterRow[]>();
   for (const row of rows) {
     const key = row.race_id;
@@ -57,7 +56,6 @@ function computeEvaluation(rows: StarterRow[]) {
     byRace.get(key)!.push(row);
   }
 
-  // Gruppera per spel
   const byGame = new Map<string, { game: GameEval["game_id"] extends string ? Pick<GameEval, "game_id" | "date" | "game_type" | "track"> : never; races: Map<string, StarterRow[]> }>();
   for (const [raceId, starters] of byRace) {
     const first = starters[0];
@@ -89,7 +87,7 @@ function computeEvaluation(rows: StarterRow[]) {
 
     for (const [, starters] of races) {
       const winner = starters.find((s) => s.finish_position === 1);
-      if (!winner) continue; // lopp utan vinnare hoppas över
+      if (!winner) continue;
 
       const ranked = [...starters]
         .filter((s) => s.formscore != null)
@@ -153,14 +151,12 @@ export default async function EvaluationPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  // Query A — all games ordered by date descending (limit 100 to prevent unbounded results)
   const { data: allGamesData } = await supabase
     .from("games")
     .select("id, date, game_type, track")
     .order("date", { ascending: false })
     .limit(100);
 
-  // Query B — starters with finish_position to determine which games have results
   const { data } = await supabase
     .from("starters")
     .select(`
@@ -171,13 +167,10 @@ export default async function EvaluationPage() {
     .not("formscore", "is", null)
     .not("finish_position", "is", null);
 
-  // Query C — all races to know total race count per game (needed for completeness check)
   const { data: allRacesData } = await supabase
     .from("races")
     .select("id, game_id");
 
-  // Query D — races with any finish result, no formscore filter (covers V65/V64/V75 where
-  // starters may lack formscores but results are fully fetched)
   const { data: resultedRacesData } = await supabase
     .from("starters")
     .select("race_id, races(game_id)")
@@ -186,7 +179,6 @@ export default async function EvaluationPage() {
   const rows = (data ?? []) as unknown as StarterRow[];
   const { overall, games } = computeEvaluation(rows);
 
-  // Races with at least one result per game (from Query D — finish_position only, no formscore)
   const racesWithResultsByGame = new Map<string, Set<string>>();
   for (const row of (resultedRacesData ?? []) as unknown as { race_id: string; races: { game_id: string } | null }[]) {
     const gameId = row.races?.game_id;
@@ -197,7 +189,6 @@ export default async function EvaluationPage() {
     }
   }
 
-  // Total races per game (from Query C)
   const totalRacesByGame = new Map<string, number>();
   for (const race of (allRacesData ?? [])) {
     totalRacesByGame.set(race.game_id, (totalRacesByGame.get(race.game_id) ?? 0) + 1);
@@ -216,8 +207,11 @@ export default async function EvaluationPage() {
   });
 
   return (
-    <main className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white">
-      <header className="sticky top-0 z-30 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center justify-between gap-4">
+    <main className="min-h-screen" style={{ background: "var(--tn-bg)", color: "var(--tn-text)" }}>
+      <header
+        className="sticky top-0 z-30 px-4 py-3 flex items-center justify-between gap-4"
+        style={{ background: "var(--tn-bg)", borderBottom: "1px solid var(--tn-border)" }}
+      >
         <h1 className="text-lg font-bold">Modell-utvärdering</h1>
         <ThemeToggle />
       </header>

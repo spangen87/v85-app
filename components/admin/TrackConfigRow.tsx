@@ -20,7 +20,6 @@ export function TrackConfigRow({ initialConfig }: { initialConfig: TrackConfig }
     setSaveError(null);
     setLanesError(null);
 
-    // Validate open_stretch_lanes when toggle is ON
     const parsedLanes: number[] = [];
     if (openStretch) {
       const tokens = lanesInput.split(",").map((s) => s.trim()).filter(Boolean);
@@ -55,14 +54,25 @@ export function TrackConfigRow({ initialConfig }: { initialConfig: TrackConfig }
   const isLoading = status === "loading";
   const isSuccess = status === "success";
 
+  const inputStyle = {
+    background: "var(--tn-bg-chip)",
+    border: "1px solid var(--tn-border)",
+    color: "var(--tn-text)",
+    borderRadius: "0.375rem",
+    padding: "0.5rem 0.75rem",
+    fontSize: "0.875rem",
+    outline: "none",
+  };
+
   return (
-    <section className="space-y-3 border-b border-gray-200 dark:border-gray-800 pb-6 last:border-0">
-      {/* Track name header */}
-      <h2 className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+    <section
+      className="space-y-3 pb-6 last:border-0"
+      style={{ borderBottom: "1px solid var(--tn-border)" }}
+    >
+      <h2 className="tn-eyebrow" style={{ color: "var(--tn-text-dim)" }}>
         {initialConfig.track_name}
       </h2>
 
-      {/* Open stretch toggle */}
       <div className="space-y-1">
         <div className="flex items-center gap-3">
           <label className="flex items-center gap-2 cursor-pointer select-none">
@@ -71,32 +81,30 @@ export function TrackConfigRow({ initialConfig }: { initialConfig: TrackConfig }
               role="switch"
               aria-checked={openStretch}
               onClick={() => setOpenStretch((v) => !v)}
-              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 ${
-                openStretch
-                  ? "bg-indigo-600"
-                  : "bg-gray-300 dark:bg-gray-600"
-              }`}
+              className="relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none"
+              style={{
+                background: openStretch ? "var(--tn-accent)" : "var(--tn-bg-chip)",
+                border: "1px solid var(--tn-border)",
+              }}
             >
               <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-                  openStretch ? "translate-x-4" : "translate-x-0.5"
-                }`}
+                className="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform"
+                style={{ transform: openStretch ? "translateX(1rem)" : "translateX(0.125rem)" }}
               />
             </button>
-            <span className="text-sm text-gray-700 dark:text-gray-300">Open stretch</span>
+            <span className="text-sm" style={{ color: "var(--tn-text)" }}>Open stretch</span>
           </label>
         </div>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
+        <p className="text-xs" style={{ color: "var(--tn-text-faint)" }}>
           Hästar på gynnade spår får +0.12 CS. Aktiverar spårinställningen nedan.
         </p>
       </div>
 
-      {/* Gynnade spår (open_stretch_lanes) — visible only when open_stretch is on */}
       <div className={`space-y-1 ${openStretch ? "" : "opacity-50 pointer-events-none"}`}>
-        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400">
+        <label className="block text-xs font-medium" style={{ color: "var(--tn-text-dim)" }}>
           Gynnade spår
         </label>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
+        <p className="text-xs" style={{ color: "var(--tn-text-faint)" }}>
           Ange spårnummer 1–20, kommaseparerade. Gäller bara när Open stretch är på.
         </p>
         <input
@@ -105,19 +113,19 @@ export function TrackConfigRow({ initialConfig }: { initialConfig: TrackConfig }
           onChange={(e) => setLanesInput(e.target.value)}
           disabled={!openStretch || isLoading}
           placeholder="t.ex. 7,8,9,10"
-          className="w-full text-sm px-3 py-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:border-indigo-400 disabled:cursor-not-allowed"
+          className="w-full disabled:cursor-not-allowed"
+          style={inputStyle}
         />
         {lanesError && (
-          <p className="text-xs text-red-500 dark:text-red-400">{lanesError}</p>
+          <p className="text-xs" style={{ color: "var(--tn-value-low)" }}>{lanesError}</p>
         )}
       </div>
 
-      {/* Distansgräns (short_race_threshold) */}
       <div className="space-y-1">
-        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400">
+        <label className="block text-xs font-medium" style={{ color: "var(--tn-text-dim)" }}>
           Distansgräns
         </label>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
+        <p className="text-xs" style={{ color: "var(--tn-text-faint)" }}>
           Lopp kortare än detta värde sänker CS med 0.08. Sätt 0 för att inaktivera.
         </p>
         <div className="flex items-center gap-2">
@@ -129,23 +137,24 @@ export function TrackConfigRow({ initialConfig }: { initialConfig: TrackConfig }
             onChange={(e) => setThreshold(Number(e.target.value))}
             disabled={isLoading}
             placeholder="0 = inaktiv"
-            className="w-28 text-sm px-3 py-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:border-indigo-400 disabled:cursor-not-allowed"
+            className="w-28 disabled:cursor-not-allowed"
+            style={inputStyle}
           />
-          <span className="text-sm text-gray-500 dark:text-gray-400">m</span>
+          <span className="text-sm" style={{ color: "var(--tn-text-faint)" }}>m</span>
         </div>
       </div>
 
-      {/* Save button + feedback */}
       <div className="flex items-center gap-3">
         <button
           type="button"
           onClick={handleSave}
           disabled={isLoading}
-          className={`text-sm font-medium px-3 py-1.5 rounded transition disabled:cursor-not-allowed ${
+          className="text-sm font-medium px-3 py-1.5 rounded transition disabled:cursor-not-allowed"
+          style={
             isSuccess
-              ? "bg-green-600 text-white"
-              : "bg-indigo-600 hover:bg-indigo-700 text-white"
-          }`}
+              ? { background: "var(--tn-value-high)", color: "#0a0e14" }
+              : { background: "var(--tn-accent)", color: "#fff" }
+          }
         >
           {isLoading ? (
             <span className="flex items-center gap-1.5">
@@ -169,7 +178,7 @@ export function TrackConfigRow({ initialConfig }: { initialConfig: TrackConfig }
         </button>
       </div>
       {saveError && (
-        <p className="text-xs text-red-500 dark:text-red-400">{saveError}</p>
+        <p className="text-xs" style={{ color: "var(--tn-value-low)" }}>{saveError}</p>
       )}
     </section>
   );

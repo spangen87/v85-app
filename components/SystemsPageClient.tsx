@@ -49,11 +49,9 @@ export function SystemsPageClient({
     setSystems(prev => prev.filter(s => s.id !== id))
   }
 
-  // Dela upp i utkast och sparade system
   const myDrafts = systems.filter(s => s.is_draft && s.user_id === currentUserId)
   const savedSystems = systems.filter(s => !s.is_draft)
 
-  // Sortering sparade: egna först, sedan per sällskapsnamn A-Ö, sedan created_at desc
   const sortedSaved = [...savedSystems].sort((a, b) => {
     if (a.user_id === currentUserId && b.user_id !== currentUserId) return -1
     if (a.user_id !== currentUserId && b.user_id === currentUserId) return 1
@@ -67,12 +65,17 @@ export function SystemsPageClient({
 
   return (
     <div className="px-4 py-4 max-w-2xl mx-auto">
-      {/* Omgångsväljare */}
       <div className="mb-6">
         <select
           value={selectedGameId ?? ''}
           onChange={e => handleGameChange(e.target.value)}
-          className="w-full text-sm px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          className="w-full text-sm rounded-lg outline-none"
+          style={{
+            padding: "8px 12px",
+            background: "var(--tn-bg-chip)",
+            border: "1px solid var(--tn-border)",
+            color: "var(--tn-text)",
+          }}
         >
           {games.map(g => (
             <option key={g.id} value={g.id}>
@@ -83,14 +86,13 @@ export function SystemsPageClient({
       </div>
 
       {loading ? (
-        <div className="text-center py-10 text-gray-400 text-sm">Laddar system...</div>
+        <div className="text-center py-10 text-sm" style={{ color: "var(--tn-text-faint)" }}>Laddar system...</div>
       ) : (
         <>
-          {/* Mina utkast */}
           {myDrafts.length > 0 && (
             <section className="mb-8">
-              <h2 className="text-sm font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide mb-3 flex items-center gap-2">
-                <span>✏️</span> Mina utkast
+              <h2 className="tn-eyebrow mb-3" style={{ color: "var(--tn-warn)" }}>
+                Mina utkast
               </h2>
               <div className="flex flex-col gap-4">
                 {myDrafts.map(system => (
@@ -108,13 +110,10 @@ export function SystemsPageClient({
             </section>
           )}
 
-          {/* Sparade system */}
           {sortedSaved.length > 0 && (
             <section>
               {myDrafts.length > 0 && (
-                <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
-                  Sparade system
-                </h2>
+                <h2 className="tn-eyebrow mb-3">Sparade system</h2>
               )}
               <div className="flex flex-col gap-4">
                 {sortedSaved.map(system => (
@@ -132,9 +131,8 @@ export function SystemsPageClient({
             </section>
           )}
 
-          {/* Tomt tillstånd */}
           {myDrafts.length === 0 && sortedSaved.length === 0 && (
-            <div className="text-center py-16 text-gray-400 dark:text-gray-500">
+            <div className="text-center py-16" style={{ color: "var(--tn-text-faint)" }}>
               <p className="text-base mb-1">Inga system sparade för denna omgång.</p>
               <p className="text-sm">Gå till Analys-fliken och klicka &ldquo;Bygg system&rdquo;.</p>
             </div>

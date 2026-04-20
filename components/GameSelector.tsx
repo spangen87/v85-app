@@ -23,7 +23,12 @@ export function GameSelector({ games, selectedId }: GameSelectorProps) {
     <select
       value={selectedId ?? ""}
       onChange={(e) => router.push(`/?game=${encodeURIComponent(e.target.value)}`)}
-      className="rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm px-3 py-2 focus:outline-none focus:border-blue-500"
+      className="rounded-lg text-sm px-3 py-2 focus:outline-none"
+      style={{
+        background: "var(--tn-bg-chip)",
+        border: "1px solid var(--tn-border)",
+        color: "var(--tn-text)",
+      }}
     >
       {games.map((g) => (
         <option key={g.id} value={g.id}>

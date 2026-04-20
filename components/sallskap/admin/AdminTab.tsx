@@ -31,58 +31,41 @@ export function AdminTab({ group, members, currentUserId }: AdminTabProps) {
 
   return (
     <div className="px-4 py-5 space-y-6 max-w-2xl mx-auto">
-      {/* Namn */}
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-          Sällskapets namn
-        </h2>
+        <h2 className="tn-eyebrow">Sällskapets namn</h2>
         {isCreator ? (
           <GroupNameForm groupId={group.id} initialName={groupName} onUpdated={setGroupName} />
         ) : (
-          <p className="text-gray-900 dark:text-white font-medium">{groupName}</p>
+          <p className="font-medium" style={{ color: "var(--tn-text)" }}>{groupName}</p>
         )}
       </section>
 
-      {/* ATG-lag */}
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-          ATG-lag
-        </h2>
-        <AtgTeamUrlForm
-          groupId={group.id}
-          initialUrl={atgUrl}
-          isCreator={isCreator}
-          onUpdated={setAtgUrl}
-        />
+        <h2 className="tn-eyebrow">ATG-lag</h2>
+        <AtgTeamUrlForm groupId={group.id} initialUrl={atgUrl} isCreator={isCreator} onUpdated={setAtgUrl} />
       </section>
 
-      {/* Inbjudningslänk */}
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-          Inbjudning
-        </h2>
+        <h2 className="tn-eyebrow">Inbjudning</h2>
         <InviteLinkSection inviteCode={group.invite_code} />
       </section>
 
-      {/* Medlemmar */}
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-          Medlemmar ({members.length})
-        </h2>
+        <h2 className="tn-eyebrow">Medlemmar ({members.length})</h2>
         <MemberList members={members} creatorId={group.created_by} />
       </section>
 
-      {/* Lämna sällskap */}
-      <section className="pt-2 border-t border-gray-200 dark:border-gray-800">
+      <section className="pt-2" style={{ borderTop: "1px solid var(--tn-border)" }}>
         <button
           onClick={handleLeave}
           disabled={leaving}
-          className="text-sm text-red-400 hover:text-red-300 disabled:opacity-50 transition"
+          className="text-sm transition disabled:opacity-50"
+          style={{ color: "var(--tn-value-low)", background: "none", border: "none", cursor: "pointer" }}
         >
           {leaving ? "Lämnar…" : "Lämna sällskap"}
         </button>
         {isCreator && (
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+          <p className="text-xs mt-1" style={{ color: "var(--tn-text-faint)" }}>
             Du är skaparen — sällskapet kvarstår för övriga medlemmar.
           </p>
         )}

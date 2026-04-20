@@ -16,7 +16,6 @@ interface SaveSystemDialogProps {
   totalRows: number
   userGroups: Group[]
   defaultGroupId?: string | null
-  /** Om ett utkast redan finns — publicera det istället för att skapa nytt */
   existingDraftId?: string | null
 }
 
@@ -42,19 +41,12 @@ export function SaveSystemDialog({
   if (!open) return null
 
   function handleSave() {
-    if (!name.trim()) {
-      setError('Systemet måste ha ett namn.')
-      return
-    }
-    if (!gameId) {
-      setError('Inget spel valt.')
-      return
-    }
+    if (!name.trim()) { setError('Systemet måste ha ett namn.'); return }
+    if (!gameId) { setError('Inget spel valt.'); return }
     setError(null)
     startTransition(async () => {
       try {
         if (existingDraftId) {
-          // Publicera befintligt utkast
           await publishDraft(existingDraftId, name.trim(), groupId)
         } else {
           await createSystem(groupId, gameId, name.trim(), selections, totalRows)
@@ -72,28 +64,43 @@ export function SaveSystemDialog({
     router.push(`/system?game=${gameId}`)
   }
 
-  // Success-vy
+  const inputStyle: React.CSSProperties = {
+    background: "var(--tn-bg-chip)",
+    border: "1px solid var(--tn-border)",
+    color: "var(--tn-text)",
+    borderRadius: 8,
+    padding: "8px 12px",
+    fontSize: 14,
+    width: "100%",
+    outline: "none",
+  }
+
   if (savedName !== null) {
     return (
-      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50">
-        <div className="bg-white dark:bg-gray-900 w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-6 pb-[calc(1.5rem+4rem)] sm:pb-6 shadow-xl">
+      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background: "rgba(0,0,0,0.6)" }}>
+        <div
+          className="w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-6 pb-[calc(1.5rem+4rem)] sm:pb-6 shadow-xl"
+          style={{ background: "var(--tn-bg-raised)", border: "1px solid var(--tn-border)" }}
+        >
           <div className="text-center mb-5">
-            <div className="text-3xl mb-2">✅</div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">System sparat!</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            <p className="tn-eyebrow mb-2">Klart</p>
+            <h2 className="text-lg font-bold mb-1" style={{ color: "var(--tn-text)" }}>System sparat!</h2>
+            <p className="text-sm" style={{ color: "var(--tn-text-faint)" }}>
               &ldquo;{savedName}&rdquo; &mdash; {totalRows} {totalRows === 1 ? 'rad' : 'rader'} &middot; {formatRowCost(totalRows, gameType ?? '')}
             </p>
           </div>
           <div className="flex gap-3">
             <button
               onClick={onSaved}
-              className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              className="flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+              style={{ background: "var(--tn-bg-chip)", color: "var(--tn-text-dim)", border: "1px solid var(--tn-border)" }}
             >
               Stäng
             </button>
             <button
               onClick={handleGoToSystem}
-              className="flex-1 px-4 py-2 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors"
+              className="flex-1 px-4 py-2 text-sm font-bold rounded-lg transition-colors"
+              style={{ background: "var(--tn-accent)", color: "#fff", border: "none", cursor: "pointer" }}
             >
               Se systemet →
             </button>
@@ -103,38 +110,36 @@ export function SaveSystemDialog({
     )
   }
 
-  // Sparavy
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50">
-      <div className="bg-white dark:bg-gray-900 w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-6 pb-[calc(1.5rem+4rem)] sm:pb-6 shadow-xl">
-        <h2 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">Spara system</h2>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background: "rgba(0,0,0,0.6)" }}>
+      <div
+        className="w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-6 pb-[calc(1.5rem+4rem)] sm:pb-6 shadow-xl"
+        style={{ background: "var(--tn-bg-raised)", border: "1px solid var(--tn-border)" }}
+      >
+        <h2 className="text-lg font-bold mb-4" style={{ color: "var(--tn-text)" }}>Spara system</h2>
 
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Systemnamn
-          </label>
+          <label className="block text-sm font-medium mb-1" style={{ color: "var(--tn-text-dim)" }}>Systemnamn</label>
           <input
             type="text"
             value={name}
             onChange={e => setName(e.target.value)}
             maxLength={100}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            style={inputStyle}
           />
         </div>
 
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Sällskap
-          </label>
+          <label className="block text-sm font-medium mb-1" style={{ color: "var(--tn-text-dim)" }}>Sällskap</label>
           {userGroups.length === 0 ? (
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm" style={{ color: "var(--tn-text-faint)" }}>
               Privat system (du är inte med i något sällskap ännu)
             </p>
           ) : (
             <select
               value={groupId ?? ''}
               onChange={e => setGroupId(e.target.value || null)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              style={inputStyle}
             >
               <option value="">Privat — inget sällskap</option>
               {userGroups.map(g => (
@@ -144,30 +149,31 @@ export function SaveSystemDialog({
           )}
         </div>
 
-        <div className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+        <div className="mb-4 text-sm" style={{ color: "var(--tn-text-faint)" }}>
           {totalRows} {totalRows === 1 ? 'rad' : 'rader'} &middot; {formatRowCost(totalRows, gameType ?? '')}
         </div>
 
         {!gameId && (
-          <p className="mb-3 text-sm text-amber-600 dark:text-amber-400">Inget spel valt.</p>
+          <p className="mb-3 text-sm" style={{ color: "var(--tn-warn)" }}>Inget spel valt.</p>
         )}
-
         {error && (
-          <p className="mb-3 text-sm text-red-600 dark:text-red-400">{error}</p>
+          <p className="mb-3 text-sm" style={{ color: "var(--tn-value-low)" }}>{error}</p>
         )}
 
         <div className="flex gap-3">
           <button
             onClick={onClose}
             disabled={isPending}
-            className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+            className="flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+            style={{ background: "var(--tn-bg-chip)", color: "var(--tn-text-dim)", border: "1px solid var(--tn-border)", cursor: "pointer" }}
           >
             Avbryt
           </button>
           <button
             onClick={handleSave}
             disabled={isPending || selections.length === 0 || !gameId}
-            className="flex-1 px-4 py-2 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors disabled:opacity-50"
+            className="flex-1 px-4 py-2 text-sm font-bold rounded-lg transition-colors disabled:opacity-50"
+            style={{ background: "var(--tn-accent)", color: "#fff", border: "none", cursor: "pointer" }}
           >
             {isPending ? 'Sparar...' : 'Spara system'}
           </button>

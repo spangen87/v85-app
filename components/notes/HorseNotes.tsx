@@ -17,17 +17,12 @@ export function HorseNotes({ horseId, userGroups, currentUserId }: HorseNotesPro
   const [notes, setNotes] = useState<HorseNote[]>([]);
   const [loaded, setLoaded] = useState(false);
 
-  // Hämta anteckningar automatiskt när komponenten mountas (avdelningen öppnas)
   useEffect(() => {
     getHorseNotes(horseId).then((data) => {
       setNotes(data);
       setLoaded(true);
     });
   }, [horseId]);
-
-  function handleExpand() {
-    setExpanded((v) => !v);
-  }
 
   const handleAdded = useCallback((note: HorseNote) => {
     setNotes((prev) => [...prev, { ...note, replies: [] }]);
@@ -37,36 +32,39 @@ export function HorseNotes({ horseId, userGroups, currentUserId }: HorseNotesPro
     setNotes((prev) =>
       prev
         .filter((n) => n.id !== noteId)
-        .map((n) => ({
-          ...n,
-          replies: n.replies.filter((r) => r.id !== noteId),
-        }))
+        .map((n) => ({ ...n, replies: n.replies.filter((r) => r.id !== noteId) }))
     );
   }, []);
 
   const handleReplied = useCallback((reply: HorseNote, parentId: string) => {
     setNotes((prev) =>
-      prev.map((n) =>
-        n.id === parentId
-          ? { ...n, replies: [...n.replies, reply] }
-          : n
-      )
+      prev.map((n) => n.id === parentId ? { ...n, replies: [...n.replies, reply] } : n)
     );
   }, []);
 
   const noteCount = notes.length + notes.reduce((sum, n) => sum + n.replies.length, 0);
 
   return (
-    <div className="border-t border-gray-300 dark:border-gray-700 mt-3 pt-3">
+    <div className="mt-3 pt-3" style={{ borderTop: "1px solid var(--tn-border)" }}>
       <button
-        onClick={handleExpand}
-        className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition w-full text-left"
+        onClick={() => setExpanded((v) => !v)}
+        className="flex items-center gap-2 text-xs transition w-full text-left"
+        style={{ color: "var(--tn-text-faint)", background: "none", border: "none", cursor: "pointer" }}
       >
-        <span>{expanded ? "▲" : "▼"}</span>
+        <svg
+          width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+          strokeLinecap="round" strokeLinejoin="round"
+          className={`transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}
+        >
+          <path d="M6 9l6 6 6-6" />
+        </svg>
         <span>
           Anteckningar
           {noteCount > 0 && (
-            <span className="ml-1.5 bg-indigo-700 text-white text-xs px-1.5 py-0.5 rounded-full">
+            <span
+              className="ml-1.5 text-xs px-1.5 py-0.5 rounded-full"
+              style={{ background: "var(--tn-accent-faint)", color: "var(--tn-accent)" }}
+            >
               {noteCount}
             </span>
           )}
@@ -76,7 +74,7 @@ export function HorseNotes({ horseId, userGroups, currentUserId }: HorseNotesPro
       {expanded && (
         <div className="mt-3 space-y-3">
           {loaded && notes.length === 0 && (
-            <p className="text-gray-500 text-xs italic">
+            <p className="text-xs italic" style={{ color: "var(--tn-text-faint)" }}>
               Inga anteckningar ännu.
             </p>
           )}
@@ -93,13 +91,8 @@ export function HorseNotes({ horseId, userGroups, currentUserId }: HorseNotesPro
             />
           ))}
 
-          {/* New note form */}
           <div className="pt-1">
-            <NoteForm
-              horseId={horseId}
-              userGroups={userGroups}
-              onAdded={handleAdded}
-            />
+            <NoteForm horseId={horseId} userGroups={userGroups} onAdded={handleAdded} />
           </div>
         </div>
       )}

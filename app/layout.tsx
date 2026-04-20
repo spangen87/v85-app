@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
@@ -13,13 +13,20 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const instrumentSerif = Instrument_Serif({
+  variable: "--font-instrument-serif",
+  subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
+});
+
 export const metadata: Metadata = {
-  title: "V85 Analys",
-  description: "Startlistor och formscore för V85",
+  title: "Travappen",
+  description: "Matematisk analys för svenska travspel — V75, V85, V64, V86, GS75",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "V85 Analys",
+    title: "Travappen",
   },
   formatDetection: {
     telephone: false,
@@ -27,7 +34,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#030712",
+  themeColor: "#0a0e14",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -40,12 +47,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="sv" className="dark">
+    <html lang="sv">
       <head>
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white dark:bg-gray-950 overflow-x-hidden`}
+        className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable} antialiased overflow-x-hidden`}
       >
         <ThemeProvider>{children}</ThemeProvider>
         <script

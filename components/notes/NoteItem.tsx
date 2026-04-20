@@ -52,28 +52,41 @@ export function NoteItem({
   }
 
   return (
-    <div className={`${isReply ? "ml-4 pl-3 border-l-2 border-gray-300 dark:border-gray-700" : ""}`}>
-      <div className="bg-gray-100 dark:bg-[rgb(40,44,52)] rounded-lg p-3 space-y-1.5">
-        {/* Header */}
+    <div
+      className={isReply ? "ml-4 pl-3" : ""}
+      style={isReply ? { borderLeft: "2px solid var(--tn-border)" } : {}}
+    >
+      <div
+        className="rounded-lg p-3 space-y-1.5"
+        style={{ background: "var(--tn-bg-chip)" }}
+      >
         <div className="flex items-center gap-2 flex-wrap">
           <NoteLabelDot label={note.label} />
-          <span className="text-gray-900 dark:text-white text-xs font-medium">{note.author_display_name}</span>
-          <span className="text-gray-400 dark:text-gray-500 text-xs">·</span>
-          <span className="text-gray-600 bg-gray-200 dark:text-gray-400 dark:bg-gray-700 text-xs px-1.5 py-0.5 rounded">
+          <span className="text-xs font-medium" style={{ color: "var(--tn-text)" }}>
+            {note.author_display_name}
+          </span>
+          <span className="text-xs" style={{ color: "var(--tn-text-faint)" }}>·</span>
+          <span
+            className="text-xs px-1.5 py-0.5 rounded"
+            style={{ background: "var(--tn-bg-card)", color: "var(--tn-text-dim)" }}
+          >
             {note.group_name ?? "Personlig"}
           </span>
-          <span className="text-gray-400 dark:text-gray-500 text-xs ml-auto">{relativeTime(note.created_at)}</span>
+          <span className="text-xs ml-auto" style={{ color: "var(--tn-text-faint)" }}>
+            {relativeTime(note.created_at)}
+          </span>
         </div>
 
-        {/* Content */}
-        <p className="text-gray-800 dark:text-gray-200 text-sm leading-relaxed whitespace-pre-wrap">{note.content}</p>
+        <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: "var(--tn-text)" }}>
+          {note.content}
+        </p>
 
-        {/* Actions */}
         <div className="flex items-center gap-3 pt-0.5">
           {!isReply && (
             <button
               onClick={() => setShowReplyForm((v) => !v)}
-              className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-300 transition"
+              className="text-xs transition"
+              style={{ color: "var(--tn-accent)", background: "none", border: "none", cursor: "pointer" }}
             >
               {showReplyForm ? "Avbryt" : "Svara"}
             </button>
@@ -82,7 +95,8 @@ export function NoteItem({
             <button
               onClick={handleDelete}
               disabled={deleting}
-              className="text-xs text-red-400 hover:text-red-300 disabled:opacity-50 transition"
+              className="text-xs transition disabled:opacity-50"
+              style={{ color: "var(--tn-value-low)", background: "none", border: "none", cursor: "pointer" }}
             >
               {deleting ? "Tar bort…" : "Ta bort"}
             </button>
@@ -90,7 +104,6 @@ export function NoteItem({
         </div>
       </div>
 
-      {/* Reply form */}
       {showReplyForm && !isReply && (
         <div className="mt-2 ml-4">
           <NoteForm
@@ -105,7 +118,6 @@ export function NoteItem({
         </div>
       )}
 
-      {/* Replies */}
       {note.replies && note.replies.length > 0 && (
         <div className="mt-2 space-y-2">
           {note.replies.map((reply) => (

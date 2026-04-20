@@ -101,14 +101,36 @@ export default async function HomePage({
 
   return (
     <RaceTabProvider initialRaceNumber={activeRaceNumber}>
-    <main className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white">
-      {/* Header: mobilanpassad med 2 rader på små skärmar */}
-      <header className="sticky top-0 z-30 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800">
-        <div className="px-4 py-4">
-          {/* Rad 1: titel + avatar/tema */}
-          <div className="flex items-center justify-between">
-            <h1 className="text-base font-semibold tracking-tight shrink-0">Streckspel Analys</h1>
-            <div className="flex items-center gap-2 md:hidden">
+    <main className="min-h-screen" style={{ background: "var(--tn-bg)", color: "var(--tn-text)" }}>
+      {/* Sticky header */}
+      <header
+        className="sticky top-0 z-30"
+        style={{
+          background: "color-mix(in oklab, var(--tn-bg) 88%, transparent)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          borderBottom: "1px solid var(--tn-border)",
+        }}
+      >
+        <div className="px-4 pt-3 pb-2">
+          {/* Brand row (mobile only — desktop has TopNav) */}
+          <div className="flex items-center justify-between md:hidden">
+            <div className="flex items-baseline gap-2">
+              <span className="tn-brand-mark text-xl">Travappen</span>
+              <span
+                className="inline-block w-1.5 h-1.5 rounded-full"
+                style={{ background: "var(--tn-accent)", transform: "translateY(-3px)" }}
+              />
+              {selectedGame && (
+                <span
+                  className="tn-mono text-xs ml-1"
+                  style={{ color: "var(--tn-text-faint)" }}
+                >
+                  {selectedGame.game_type}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
               <ThemeToggle />
               <UserMenu
                 profile={profile}
@@ -117,14 +139,31 @@ export default async function HomePage({
               />
             </div>
           </div>
-          {/* Rad 2: spelkontroller */}
-          <CollapsibleControls>
-            <GamePickerBar savedGames={games} selectedId={selectedId} />
-            <ResultsButton gameId={selectedId} />
-          </CollapsibleControls>
+          {/* Game controls */}
+          <div className="mt-2 md:mt-0">
+            <CollapsibleControls>
+              <GamePickerBar savedGames={games} selectedId={selectedId} />
+              <ResultsButton gameId={selectedId} />
+            </CollapsibleControls>
+          </div>
         </div>
+
+        {/* Game meta bar */}
+        {selectedGame && (
+          <div
+            className="px-4 py-1.5 tn-mono text-xs flex items-center gap-2"
+            style={{ color: "var(--tn-text-faint)", borderTop: "1px solid var(--tn-border)" }}
+          >
+            <span>{selectedGame.date}</span>
+            <span style={{ color: "var(--tn-border-strong)" }}>·</span>
+            <span style={{ color: "var(--tn-accent)", fontWeight: 600 }}>{selectedGame.game_type}</span>
+            <span style={{ color: "var(--tn-border-strong)" }}>·</span>
+            <span>{selectedGame.track}</span>
+          </div>
+        )}
+
         {races.length > 0 && (
-          <Suspense fallback={<div className="h-10 border-t border-gray-200 dark:border-gray-800" />}>
+          <Suspense fallback={<div className="h-10" style={{ borderTop: "1px solid var(--tn-border)" }} />}>
             <RaceTabBar
               races={races.map((r) => ({ race_number: r.race_number, start_time: r.start_time }))}
             />
@@ -132,18 +171,11 @@ export default async function HomePage({
         )}
       </header>
 
-      {selectedGame && (
-        <div className="px-4 py-2 text-xs text-gray-400 dark:text-gray-500 border-b border-gray-200 dark:border-gray-800 tracking-wide">
-          {selectedGame.date} &middot; {selectedGame.game_type} &middot; {selectedGame.track}
-        </div>
-      )}
-
       <div className="px-4 lg:px-[5%] xl:px-[8%] py-6">
         <div className="mb-6">
           <UsefulLinks />
         </div>
 
-        {/* Auto-ladda nästkommande V85/V86 om inga spel finns */}
         {games.length === 0 && <AutoLoadUpcoming />}
 
         <MainPageClient

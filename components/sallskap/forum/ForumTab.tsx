@@ -35,71 +35,42 @@ export function ForumTab({ groupId, games, initialPosts, initialGameId, currentU
 
   const handleDeleted = useCallback((postId: string) => {
     setPosts((prev) =>
-      prev
-        .filter((p) => p.id !== postId)
-        .map((p) => ({
-          ...p,
-          replies: p.replies.filter((r) => r.id !== postId),
-        }))
+      prev.filter((p) => p.id !== postId).map((p) => ({ ...p, replies: p.replies.filter((r) => r.id !== postId) }))
     );
   }, []);
 
   const handleReplied = useCallback((reply: GroupPost, parentId: string) => {
-    setPosts((prev) =>
-      prev.map((p) =>
-        p.id === parentId ? { ...p, replies: [...p.replies, reply] } : p
-      )
-    );
+    setPosts((prev) => prev.map((p) => p.id === parentId ? { ...p, replies: [...p.replies, reply] } : p));
   }, []);
 
   return (
     <div className="px-4 py-5 space-y-5 max-w-2xl mx-auto">
-      {/* Omgångsväljare */}
       {games.length > 0 && (
-        <div>
-          <select
-            value={selectedGameId ?? ""}
-            onChange={(e) => handleGameChange(e.target.value)}
-            className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500"
-          >
-            {games.map((g) => (
-              <option key={g.id} value={g.id}>
-                {g.date}{g.track ? ` – ${g.track}` : ""}
-              </option>
-            ))}
-          </select>
-        </div>
+        <select
+          value={selectedGameId ?? ""}
+          onChange={(e) => handleGameChange(e.target.value)}
+          className="w-full rounded-lg px-3 py-2 text-sm outline-none"
+          style={{ background: "var(--tn-bg-chip)", border: "1px solid var(--tn-border)", color: "var(--tn-text)" }}
+        >
+          {games.map((g) => (
+            <option key={g.id} value={g.id}>{g.date}{g.track ? ` – ${g.track}` : ""}</option>
+          ))}
+        </select>
       )}
 
       {games.length === 0 && (
-        <p className="text-sm text-gray-500 dark:text-gray-400 italic">
+        <p className="text-sm italic" style={{ color: "var(--tn-text-faint)" }}>
           Ingen omgång inladdad ännu. Hämta en V85-omgång på startsidan först.
         </p>
       )}
 
       {selectedGameId && (
         <>
-          {/* Nytt inlägg */}
-          <div>
-            <PostForm
-              groupId={groupId}
-              gameId={selectedGameId}
-              onAdded={handleAdded}
-            />
-          </div>
-
-          {/* Inläggslista */}
+          <PostForm groupId={groupId} gameId={selectedGameId} onAdded={handleAdded} />
           {loading ? (
-            <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-4">Laddar…</p>
+            <p className="text-sm text-center py-4" style={{ color: "var(--tn-text-faint)" }}>Laddar…</p>
           ) : (
-            <PostList
-              posts={posts}
-              groupId={groupId}
-              gameId={selectedGameId}
-              currentUserId={currentUserId}
-              onDeleted={handleDeleted}
-              onReplied={handleReplied}
-            />
+            <PostList posts={posts} groupId={groupId} gameId={selectedGameId} currentUserId={currentUserId} onDeleted={handleDeleted} onReplied={handleReplied} />
           )}
         </>
       )}

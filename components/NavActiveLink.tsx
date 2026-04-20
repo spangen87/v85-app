@@ -16,11 +16,13 @@ export function NavActiveLink({ href, label }: NavActiveLinkProps) {
   return (
     <Link
       href={href}
-      className={`py-4 text-xs uppercase tracking-wide font-semibold border-b-2 transition-colors ${
-        isActive
-          ? "border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400"
-          : "border-transparent text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white"
-      }`}
+      className="tn-mono py-4 px-3 text-xs border-b-2 transition-colors"
+      style={{
+        letterSpacing: "0.1em",
+        textTransform: "uppercase",
+        borderBottomColor: isActive ? "var(--tn-accent)" : "transparent",
+        color: isActive ? "var(--tn-accent)" : "var(--tn-text-faint)",
+      }}
     >
       {label}
     </Link>

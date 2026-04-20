@@ -4,7 +4,6 @@ import { getAllTrackConfigs } from "@/lib/actions/tracks";
 import { TrackConfigRow } from "@/components/admin/TrackConfigRow";
 
 export default async function AdminPage() {
-  // Auth gate: check ADMIN_USER_IDS env var server-side (per D-13, security requirement)
   const supabase = await createClient();
   const {
     data: { user },
@@ -22,16 +21,16 @@ export default async function AdminPage() {
   return (
     <main className="px-4 py-5 max-w-2xl mx-auto space-y-6">
       <div>
-        <h1 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+        <h1 className="text-lg font-bold mb-1" style={{ color: "var(--tn-text)" }}>
           Bankonfiguration
         </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+        <p className="text-sm mb-6" style={{ color: "var(--tn-text-faint)" }}>
           Redigera spårfaktorer per bana.
         </p>
       </div>
 
       {configs.length === 0 ? (
-        <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
+        <p className="text-sm text-center py-8" style={{ color: "var(--tn-text-faint)" }}>
           Inga banor konfigurerade.
         </p>
       ) : (
