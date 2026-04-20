@@ -10,8 +10,11 @@ export function RaceTabBar({ races }: RaceTabBarProps) {
   const { activeRaceNumber, setActiveRaceNumber } = useRaceTab();
 
   return (
-    <div className="border-t border-gray-200 dark:border-gray-800 overflow-x-auto scrollbar-none">
-      <div className="flex px-3 gap-0.5 py-1.5 min-w-max">
+    <div
+      className="overflow-x-auto scrollbar-none"
+      style={{ borderTop: "1px solid var(--tn-border)" }}
+    >
+      <div className="flex px-3 gap-1 py-2 min-w-max">
         {races.map((race) => {
           const isActive = race.race_number === activeRaceNumber;
           const timeStr = race.start_time
@@ -25,15 +28,22 @@ export function RaceTabBar({ races }: RaceTabBarProps) {
             <button
               key={race.race_number}
               onClick={() => setActiveRaceNumber(race.race_number)}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-md whitespace-nowrap transition-colors ${
-                isActive
-                  ? "bg-indigo-700 text-white"
-                  : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white"
-              }`}
+              className="px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors tn-mono text-xs"
+              style={{
+                background: isActive ? "var(--tn-accent-faint)" : "transparent",
+                color: isActive ? "var(--tn-accent)" : "var(--tn-text-faint)",
+                border: isActive ? "1px solid transparent" : "1px solid transparent",
+                fontWeight: isActive ? "600" : "400",
+              }}
             >
               AVD {race.race_number}
               {timeStr && (
-                <span className="ml-1 font-normal opacity-70">{timeStr}</span>
+                <span
+                  className="ml-1.5"
+                  style={{ opacity: 0.65, fontWeight: 400 }}
+                >
+                  {timeStr}
+                </span>
               )}
             </button>
           );

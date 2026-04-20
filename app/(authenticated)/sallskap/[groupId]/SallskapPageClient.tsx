@@ -37,12 +37,15 @@ export function SallskapPageClient({
   const [activeTab, setActiveTab] = useState<SallskapTab>("forum");
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white flex flex-col">
-      {/* Header */}
-      <header className="border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center gap-3 sticky top-0 z-30 bg-white dark:bg-gray-950">
+    <div className="min-h-screen flex flex-col" style={{ background: "var(--tn-bg)", color: "var(--tn-text)" }}>
+      <header
+        className="px-4 py-3 flex items-center gap-3 sticky top-0 z-30"
+        style={{ background: "var(--tn-bg)", borderBottom: "1px solid var(--tn-border)" }}
+      >
         <Link
           href="/"
-          className="text-gray-500 hover:text-gray-900 dark:hover:text-white transition text-lg w-8 text-center shrink-0"
+          className="text-lg w-8 text-center shrink-0 transition"
+          style={{ color: "var(--tn-text-faint)" }}
           aria-label="Tillbaka"
         >
           ←
@@ -51,10 +54,8 @@ export function SallskapPageClient({
         <ThemeToggle />
       </header>
 
-      {/* Tab bar */}
       <TabBar activeTab={activeTab} onChange={setActiveTab} />
 
-      {/* Tab content — alltid monterade för att bevara state vid fliktbyte */}
       <div className="flex-1">
         <div className={activeTab === "forum" ? undefined : "hidden"}>
           <ForumTab

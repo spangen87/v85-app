@@ -2,6 +2,240 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-body {
-  font-family: var(--font-geist-sans), sans-serif;
+/* ─── Design tokens ─────────────────────────────────────────── */
+:root {
+  /* Dark palette (default) */
+  --tn-bg: #0a0e14;
+  --tn-bg-raised: #0f141c;
+  --tn-bg-card: #131a24;
+  --tn-bg-card-hover: #182030;
+  --tn-bg-chip: #1a2130;
+  --tn-border: #1f2937;
+  --tn-border-strong: #2a3647;
+  --tn-text: #e6ecf5;
+  --tn-text-dim: #8a95a8;
+  --tn-text-faint: #5a6577;
+
+  /* Accent — cobalt-electric */
+  --tn-accent: #3b82f6;
+  --tn-accent-soft: #1e3a8a;
+  --tn-accent-faint: rgba(59, 130, 246, 0.12);
+  --tn-accent-glow: rgba(59, 130, 246, 0.22);
+
+  /* Semantic */
+  --tn-value-high: #34d399;
+  --tn-value-high-bg: rgba(52, 211, 153, 0.12);
+  --tn-value-low: #f87171;
+  --tn-value-low-bg: rgba(248, 113, 113, 0.10);
+  --tn-warn: #fbbf24;
+  --tn-warn-bg: rgba(251, 191, 36, 0.10);
+
+  /* Form heat */
+  --tn-heat-hot: #f97316;
+  --tn-heat-warm: #fbbf24;
+  --tn-heat-cool: #475569;
+
+  /* Note label colors */
+  --tn-label-red: #ef4444;
+  --tn-label-orange: #f97316;
+  --tn-label-yellow: #eab308;
+  --tn-label-green: #10b981;
+  --tn-label-blue: #3b82f6;
+  --tn-label-purple: #a855f7;
+
+  /* Result badges */
+  --tn-p1: #fbbf24;
+  --tn-p2: #94a3b8;
+  --tn-p3: #b45309;
 }
+
+/* Light theme override via data-theme or .light class */
+[data-theme="light"],
+:root.light {
+  --tn-bg: #f5f3ef;
+  --tn-bg-raised: #ffffff;
+  --tn-bg-card: #ffffff;
+  --tn-bg-card-hover: #fafaf7;
+  --tn-bg-chip: #efece6;
+  --tn-border: #e6e2d9;
+  --tn-border-strong: #d6d1c4;
+  --tn-text: #14171c;
+  --tn-text-dim: #5b6474;
+  --tn-text-faint: #8b93a2;
+
+  --tn-accent: #1d4ed8;
+  --tn-accent-soft: #dbeafe;
+  --tn-accent-faint: rgba(29, 78, 216, 0.08);
+  --tn-accent-glow: rgba(29, 78, 216, 0.15);
+
+  --tn-value-high: #047857;
+  --tn-value-high-bg: rgba(4, 120, 87, 0.10);
+  --tn-value-low: #b91c1c;
+  --tn-value-low-bg: rgba(185, 28, 28, 0.08);
+  --tn-warn: #b45309;
+  --tn-warn-bg: rgba(180, 83, 9, 0.10);
+
+  --tn-heat-hot: #c2410c;
+  --tn-heat-warm: #b45309;
+  --tn-heat-cool: #94a3b8;
+
+  --tn-p1: #d97706;
+  --tn-p2: #64748b;
+  --tn-p3: #92400e;
+}
+
+/* ─── Base ───────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  background: var(--tn-bg);
+}
+
+body {
+  font-family: var(--font-geist-sans), var(--font-instrument-serif), -apple-system, system-ui, sans-serif;
+  background: var(--tn-bg);
+  color: var(--tn-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* ─── Typography helpers ─────────────────────────────────────── */
+.tn-serif {
+  font-family: var(--font-instrument-serif), Georgia, serif;
+}
+
+.tn-mono {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-feature-settings: "tnum";
+}
+
+.tn-eyebrow {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--tn-text-faint);
+  font-weight: 500;
+}
+
+/* ─── Brand mark ─────────────────────────────────────────────── */
+.tn-brand-mark {
+  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-style: italic;
+  letter-spacing: -0.02em;
+  color: var(--tn-text);
+}
+
+/* ─── Chip ───────────────────────────────────────────────────── */
+.tn-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  background: var(--tn-bg-chip);
+  border: 1px solid var(--tn-border);
+  border-radius: 6px;
+  font-size: 11px;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  color: var(--tn-text-dim);
+  white-space: nowrap;
+}
+
+.tn-chip-accent {
+  background: var(--tn-accent-faint);
+  border-color: transparent;
+  color: var(--tn-accent);
+}
+
+.tn-chip-value {
+  background: var(--tn-value-high-bg);
+  color: var(--tn-value-high);
+  border-color: transparent;
+  font-weight: 600;
+}
+
+/* ─── Delta badge ────────────────────────────────────────────── */
+.tn-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.tn-delta-pos { background: var(--tn-value-high-bg); color: var(--tn-value-high); }
+.tn-delta-neg { background: var(--tn-value-low-bg); color: var(--tn-value-low); }
+.tn-delta-neu { color: var(--tn-text-faint); }
+
+/* ─── Form score ring ────────────────────────────────────────── */
+.tn-form-ring {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+.tn-form-ring svg {
+  position: absolute;
+  inset: 0;
+  transform: rotate(-90deg);
+}
+.tn-form-ring .ring-track {
+  stroke: var(--tn-border);
+  stroke-width: 3;
+  fill: none;
+}
+.tn-form-ring .ring-bar {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.tn-form-ring .ring-val {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--tn-text);
+}
+
+/* ─── Last-5 result pills ────────────────────────────────────── */
+.tn-last5 {
+  display: flex;
+  gap: 3px;
+}
+.tn-last5 span {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  background: var(--tn-bg-chip);
+  color: var(--tn-text-dim);
+}
+.tn-last5 .r1 { background: var(--tn-p1); color: #0a0e14; }
+.tn-last5 .r2 { background: var(--tn-p2); color: #0a0e14; }
+.tn-last5 .r3 { background: var(--tn-p3); color: #fff; }
+.tn-last5 .rdq { background: transparent; color: var(--tn-text-faint); border: 1px solid var(--tn-border); }
+
+/* ─── Scrollbar hide ─────────────────────────────────────────── */
+.scrollbar-none::-webkit-scrollbar { display: none; }
+.scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ─── Sheet animation ────────────────────────────────────────── */
+@keyframes tn-sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes tn-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.tn-sheet-enter { animation: tn-sheet-up 0.25s cubic-bezier(0.22, 1, 0.36, 1); }
+.tn-backdrop-enter { animation: tn-fade-in 0.18s ease-out; }

@@ -9,10 +9,6 @@ interface UpcomingResponse {
   date: string | null;
 }
 
-/**
- * Visas när inga spel är sparade.
- * Letar automatiskt upp nästkommande V86/V85/V75 och erbjuder att hämta det.
- */
 export function AutoLoadUpcoming() {
   const router = useRouter();
   const [upcoming, setUpcoming] = useState<UpcomingResponse | null>(null);
@@ -50,34 +46,42 @@ export function AutoLoadUpcoming() {
 
   if (loading) {
     return (
-      <div className="text-center py-6 text-sm text-gray-400 dark:text-gray-500">
+      <div className="text-center py-6 text-sm" style={{ color: "var(--tn-text-faint)" }}>
         Letar efter nästa spel...
       </div>
     );
   }
 
-  if (!upcoming?.game) {
-    return null; // Inga spel hittades — visa standard tom-vy
-  }
+  if (!upcoming?.game) return null;
 
   const dateLabel = upcoming.date === new Date().toLocaleDateString("sv-SE") ? "idag" : "imorgon";
 
   return (
-    <div className="mb-6 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950 p-5 text-center">
-      <div className="text-3xl mb-2">🏇</div>
-      <h2 className="text-base font-bold text-gray-900 dark:text-white mb-1">
+    <div
+      className="mb-6 rounded-xl p-5 text-center"
+      style={{ background: "var(--tn-bg-card)", border: "1px solid var(--tn-border)" }}
+    >
+      <p className="tn-eyebrow mb-3">Nästa spel</p>
+      <h2 className="text-base font-bold mb-1" style={{ color: "var(--tn-text)" }}>
         {upcoming.game.label} {dateLabel}
       </h2>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+      <p className="text-sm mb-4" style={{ color: "var(--tn-text-faint)" }}>
         Hämta spelet för att se hästar och börja analysera.
       </p>
       {error && (
-        <p className="text-sm text-red-500 mb-3">{error}</p>
+        <p className="text-sm mb-3" style={{ color: "var(--tn-value-low)" }}>{error}</p>
       )}
       <button
         onClick={handleAutoLoad}
         disabled={fetching}
-        className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm disabled:opacity-60 transition"
+        className="text-sm font-bold rounded-xl transition disabled:opacity-60"
+        style={{
+          padding: "10px 24px",
+          background: "var(--tn-accent)",
+          color: "#fff",
+          border: "none",
+          cursor: "pointer",
+        }}
       >
         {fetching ? "Hämtar..." : `Hämta ${upcoming.game.label}`}
       </button>

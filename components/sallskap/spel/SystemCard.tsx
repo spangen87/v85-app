@@ -13,7 +13,6 @@ interface SystemCardProps {
   onDeleted?: (id: string) => void
   winnersByRace?: Record<number, string>
   gameType?: string
-  /** Spel-ID behövs för "Fortsätt"-länken på utkast */
   gameId?: string | null
 }
 
@@ -48,77 +47,80 @@ export function SystemCard({ system, currentUserId, onDeleted, winnersByRace, ga
     })
   }
 
-  const scoreColor = system.score == null
-    ? ''
-    : system.score >= 7
-    ? 'bg-emerald-500 text-white'
-    : system.score >= 5
-    ? 'bg-amber-400 text-black'
-    : 'bg-gray-300 text-gray-800 dark:bg-gray-600 dark:text-white'
+  const score = system.score
+  const scoreStyle: React.CSSProperties = score == null ? {}
+    : score >= 7 ? { background: "var(--tn-value-high)", color: "#0a0e14" }
+    : score >= 5 ? { background: "var(--tn-warn)", color: "#0a0e14" }
+    : { background: "var(--tn-bg-chip)", color: "var(--tn-text-dim)" }
 
-  // URL för att fortsätta ett utkast
-  const continueHref = gameId
-    ? `/?game=${encodeURIComponent(gameId)}&systemMode=1`
-    : null
+  const continueHref = gameId ? `/?game=${encodeURIComponent(gameId)}&systemMode=1` : null
+
+  const borderColor = system.is_draft ? "var(--tn-warn)" : "var(--tn-border)"
 
   return (
-    <div className={`border rounded-xl p-4 bg-white dark:bg-gray-900 ${
-      system.is_draft
-        ? 'border-amber-300 dark:border-amber-700'
-        : 'border-gray-200 dark:border-gray-700'
-    }`}>
-      {/* Systemhuvud */}
+    <div
+      className="rounded-xl p-4"
+      style={{ background: "var(--tn-bg-card)", border: `1px solid ${borderColor}` }}
+    >
       <div className="flex items-start justify-between mb-3">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-bold text-gray-900 dark:text-white">{system.name}</span>
+            <span className="font-bold" style={{ color: "var(--tn-text)" }}>{system.name}</span>
             {system.is_draft && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 font-semibold">
-                ✏️ Utkast
+              <span
+                className="tn-mono text-xs px-2 py-0.5 rounded-full font-semibold"
+                style={{ background: "rgba(251,191,36,0.15)", color: "var(--tn-warn)" }}
+              >
+                Utkast
               </span>
             )}
           </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">
+          <div className="text-xs" style={{ color: "var(--tn-text-faint)" }}>
             {system.author_display_name} · {system.total_rows} {system.total_rows === 1 ? 'rad' : 'rader'} · {formatRowCost(system.total_rows, gameType)}
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
-          {/* Privat/sällskap-bricka */}
           {!system.is_draft && (
             system.group_name != null ? (
-              <span className="text-xs px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold whitespace-nowrap">
-                👥 {system.group_name}
+              <span
+                className="tn-mono text-xs px-2 py-1 rounded-full font-semibold whitespace-nowrap"
+                style={{ background: "var(--tn-accent-faint)", color: "var(--tn-accent)" }}
+              >
+                {system.group_name}
               </span>
             ) : (
-              <span className="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 font-semibold">
-                🔒 Privat
+              <span
+                className="tn-mono text-xs px-2 py-1 rounded-full font-semibold"
+                style={{ background: "var(--tn-bg-chip)", color: "var(--tn-text-faint)" }}
+              >
+                Privat
               </span>
             )
           )}
-          {/* Poängbadge */}
-          {!system.is_draft && system.is_graded && system.score != null && (
-            <span className={`text-lg font-black px-3 py-1 rounded-lg ${scoreColor}`}>
-              {system.score}/8
+          {!system.is_draft && system.is_graded && score != null && (
+            <span className="tn-mono text-lg font-black px-3 py-1 rounded-lg" style={scoreStyle}>
+              {score}/8
             </span>
           )}
           {!system.is_draft && !system.is_graded && (
-            <span className="text-xs px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-500">Pågår</span>
+            <span className="tn-mono text-xs px-2 py-1 rounded-md" style={{ background: "var(--tn-bg-chip)", color: "var(--tn-text-faint)" }}>
+              Pågår
+            </span>
           )}
         </div>
       </div>
 
-      {/* ATG-kvittoformat tabell */}
       <table className="w-full border-collapse text-sm mb-3">
         <thead>
-          <tr className="border-b-2 border-gray-900 dark:border-gray-100">
-            <th className="text-left py-1 px-1 text-xs font-semibold text-gray-500 uppercase tracking-wide w-9">Avd</th>
-            <th className="text-left py-1 px-1 text-xs font-semibold text-gray-500 uppercase tracking-wide">Hästar</th>
+          <tr style={{ borderBottom: `2px solid var(--tn-text)` }}>
+            <th className="text-left py-1 px-1 tn-eyebrow w-9">Avd</th>
+            <th className="text-left py-1 px-1 tn-eyebrow">Hästar</th>
           </tr>
         </thead>
         <tbody>
           {[...system.selections].sort((a, b) => a.race_number - b.race_number).map(sel => (
-            <tr key={sel.race_number} className="border-b border-gray-100 dark:border-gray-800">
-              <td className="py-1.5 px-1 font-bold text-base text-gray-900 dark:text-white">{sel.race_number}</td>
+            <tr key={sel.race_number} style={{ borderBottom: "1px solid var(--tn-border)" }}>
+              <td className="py-1.5 px-1 font-bold text-base" style={{ color: "var(--tn-text)" }}>{sel.race_number}</td>
               <td className="py-1.5 px-1">
                 <div className="flex gap-1.5 flex-wrap">
                   {[...sel.horses].sort((a, b) => a.start_number - b.start_number).map(h => {
@@ -128,15 +130,13 @@ export function SystemCard({ system, currentUserId, onDeleted, winnersByRace, ga
                     return (
                       <span
                         key={h.horse_id}
-                        className={`inline-flex items-center justify-center w-7 h-7 rounded-full font-bold text-sm transition-colors ${
-                          won
-                            ? 'border-2 border-green-600 text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950'
-                            : lost
-                            ? 'text-gray-400 dark:text-gray-600'
-                            : system.is_draft
-                            ? 'text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950'
-                            : 'text-gray-900 dark:text-white'
-                        }`}
+                        className="inline-flex items-center justify-center w-7 h-7 rounded-full font-bold text-sm"
+                        style={
+                          won ? { border: "2px solid var(--tn-value-high)", color: "var(--tn-value-high)", background: "rgba(52,211,153,0.1)" }
+                          : lost ? { color: "var(--tn-text-faint)" }
+                          : system.is_draft ? { color: "var(--tn-warn)", background: "rgba(251,191,36,0.1)" }
+                          : { color: "var(--tn-text)" }
+                        }
                       >
                         {h.start_number}
                       </span>
@@ -148,7 +148,7 @@ export function SystemCard({ system, currentUserId, onDeleted, winnersByRace, ga
           ))}
           {system.selections.length === 0 && (
             <tr>
-              <td colSpan={2} className="py-2 px-1 text-xs text-gray-400 dark:text-gray-500 italic">
+              <td colSpan={2} className="py-2 px-1 text-xs italic" style={{ color: "var(--tn-text-faint)" }}>
                 Inga hästar valda ännu
               </td>
             </tr>
@@ -156,25 +156,23 @@ export function SystemCard({ system, currentUserId, onDeleted, winnersByRace, ga
         </tbody>
       </table>
 
-      {deleteError && (
-        <p className="text-xs text-red-500 mb-2">{deleteError}</p>
-      )}
+      {deleteError && <p className="text-xs mb-2" style={{ color: "var(--tn-value-low)" }}>{deleteError}</p>}
 
-      {/* Åtgärder */}
       <div className="flex gap-2 flex-wrap">
-        {/* Fortsätt-knapp för utkast */}
         {system.is_draft && isOwner && continueHref && (
           <Link
             href={continueHref}
-            className="text-xs px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-white font-semibold transition"
+            className="text-xs px-3 py-1.5 rounded-lg font-semibold transition"
+            style={{ background: "rgba(251,191,36,0.15)", color: "var(--tn-warn)", border: "1px solid rgba(251,191,36,0.3)" }}
           >
-            ✏️ Fortsätt utkast
+            Fortsätt utkast
           </Link>
         )}
         {!system.is_draft && (
           <button
             onClick={handleCopy}
-            className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+            className="text-xs px-3 py-1.5 rounded-lg transition"
+            style={{ background: "var(--tn-bg-chip)", border: "1px solid var(--tn-border)", color: "var(--tn-text-dim)", cursor: "pointer" }}
           >
             Kopiera system
           </button>
@@ -183,7 +181,8 @@ export function SystemCard({ system, currentUserId, onDeleted, winnersByRace, ga
           <button
             onClick={handleDelete}
             disabled={isPending}
-            className="text-xs px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition disabled:opacity-50"
+            className="text-xs px-3 py-1.5 rounded-lg transition disabled:opacity-50"
+            style={{ border: "1px solid rgba(248,113,113,0.3)", color: "var(--tn-value-low)", background: "none", cursor: "pointer" }}
           >
             Ta bort
           </button>

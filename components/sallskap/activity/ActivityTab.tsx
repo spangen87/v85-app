@@ -24,11 +24,12 @@ export function ActivityTab({ groupId, initialActivity }: ActivityTabProps) {
   return (
     <div className="max-w-2xl mx-auto py-4">
       <div className="flex items-center justify-between px-4 mb-3">
-        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Senaste aktivitet</h2>
+        <h2 className="tn-eyebrow">Senaste aktivitet</h2>
         <button
           onClick={handleRefresh}
           disabled={isPending}
-          className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-200 disabled:opacity-50 transition"
+          className="text-xs transition disabled:opacity-50"
+          style={{ color: "var(--tn-accent)", background: "none", border: "none", cursor: "pointer" }}
         >
           {isPending ? "Uppdaterar..." : "Uppdatera"}
         </button>

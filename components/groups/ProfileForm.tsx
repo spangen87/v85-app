@@ -18,24 +18,26 @@ export function ProfileForm({ initialName }: { initialName: string }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2">
+    <form onSubmit={handleSubmit} className="flex gap-2 flex-wrap">
       <input
         type="text"
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder="Ditt visningsnamn"
         maxLength={40}
-        className="flex-1 bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-indigo-500"
+        className="flex-1 rounded-lg px-3 py-2 text-sm outline-none"
+        style={{ background: "var(--tn-bg-chip)", border: "1px solid var(--tn-border)", color: "var(--tn-text)" }}
       />
       <button
         type="submit"
         disabled={loading || !name.trim()}
-        className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-sm px-4 py-2 rounded-lg transition"
+        className="text-sm px-4 py-2 rounded-lg transition disabled:opacity-50"
+        style={{ background: "var(--tn-accent)", color: "#fff", border: "none", cursor: "pointer" }}
       >
         {loading ? "Sparar…" : "Spara"}
       </button>
       {message && (
-        <span className="text-xs text-gray-500 dark:text-gray-400 self-center">{message}</span>
+        <span className="text-xs self-center w-full" style={{ color: "var(--tn-text-faint)" }}>{message}</span>
       )}
     </form>
   );

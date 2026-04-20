@@ -9,7 +9,6 @@ function relativeTime(dateStr: string): string {
   const now = Date.now();
   const then = new Date(dateStr).getTime();
   const diffSec = Math.floor((now - then) / 1000);
-
   if (diffSec < 60) return "just nu";
   const diffMin = Math.floor(diffSec / 60);
   if (diffMin < 60) return `${diffMin} min sedan`;
@@ -26,30 +25,31 @@ const VALID_LABELS = new Set(["red", "orange", "yellow", "green", "blue", "purpl
 export function ActivityFeed({ items }: { items: ActivityItem[] }) {
   if (items.length === 0) {
     return (
-      <p className="text-sm text-gray-500 dark:text-gray-400 italic text-center py-8">
+      <p className="text-sm italic text-center py-8" style={{ color: "var(--tn-text-faint)" }}>
         Ingen aktivitet ännu. Börja diskutera i Forum-fliken!
       </p>
     );
   }
 
   return (
-    <div className="divide-y divide-gray-200 dark:divide-gray-800">
+    <div style={{ borderTop: "1px solid var(--tn-border)" }}>
       {items.map((item) => (
-        <div key={item.id} className="px-4 py-3">
+        <div key={item.id} className="px-4 py-3" style={{ borderBottom: "1px solid var(--tn-border)" }}>
           {item.kind === "post" ? (
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-medium text-indigo-600 dark:text-indigo-400">Forum</span>
-                <span className="text-xs text-gray-400 dark:text-gray-500">&middot;</span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">{relativeTime(item.created_at)}</span>
+                <span className="text-xs font-medium" style={{ color: "var(--tn-accent)" }}>Forum</span>
+                <span className="text-xs" style={{ color: "var(--tn-text-faint)" }}>&middot;</span>
+                <span className="text-xs" style={{ color: "var(--tn-text-faint)" }}>{relativeTime(item.created_at)}</span>
               </div>
-              <p className="text-sm text-gray-900 dark:text-white line-clamp-2">{item.content}</p>
+              <p className="text-sm line-clamp-2" style={{ color: "var(--tn-text)" }}>{item.content}</p>
               <div className="flex items-center gap-2 mt-1">
-                <span className="text-xs text-gray-500 dark:text-gray-400">{item.author}</span>
+                <span className="text-xs" style={{ color: "var(--tn-text-faint)" }}>{item.author}</span>
                 {item.game_date && (
                   <Link
                     href={`/?game=${encodeURIComponent(item.game_id)}`}
-                    className="text-xs text-indigo-500 dark:text-indigo-400 hover:underline"
+                    className="text-xs hover:underline"
+                    style={{ color: "var(--tn-accent)" }}
                   >
                     {item.game_type} {item.game_date}
                   </Link>
@@ -59,17 +59,15 @@ export function ActivityFeed({ items }: { items: ActivityItem[] }) {
           ) : (
             <div>
               <div className="flex items-center gap-2 mb-1">
-                {VALID_LABELS.has(item.label) && (
-                  <NoteLabelDot label={item.label as NoteLabel} />
-                )}
-                <span className="text-xs font-medium text-purple-600 dark:text-purple-400">Anteckning</span>
-                <span className="text-xs text-gray-400 dark:text-gray-500">&middot;</span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">{relativeTime(item.created_at)}</span>
+                {VALID_LABELS.has(item.label) && <NoteLabelDot label={item.label as NoteLabel} />}
+                <span className="text-xs font-medium" style={{ color: "var(--tn-text-dim)" }}>Anteckning</span>
+                <span className="text-xs" style={{ color: "var(--tn-text-faint)" }}>&middot;</span>
+                <span className="text-xs" style={{ color: "var(--tn-text-faint)" }}>{relativeTime(item.created_at)}</span>
               </div>
-              <p className="text-sm text-gray-900 dark:text-white line-clamp-2">{item.content}</p>
+              <p className="text-sm line-clamp-2" style={{ color: "var(--tn-text)" }}>{item.content}</p>
               <div className="flex items-center gap-2 mt-1">
-                <span className="text-xs text-gray-500 dark:text-gray-400">{item.author}</span>
-                <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">{item.horse_name}</span>
+                <span className="text-xs" style={{ color: "var(--tn-text-faint)" }}>{item.author}</span>
+                <span className="text-xs font-medium" style={{ color: "var(--tn-text-dim)" }}>{item.horse_name}</span>
               </div>
             </div>
           )}

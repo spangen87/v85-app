@@ -27,15 +27,7 @@ interface PostItemProps {
   isReply?: boolean;
 }
 
-export function PostItem({
-  post,
-  groupId,
-  gameId,
-  currentUserId,
-  onDeleted,
-  onReplied,
-  isReply = false,
-}: PostItemProps) {
+export function PostItem({ post, groupId, gameId, currentUserId, onDeleted, onReplied, isReply = false }: PostItemProps) {
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -51,26 +43,30 @@ export function PostItem({
   }
 
   return (
-    <div className={`${isReply ? "ml-4 pl-3 border-l-2 border-gray-300 dark:border-gray-700" : ""}`}>
-      <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-3 space-y-1.5">
-        {/* Header */}
+    <div
+      className={isReply ? "ml-4 pl-3" : ""}
+      style={isReply ? { borderLeft: "2px solid var(--tn-border)" } : {}}
+    >
+      <div className="rounded-lg p-3 space-y-1.5" style={{ background: "var(--tn-bg-chip)" }}>
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="w-6 h-6 rounded-full bg-indigo-700 flex items-center justify-center text-white text-xs font-bold shrink-0">
+          <span
+            className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+            style={{ background: "var(--tn-accent)", color: "#fff" }}
+          >
             {post.author_display_name.slice(0, 2).toUpperCase()}
           </span>
-          <span className="text-gray-900 dark:text-white text-xs font-medium">{post.author_display_name}</span>
-          <span className="text-gray-400 dark:text-gray-500 text-xs ml-auto">{relativeTime(post.created_at)}</span>
+          <span className="text-xs font-medium" style={{ color: "var(--tn-text)" }}>{post.author_display_name}</span>
+          <span className="text-xs ml-auto" style={{ color: "var(--tn-text-faint)" }}>{relativeTime(post.created_at)}</span>
         </div>
 
-        {/* Content */}
-        <p className="text-gray-800 dark:text-gray-200 text-sm leading-relaxed whitespace-pre-wrap">{post.content}</p>
+        <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: "var(--tn-text)" }}>{post.content}</p>
 
-        {/* Actions */}
         <div className="flex items-center gap-3 pt-0.5">
           {!isReply && (
             <button
               onClick={() => setShowReplyForm((v) => !v)}
-              className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-300 transition"
+              className="text-xs transition"
+              style={{ color: "var(--tn-accent)", background: "none", border: "none", cursor: "pointer" }}
             >
               {showReplyForm ? "Avbryt" : "Svara"}
             </button>
@@ -79,7 +75,8 @@ export function PostItem({
             <button
               onClick={handleDelete}
               disabled={deleting}
-              className="text-xs text-red-400 hover:text-red-300 disabled:opacity-50 transition"
+              className="text-xs transition disabled:opacity-50"
+              style={{ color: "var(--tn-value-low)", background: "none", border: "none", cursor: "pointer" }}
             >
               {deleting ? "Tar bort…" : "Ta bort"}
             </button>
@@ -87,34 +84,16 @@ export function PostItem({
         </div>
       </div>
 
-      {/* Reply form */}
       {showReplyForm && !isReply && (
         <div className="mt-2 ml-4">
-          <PostForm
-            groupId={groupId}
-            gameId={gameId}
-            parentId={post.id}
-            onAdded={handleReplied}
-            onCancel={() => setShowReplyForm(false)}
-            compact
-          />
+          <PostForm groupId={groupId} gameId={gameId} parentId={post.id} onAdded={handleReplied} onCancel={() => setShowReplyForm(false)} compact />
         </div>
       )}
 
-      {/* Replies */}
       {post.replies && post.replies.length > 0 && (
         <div className="mt-2 space-y-2">
           {post.replies.map((reply) => (
-            <PostItem
-              key={reply.id}
-              post={reply}
-              groupId={groupId}
-              gameId={gameId}
-              currentUserId={currentUserId}
-              onDeleted={onDeleted}
-              onReplied={onReplied}
-              isReply
-            />
+            <PostItem key={reply.id} post={reply} groupId={groupId} gameId={gameId} currentUserId={currentUserId} onDeleted={onDeleted} onReplied={onReplied} isReply />
           ))}
         </div>
       )}

@@ -20,12 +20,8 @@ export function GroupNameForm({ groupId, initialName, onUpdated }: GroupNameForm
     setMessage(null);
     const { error } = await updateGroup(groupId, { name: name.trim() });
     setLoading(false);
-    if (error) {
-      setMessage(error);
-    } else {
-      setMessage("Sparat!");
-      onUpdated(name.trim());
-    }
+    if (error) { setMessage(error); }
+    else { setMessage("Sparat!"); onUpdated(name.trim()); }
   }
 
   return (
@@ -36,18 +32,18 @@ export function GroupNameForm({ groupId, initialName, onUpdated }: GroupNameForm
         onChange={(e) => setName(e.target.value)}
         placeholder="Sällskapets namn"
         maxLength={60}
-        className="flex-1 min-w-0 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-indigo-500"
+        className="flex-1 min-w-0 rounded-lg px-3 py-2 text-sm outline-none"
+        style={{ background: "var(--tn-bg-chip)", border: "1px solid var(--tn-border)", color: "var(--tn-text)" }}
       />
       <button
         type="submit"
         disabled={loading || !name.trim()}
-        className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-sm px-4 py-2 rounded-lg transition"
+        className="text-sm px-4 py-2 rounded-lg transition disabled:opacity-50"
+        style={{ background: "var(--tn-accent)", color: "#fff", border: "none", cursor: "pointer" }}
       >
         {loading ? "Sparar…" : "Spara"}
       </button>
-      {message && (
-        <span className="text-xs text-gray-500 dark:text-gray-400">{message}</span>
-      )}
+      {message && <span className="text-xs" style={{ color: "var(--tn-text-faint)" }}>{message}</span>}
     </form>
   );
 }

@@ -14,19 +14,29 @@ export function MemberList({ members, creatorId }: { members: GroupMember[]; cre
   return (
     <ul className="space-y-2">
       {members.map((m) => (
-        <li key={m.user_id} className="flex items-center justify-between gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg px-3 py-2">
+        <li
+          key={m.user_id}
+          className="flex items-center justify-between gap-2 rounded-lg px-3 py-2"
+          style={{ background: "var(--tn-bg-chip)" }}
+        >
           <div className="flex items-center gap-2 min-w-0">
-            <span className="w-7 h-7 rounded-full bg-indigo-700 flex items-center justify-center text-white text-xs font-bold shrink-0">
+            <span
+              className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+              style={{ background: "var(--tn-accent)", color: "#fff" }}
+            >
               {m.display_name.slice(0, 2).toUpperCase()}
             </span>
-            <span className="text-sm text-gray-900 dark:text-white truncate">{m.display_name}</span>
+            <span className="text-sm truncate" style={{ color: "var(--tn-text)" }}>{m.display_name}</span>
             {m.user_id === creatorId && (
-              <span className="text-xs bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-1.5 py-0.5 rounded shrink-0">
+              <span
+                className="text-xs px-1.5 py-0.5 rounded shrink-0"
+                style={{ background: "var(--tn-bg-card)", color: "var(--tn-text-faint)" }}
+              >
                 skapare
               </span>
             )}
           </div>
-          <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">
+          <span className="text-xs shrink-0" style={{ color: "var(--tn-text-faint)" }}>
             {relativeDate(m.joined_at)}
           </span>
         </li>

@@ -45,62 +45,59 @@ export function SystemSidebar({
   onLoadDraft,
 }: SystemSidebarProps) {
   function isSelected(raceNumber: number, horseId: string): boolean {
-    return (
-      selections
-        .find((s) => s.race_number === raceNumber)
-        ?.horses.some((h) => h.horse_id === horseId) ?? false
-    );
+    return selections.find((s) => s.race_number === raceNumber)?.horses.some((h) => h.horse_id === horseId) ?? false;
   }
 
   const completedRaces = selections.length;
 
   return (
-    <aside className="hidden md:flex flex-col fixed right-0 top-[170px] bottom-0 z-40 w-[320px] border-l border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-      {/* Header */}
-      <div className="px-3 py-3 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
-        <div className="font-bold text-sm text-gray-900 dark:text-white">
-          🎯 Din kupong
-        </div>
+    <aside
+      className="hidden md:flex flex-col fixed right-0 top-[170px] bottom-0 z-40 w-[320px]"
+      style={{ background: "var(--tn-bg-raised)", borderLeft: "1px solid var(--tn-border)" }}
+    >
+      <div
+        className="px-3 py-3 flex-shrink-0"
+        style={{ borderBottom: "1px solid var(--tn-border)" }}
+      >
+        <div className="tn-eyebrow mb-1.5">Din kupong</div>
         <input
           type="text"
           value={draftName}
           onChange={(e) => onDraftNameChange(e.target.value)}
           placeholder="Namnge utkast..."
           maxLength={80}
-          className="mt-1.5 w-full px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-gray-700 dark:text-gray-300 focus:outline-none focus:border-indigo-400"
+          className="w-full px-2 py-1 text-xs rounded outline-none"
+          style={{
+            background: "var(--tn-bg-chip)",
+            border: "1px solid var(--tn-border)",
+            color: "var(--tn-text)",
+          }}
         />
       </div>
 
-      {/* Races */}
       <div className="flex-1 overflow-y-auto px-3 py-2 space-y-4">
         {races.map((race) => {
-          const sorted = [...race.starters].sort(
-            (a, b) => a.start_number - b.start_number
-          );
+          const sorted = [...race.starters].sort((a, b) => a.start_number - b.start_number);
           return (
             <div key={race.id}>
-              <div className="text-[10px] uppercase tracking-wide font-semibold text-gray-400 dark:text-gray-500 mb-1.5">
-                Avd {race.race_number} · {race.distance}m
-              </div>
+              <div className="tn-eyebrow mb-1.5">Avd {race.race_number} · {race.distance}m</div>
               <div className="flex flex-wrap gap-1">
                 {sorted.map((starter) => {
                   const selected = isSelected(race.race_number, starter.horse_id);
                   return (
                     <button
                       key={starter.horse_id}
-                      onClick={() =>
-                        onToggleHorse(race.race_number, {
-                          horse_id: starter.horse_id,
-                          start_number: starter.start_number,
-                          horse_name: starter.horses?.name ?? "",
-                        })
-                      }
+                      onClick={() => onToggleHorse(race.race_number, {
+                        horse_id: starter.horse_id,
+                        start_number: starter.start_number,
+                        horse_name: starter.horses?.name ?? "",
+                      })}
                       title={starter.horses?.name ?? `Nr ${starter.start_number}`}
-                      className={`w-[26px] h-[26px] rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
-                        selected
-                          ? "bg-emerald-500 text-white ring-2 ring-emerald-300"
-                          : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-emerald-100 dark:hover:bg-emerald-900 hover:text-emerald-700 dark:hover:text-emerald-400"
-                      }`}
+                      className="w-[26px] h-[26px] rounded-full flex items-center justify-center text-xs font-bold transition-colors"
+                      style={selected
+                        ? { background: "var(--tn-accent)", color: "#fff", outline: "2px solid var(--tn-accent-soft)", outlineOffset: 1 }
+                        : { background: "var(--tn-bg-chip)", color: "var(--tn-text-faint)" }
+                      }
                     >
                       {starter.start_number}
                     </button>
@@ -111,22 +108,21 @@ export function SystemSidebar({
           );
         })}
 
-        {/* Sparade utkast */}
         {savedDrafts.length > 0 && (
-          <div className="border-t border-gray-200 dark:border-gray-800 pt-3 mt-2">
-            <p className="text-[10px] uppercase tracking-wide font-semibold text-gray-400 dark:text-gray-500 mb-2">
-              Mina utkast
-            </p>
+          <div className="pt-3 mt-2" style={{ borderTop: "1px solid var(--tn-border)" }}>
+            <p className="tn-eyebrow mb-2">Mina utkast</p>
             {savedDrafts.map((draft) => (
               <button
                 key={draft.id}
                 onClick={() => onLoadDraft?.(draft)}
-                className="w-full text-left px-2 py-1.5 rounded text-xs text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition mb-1"
+                className="w-full text-left px-2 py-1.5 rounded text-xs transition mb-1"
+                style={{ color: "var(--tn-text-dim)", background: "none", border: "none", cursor: "pointer" }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--tn-bg-card)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
               >
-                <span className="font-semibold">{draft.name}</span>
-                <span className="text-gray-400 dark:text-gray-500 ml-2">
-                  {draft.total_rows} rader ·{" "}
-                  {new Date(draft.created_at).toLocaleDateString("sv-SE")}
+                <span className="font-semibold" style={{ color: "var(--tn-text)" }}>{draft.name}</span>
+                <span className="ml-2" style={{ color: "var(--tn-text-faint)" }}>
+                  {draft.total_rows} rader · {new Date(draft.created_at).toLocaleDateString("sv-SE")}
                 </span>
               </button>
             ))}
@@ -134,37 +130,41 @@ export function SystemSidebar({
         )}
       </div>
 
-      {/* Footer */}
-      <div className="px-3 py-3 border-t-2 border-emerald-500 flex-shrink-0">
+      <div
+        className="px-3 py-3 flex-shrink-0"
+        style={{ borderTop: "2px solid var(--tn-accent)" }}
+      >
         <div className="flex items-baseline justify-between mb-1">
-          <span className="text-lg font-extrabold text-emerald-500">
+          <span className="text-lg font-extrabold" style={{ color: "var(--tn-accent)" }}>
             {totalRows} {totalRows === 1 ? "rad" : "rader"}
           </span>
-          <span className="text-xs text-gray-500 dark:text-gray-400">
+          <span className="text-xs" style={{ color: "var(--tn-text-faint)" }}>
             {totalRows > 0 ? formatRowCost(totalRows, gameType ?? "") : "–"}
           </span>
         </div>
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs text-gray-400 dark:text-gray-500">
+          <span className="text-xs" style={{ color: "var(--tn-text-faint)" }}>
             {completedRaces} av {races.length} avd. klara
           </span>
           {draftSaveStatus === "saving" && (
-            <span className="text-xs text-gray-500">Sparar utkast...</span>
+            <span className="text-xs" style={{ color: "var(--tn-text-faint)" }}>Sparar utkast...</span>
           )}
           {draftSaveStatus === "saved" && (
-            <span className="text-xs text-emerald-500">Utkast sparat ✓</span>
+            <span className="text-xs" style={{ color: "var(--tn-value-high)" }}>Utkast sparat ✓</span>
           )}
         </div>
         <button
           onClick={onSave}
           disabled={selections.length === 0}
-          className="w-full py-2 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-bold rounded-lg disabled:opacity-40 transition"
+          className="w-full py-2 text-sm font-bold rounded-lg disabled:opacity-40 transition"
+          style={{ background: "var(--tn-accent)", color: "#fff", border: "none", cursor: "pointer" }}
         >
           Spara system →
         </button>
         <button
           onClick={onCancel}
-          className="w-full mt-2 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 underline transition"
+          className="w-full mt-2 text-xs underline transition"
+          style={{ color: "var(--tn-text-faint)", background: "none", border: "none", cursor: "pointer" }}
         >
           Avbryt systemläge
         </button>

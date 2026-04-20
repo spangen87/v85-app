@@ -98,7 +98,6 @@ export function RaceList({
   const [hideOutsiders, setHideOutsiders] = useState(false);
   const [search, setSearch] = useState("");
 
-  // Reset analysis panel when switching races
   useEffect(() => {
     setShowAnalysis(false);
   }, [activeRaceNumber]);
@@ -112,14 +111,10 @@ export function RaceList({
 
   const activeRace = races.find((r) => r.race_number === activeRaceNumber) ?? races[0];
 
-  function sortStarters(
-    starters: Starter[],
-    compositeMap: Record<number, number>
-  ): Starter[] {
+  function sortStarters(starters: Starter[], compositeMap: Record<number, number>): Starter[] {
     return [...starters].sort((a, b) => {
       switch (sortKey) {
-        case "number":
-          return a.start_number - b.start_number;
+        case "number": return a.start_number - b.start_number;
         case "odds":
           if (a.odds == null && b.odds == null) return 0;
           if (a.odds == null) return 1;
@@ -141,13 +136,7 @@ export function RaceList({
   if (!activeRace) return null;
 
   const hasActiveFilter = filterValue || hideOutsiders || search.trim().length > 0;
-
-  // Bygg compositeMap direkt från DB-lagrad formscore (CS)
-  const compositeMap = Object.fromEntries(
-    activeRace.starters.map((s) => [s.start_number, s.formscore ?? 0])
-  );
-
-  // Beräkna "isValue" per häst: CS > 55 och positiv CS-andel vs streckning
+  const compositeMap = Object.fromEntries(activeRace.starters.map((s) => [s.start_number, s.formscore ?? 0]));
   const totalCS = activeRace.starters.reduce((sum, s) => sum + (s.formscore ?? 0), 0);
   const valueMap = Object.fromEntries(
     activeRace.starters.map((s) => {
@@ -164,110 +153,115 @@ export function RaceList({
     .filter((s) => !hideOutsiders || s.odds == null || s.odds <= 50)
     .filter((s) => {
       if (!q) return true;
-      return (
-        (s.horses?.name ?? "").toLowerCase().includes(q) ||
-        s.driver.toLowerCase().includes(q) ||
-        s.trainer.toLowerCase().includes(q)
-      );
+      return (s.horses?.name ?? "").toLowerCase().includes(q) || s.driver.toLowerCase().includes(q) || s.trainer.toLowerCase().includes(q);
     });
 
   const sorted = sortStarters(filtered, compositeMap);
   const raceSelections = systemSelections?.find((s) => s.race_number === activeRace.race_number);
-
   const startTimeStr = activeRace.start_time
-    ? new Date(activeRace.start_time).toLocaleTimeString("sv-SE", {
-        hour: "2-digit",
-        minute: "2-digit",
-        timeZone: "Europe/Stockholm",
-      })
+    ? new Date(activeRace.start_time).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Stockholm" })
     : null;
+
+  const chipBase: React.CSSProperties = {
+    background: "var(--tn-bg-chip)",
+    border: "1px solid var(--tn-border)",
+    color: "var(--tn-text-dim)",
+    borderRadius: 8,
+    fontSize: 12,
+    padding: "5px 10px",
+    cursor: "pointer",
+    transition: "background 0.15s",
+    fontFamily: "var(--font-geist-sans)",
+  };
 
   return (
     <div className="space-y-3">
       <TopFiveRanking races={races} onHorseClick={onHorseClick} />
 
-      {/* Toolbar: sortering + filter på en rad */}
+      {/* Toolbar */}
       <div className="flex items-center gap-2 flex-wrap px-1">
-        {/* Sort dropdown */}
         <select
           value={sortKey}
           onChange={(e) => setSortKey(e.target.value as SortKey)}
-          className="text-xs px-2 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:outline-none focus:border-indigo-400 cursor-pointer"
+          className="text-xs rounded-lg outline-none cursor-pointer"
+          style={{ ...chipBase, minWidth: 0 }}
         >
           {SORT_OPTIONS.map((opt) => (
-            <option key={opt.key} value={opt.key}>
-              {opt.label}
-            </option>
+            <option key={opt.key} value={opt.key}>{opt.label}</option>
           ))}
         </select>
 
-        {/* Filter chips */}
         <button
           onClick={() => setFilterValue((v) => !v)}
-          className={`text-xs px-3 py-1.5 rounded-lg border transition font-medium ${
-            filterValue
-              ? "bg-green-600 border-green-500 text-white"
-              : "bg-transparent border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
-          }`}
+          className="text-xs font-medium transition-colors"
+          style={{
+            ...chipBase,
+            background: filterValue ? "var(--tn-value-high-bg)" : "var(--tn-bg-chip)",
+            color: filterValue ? "var(--tn-value-high)" : "var(--tn-text-dim)",
+            border: filterValue ? "1px solid transparent" : "1px solid var(--tn-border)",
+          }}
         >
           Värde
         </button>
+
         <button
           onClick={() => setHideOutsiders((v) => !v)}
-          className={`text-xs px-3 py-1.5 rounded-lg border transition font-medium ${
-            hideOutsiders
-              ? "bg-indigo-700 border-indigo-600 text-white"
-              : "bg-transparent border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
-          }`}
+          className="text-xs font-medium transition-colors"
+          style={{
+            ...chipBase,
+            background: hideOutsiders ? "var(--tn-accent-faint)" : "var(--tn-bg-chip)",
+            color: hideOutsiders ? "var(--tn-accent)" : "var(--tn-text-dim)",
+            border: hideOutsiders ? "1px solid transparent" : "1px solid var(--tn-border)",
+          }}
         >
           Dölj &gt;50x
         </button>
+
         {hasActiveFilter && (
           <button
-            onClick={() => {
-              setFilterValue(false);
-              setHideOutsiders(false);
-              setSearch("");
-            }}
-            className="text-xs px-2 py-1.5 text-gray-400 dark:text-gray-500 hover:text-red-500 transition"
+            onClick={() => { setFilterValue(false); setHideOutsiders(false); setSearch(""); }}
+            className="text-xs transition-colors"
+            style={{ color: "var(--tn-text-faint)", background: "none", border: "none", cursor: "pointer" }}
           >
             Rensa ✕
           </button>
         )}
 
-        {/* Sök */}
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Sök häst, kusk…"
-          className="text-xs px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-400 w-full sm:w-44 ml-auto"
+          className="text-xs rounded-lg outline-none w-full sm:w-44 ml-auto"
+          style={{
+            ...chipBase,
+            color: "var(--tn-text)",
+          }}
         />
       </div>
 
-      {/* Loppinfo + analysknapp */}
-      <div className="flex items-center justify-between px-1 text-xs text-gray-500 dark:text-gray-400">
-        <span className="truncate">
+      {/* Race info + analysis toggle */}
+      <div className="flex items-center justify-between px-1">
+        <span className="text-xs truncate" style={{ color: "var(--tn-text-faint)" }}>
           {activeRace.race_name ?? `Avdelning ${activeRace.race_number}`}
           {startTimeStr && <span className="ml-2">{startTimeStr}</span>}
           <span className="ml-2">{activeRace.distance} m</span>
-          {activeRace.start_method && (
-            <span className="ml-2 capitalize">{activeRace.start_method}</span>
-          )}
+          {activeRace.start_method && <span className="ml-2 capitalize">{activeRace.start_method}</span>}
         </span>
         <button
           onClick={() => setShowAnalysis((v) => !v)}
-          className={`ml-3 shrink-0 text-xs px-3 py-1.5 rounded-lg border transition font-medium ${
-            showAnalysis
-              ? "bg-indigo-700 border-indigo-600 text-white"
-              : "bg-transparent border-indigo-700 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30"
-          }`}
+          className="ml-3 shrink-0 text-xs font-medium transition-colors"
+          style={{
+            ...chipBase,
+            background: showAnalysis ? "var(--tn-accent-faint)" : "transparent",
+            color: showAnalysis ? "var(--tn-accent)" : "var(--tn-accent)",
+            border: "1px solid var(--tn-accent-soft)",
+          }}
         >
           {showAnalysis ? "Dölj analys" : "Visa analys"}
         </button>
       </div>
 
-      {/* Analysvy */}
       {showAnalysis && (
         <AnalysisPanel
           starters={sorted}
@@ -278,54 +272,34 @@ export function RaceList({
       )}
 
       {sorted.length === 0 && (
-        <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">
+        <p className="text-sm text-center py-8" style={{ color: "var(--tn-text-faint)" }}>
           Inga hästar matchar filtret.
         </p>
       )}
 
-      {/* Hästlista: en per rad */}
       <div className="flex flex-col gap-2">
-        {sorted.map((s, idx) => {
-          return (
-            <div
-              key={s.id}
-              data-race={activeRace.race_number}
-              data-start={s.start_number}
-            >
-              <HorseCard
-                starter={s}
-                internalRaceId={activeRace.id}
-                raceDistance={activeRace.distance}
-                raceStartMethod={activeRace.start_method ?? "auto"}
-                isValue={valueMap[s.start_number] ?? false}
-                sortRank={sortKey !== "number" ? idx + 1 : undefined}
-                trackConfig={trackConfig ?? undefined}
-                isSelected={
-                  systemMode
-                    ? (raceSelections?.horses.some((h) => h.horse_id === s.horse_id) ?? false)
-                    : undefined
-                }
-                onSelect={
-                  systemMode && onToggleHorse
-                    ? () =>
-                        onToggleHorse(activeRace.race_number, {
-                          horse_id: s.horse_id,
-                          start_number: s.start_number,
-                          horse_name: s.horses?.name ?? "",
-                        })
-                    : undefined
-                }
-                notesSection={
-                  <HorseNotes
-                    horseId={s.horse_id}
-                    userGroups={userGroups}
-                    currentUserId={currentUserId}
-                  />
-                }
-              />
-            </div>
-          );
-        })}
+        {sorted.map((s, idx) => (
+          <div key={s.id} data-race={activeRace.race_number} data-start={s.start_number}>
+            <HorseCard
+              starter={s}
+              internalRaceId={activeRace.id}
+              raceDistance={activeRace.distance}
+              raceStartMethod={activeRace.start_method ?? "auto"}
+              isValue={valueMap[s.start_number] ?? false}
+              sortRank={sortKey !== "number" ? idx + 1 : undefined}
+              trackConfig={trackConfig ?? undefined}
+              isSelected={systemMode ? (raceSelections?.horses.some((h) => h.horse_id === s.horse_id) ?? false) : undefined}
+              onSelect={
+                systemMode && onToggleHorse
+                  ? () => onToggleHorse(activeRace.race_number, { horse_id: s.horse_id, start_number: s.start_number, horse_name: s.horses?.name ?? "" })
+                  : undefined
+              }
+              notesSection={
+                <HorseNotes horseId={s.horse_id} userGroups={userGroups} currentUserId={currentUserId} />
+              }
+            />
+          </div>
+        ))}
       </div>
     </div>
   );

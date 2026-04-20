@@ -26,12 +26,8 @@ export function PostForm({ groupId, gameId, parentId, onAdded, onCancel, compact
     setError(null);
     const { data, error } = await addPost(groupId, gameId, content, parentId);
     setLoading(false);
-    if (error) {
-      setError(error);
-    } else if (data) {
-      setContent("");
-      onAdded(data);
-    }
+    if (error) { setError(error); }
+    else if (data) { setContent(""); onAdded(data); }
   }
 
   return (
@@ -41,14 +37,16 @@ export function PostForm({ groupId, gameId, parentId, onAdded, onCancel, compact
         onChange={(e) => setContent(e.target.value)}
         placeholder={isReply ? "Skriv ett svar…" : "Dela din analys om omgången…"}
         rows={compact ? 2 : 3}
-        className="w-full bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-indigo-500 resize-none"
+        className="w-full rounded-lg px-3 py-2 text-sm resize-none outline-none"
+        style={{ background: "var(--tn-bg-chip)", border: "1px solid var(--tn-border)", color: "var(--tn-text)" }}
       />
       <div className="flex gap-2 justify-end">
         {onCancel && (
           <button
             type="button"
             onClick={onCancel}
-            className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 px-3 py-1.5 rounded-lg transition"
+            className="text-xs px-3 py-1.5 rounded-lg transition"
+            style={{ color: "var(--tn-text-faint)", background: "none", border: "none", cursor: "pointer" }}
           >
             Avbryt
           </button>
@@ -56,12 +54,13 @@ export function PostForm({ groupId, gameId, parentId, onAdded, onCancel, compact
         <button
           type="submit"
           disabled={loading || !content.trim()}
-          className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs px-3 py-1.5 rounded-lg transition"
+          className="text-xs px-3 py-1.5 rounded-lg transition disabled:opacity-50"
+          style={{ background: "var(--tn-accent)", color: "#fff", border: "none", cursor: "pointer" }}
         >
           {loading ? "Skickar…" : isReply ? "Svara" : "Publicera"}
         </button>
       </div>
-      {error && <p className="text-red-400 text-xs">{error}</p>}
+      {error && <p className="text-xs" style={{ color: "var(--tn-value-low)" }}>{error}</p>}
     </form>
   );
 }

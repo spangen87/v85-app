@@ -26,45 +26,49 @@ interface GroupNotesRaceSectionProps {
 }
 
 function formatTime(isoStr: string): string {
-  try {
-    return new Date(isoStr).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
-  } catch {
-    return "";
-  }
+  try { return new Date(isoStr).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" }); }
+  catch { return ""; }
 }
 
 export function GroupNotesRaceSection({ race, userGroups, currentUserId }: GroupNotesRaceSectionProps) {
   const [expanded, setExpanded] = useState(false);
-
   const sortedStarters = [...race.starters].sort((a, b) => a.start_number - b.start_number);
   const timeStr = race.start_time ? formatTime(race.start_time) : null;
 
   return (
-    <div className="border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
+    <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--tn-border)" }}>
       <button
         onClick={() => setExpanded((v) => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 transition text-left"
+        className="w-full flex items-center justify-between px-4 py-3 text-left transition"
+        style={{ background: "var(--tn-bg-card)", border: "none", cursor: "pointer" }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = "var(--tn-bg-card-hover)"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = "var(--tn-bg-card)"; }}
       >
-        <span className="text-sm font-semibold text-gray-900 dark:text-white">
-          Avd {race.race_number}
-          {race.race_name ? ` – ${race.race_name}` : ""}
-          {timeStr ? ` · ${timeStr}` : ""}
+        <span className="text-sm font-semibold" style={{ color: "var(--tn-text)" }}>
+          Avd {race.race_number}{race.race_name ? ` – ${race.race_name}` : ""}{timeStr ? ` · ${timeStr}` : ""}
         </span>
-        <span className="text-gray-400 dark:text-gray-500 text-xs">{expanded ? "▲" : "▼"}</span>
+        <svg
+          width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          className={`transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}
+          style={{ color: "var(--tn-text-faint)" }}
+        >
+          <path d="M6 9l6 6 6-6" />
+        </svg>
       </button>
 
       {expanded && (
-        <div className="divide-y divide-gray-200 dark:divide-gray-800">
-          {sortedStarters.map((starter) => (
-            <div key={starter.id} className="px-4 py-3">
-              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+        <div style={{ borderTop: "1px solid var(--tn-border)" }}>
+          {sortedStarters.map((starter, i) => (
+            <div
+              key={starter.id}
+              className="px-4 py-3"
+              style={{ borderTop: i > 0 ? "1px solid var(--tn-border)" : "none" }}
+            >
+              <p className="text-xs font-medium mb-1" style={{ color: "var(--tn-text-dim)" }}>
                 {starter.start_number}. {starter.horses?.name ?? starter.horse_id}
               </p>
-              <HorseNotes
-                horseId={starter.horse_id}
-                userGroups={userGroups}
-                currentUserId={currentUserId}
-              />
+              <HorseNotes horseId={starter.horse_id} userGroups={userGroups} currentUserId={currentUserId} />
             </div>
           ))}
         </div>
