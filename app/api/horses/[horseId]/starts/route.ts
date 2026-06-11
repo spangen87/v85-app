@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createServiceClient } from "@/lib/supabase/server";
 
 const ATG_BASE = "https://www.atg.se/services/racinginfo/v1/api";
 const HEADERS = {
@@ -116,6 +117,47 @@ export async function GET(
         shoes_back: shoesBack,
       };
     });
+
+    // Persistera historiken så att den förbättrar CS-beräkningen vid nästa
+    // omhämtning av omgången — annars försvinner datat när vyn stängs.
+    // Skriv bara om raden saknar historik (bulk-hämtningen ger 20 starter,
+    // detta endpoint bara 10) och bara om ATG-svaret gäller rätt häst.
+    const atgHorseId = horseData["id"] != null ? String(horseData["id"]) : null;
+    if (starts.length > 0 && atgHorseId === horseId) {
+      try {
+        const history = starts.map((s) => ({
+          date: s.date,
+          track: s.track,
+          place: s.place,
+          time: s.time,
+          post_position: s.post_position,
+        }));
+        const db = createServiceClient();
+        const { data: existing } = await db
+          .from("starters")
+          .select("id, last_5_results")
+          .eq("race_id", internalRaceId)
+          .eq("horse_id", horseId)
+          .maybeSingle();
+        if (
+          existing &&
+          (!existing.last_5_results || existing.last_5_results.length === 0)
+        ) {
+          await db
+            .from("starters")
+            .update({
+              last_5_results: history.slice(0, 5),
+              horse_starts_history: history,
+            })
+            .eq("id", existing.id);
+        }
+      } catch (err) {
+        console.warn(
+          `[horse-starts] Kunde inte spara historik för häst ${horseId}:`,
+          err instanceof Error ? err.message : String(err)
+        );
+      }
+    }
 
     return NextResponse.json({ starts });
   } catch (err) {

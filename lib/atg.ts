@@ -177,15 +177,25 @@ function formatTime(timeObj: Record<string, number> | null | undefined): string 
   return `${m}:${String(s).padStart(2, "0")},${t}`;
 }
 
+// Backoff-fördröjningar vid 429/5xx från ATG — utan retry tappas historiken
+// tyst för de flesta hästar när många anrop görs i följd
+const HORSE_STARTS_RETRY_DELAYS_MS = [500, 1500];
+
 export async function fetchHorseStarts(
   horseId: string
 ): Promise<HorseStart[]> {
   try {
-    const res = await fetch(`${ATG_BASE}/horses/${horseId}`, {
-      headers: HEADERS,
-      next: { revalidate: 0 },
-    });
-    if (!res.ok) return [];
+    let res: Response;
+    for (let attempt = 0; ; attempt++) {
+      res = await fetch(`${ATG_BASE}/horses/${horseId}`, {
+        headers: HEADERS,
+        next: { revalidate: 0 },
+      });
+      if (res.ok) break;
+      const retryable = res.status === 429 || res.status >= 500;
+      if (!retryable || attempt >= HORSE_STARTS_RETRY_DELAYS_MS.length) return [];
+      await new Promise((r) => setTimeout(r, HORSE_STARTS_RETRY_DELAYS_MS[attempt]));
+    }
     const raw = await res.json();
     const startsRaw = (raw["starts"] as Record<string, unknown>[]) ?? [];
     if (!Array.isArray(startsRaw)) {
