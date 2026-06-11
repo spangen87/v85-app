@@ -2,7 +2,7 @@
 
 import { createServiceClient } from "@/lib/supabase/server";
 import { getAuthUser, isGroupMember } from "@/lib/supabase/guards";
-import type { GroupMember, ActivityItem } from "@/lib/types";
+import type { GroupMember } from "@/lib/types";
 
 export async function getGroupMembers(groupId: string): Promise<GroupMember[]> {
   const user = await getAuthUser();
@@ -32,11 +32,5 @@ export async function getGroupMembers(groupId: string): Promise<GroupMember[]> {
     display_name: nameMap.get(row.user_id as string) ?? "Okänd",
     joined_at: row.joined_at as string,
   }));
-}
-
-export async function getRecentGroupActivity(
-  _groupId: string
-): Promise<ActivityItem[]> {
-  return []
 }
 
