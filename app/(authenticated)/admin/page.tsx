@@ -1,20 +1,12 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getAuthUser, isAdmin } from "@/lib/supabase/guards";
 import { getAllTrackConfigs } from "@/lib/actions/tracks";
 import { TrackConfigRow } from "@/components/admin/TrackConfigRow";
 
 export default async function AdminPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
   if (!user) redirect("/login");
-
-  const adminIds = (process.env.ADMIN_USER_IDS ?? "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-  if (!adminIds.includes(user.id)) redirect("/");
+  if (!isAdmin(user.id)) redirect("/");
 
   const configs = await getAllTrackConfigs();
 

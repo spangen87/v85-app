@@ -172,12 +172,16 @@ Prioriterat efter hur störande det är för användaren (från UI-genomgången)
 
 ## Rekommenderad ordning
 
-| Steg | Vad | Insats |
-|------|-----|--------|
-| 1 | Säkerhet S1–S4 (auth/medlemskap i server actions, admin-spärr på deleteGame) | Liten |
-| 2 | Säkerhet S5 (crypto-genererade, längre invite-koder) | Liten |
-| 3 | Spårfaktor-buggen + skicka in trackConfig i CS-beräkningen | Liten |
-| 4 | Spara `horse_starts_history` + backtest-skript för viktkalibrering | Medel |
-| 5 | Nya formelkomponenter (kusk-%, galopprisk, streckdiskrepans) – validerade via backtest | Medel |
-| 6 | Kostnadskalkyl + backtest av sparade system i UI | Medel |
-| 7 | UX-städning (tysta fel, confirm(), toasts, aria-labels) | Liten–medel |
+Åtgärderna spåras som GitHub-issues:
+
+| Steg | Vad | Issue | Insats |
+|------|-----|-------|--------|
+| 1 | Säkerhet S1–S4 (auth/medlemskap i server actions, admin-spärr på deleteGame) | [#54](https://github.com/spangen87/v85-app/issues/54) | Liten |
+| 2 | Säkerhet S5 (crypto-genererade, längre invite-koder) | [#55](https://github.com/spangen87/v85-app/issues/55) | Liten |
+| 3 | Spårfaktor-buggen + skicka in trackConfig i CS-beräkningen | [#56](https://github.com/spangen87/v85-app/issues/56) | Liten |
+| 4 | Spara `horse_starts_history` + backtest-skript för viktkalibrering | [#57](https://github.com/spangen87/v85-app/issues/57) | Medel |
+| 5 | Nya formelkomponenter (kusk-%, galopprisk, streckdiskrepans) – validerade via backtest | [#58](https://github.com/spangen87/v85-app/issues/58) | Medel |
+| 6 | Kostnadskalkyl för system | [#59](https://github.com/spangen87/v85-app/issues/59) | Liten |
+| 7 | Backtest av sparade system + bets-ROI-vyn | [#60](https://github.com/spangen87/v85-app/issues/60) | Medel |
+| 8 | UX-städning (tysta fel, confirm(), toasts, aria-labels) | [#61](https://github.com/spangen87/v85-app/issues/61) | Liten–medel |
+| 9 | Uppdatera CLAUDE.md + städa död kod | [#62](https://github.com/spangen87/v85-app/issues/62) | Liten |

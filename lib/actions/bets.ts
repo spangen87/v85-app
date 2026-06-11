@@ -1,6 +1,7 @@
 "use server";
 
-import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
+import { getAuthUser, isGroupMember } from "@/lib/supabase/guards";
 
 export interface Bet {
   id: string;
@@ -33,9 +34,11 @@ export async function addBet(
   betType: string,
   stake: number
 ): Promise<{ error?: string }> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser();
   if (!user) return { error: "Ej inloggad" };
+  if (!(await isGroupMember(user.id, groupId))) {
+    return { error: "Du är inte medlem i detta sällskap" };
+  }
 
   const db = createServiceClient();
   const { error } = await db.from("bets").insert({
@@ -56,8 +59,7 @@ export async function updateBetPayout(
   betId: string,
   payout: number
 ): Promise<{ error?: string }> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser();
   if (!user) return { error: "Ej inloggad" };
 
   const db = createServiceClient();
@@ -72,8 +74,7 @@ export async function updateBetPayout(
 }
 
 export async function deleteBet(betId: string): Promise<{ error?: string }> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser();
   if (!user) return { error: "Ej inloggad" };
 
   const db = createServiceClient();
@@ -91,6 +92,9 @@ export async function getGroupBets(
   groupId: string,
   gameId?: string
 ): Promise<Bet[]> {
+  const user = await getAuthUser();
+  if (!user || !(await isGroupMember(user.id, groupId))) return [];
+
   const db = createServiceClient();
 
   let query = db
@@ -132,6 +136,9 @@ export async function getGroupBets(
 }
 
 export async function getGroupBetStats(groupId: string): Promise<BetStats[]> {
+  const user = await getAuthUser();
+  if (!user || !(await isGroupMember(user.id, groupId))) return [];
+
   const db = createServiceClient();
 
   const { data, error } = await db

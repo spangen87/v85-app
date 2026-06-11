@@ -1,9 +1,13 @@
 "use server";
 
 import { createServiceClient } from "@/lib/supabase/server";
+import { getAuthUser, isGroupMember } from "@/lib/supabase/guards";
 import type { GroupMember, ActivityItem } from "@/lib/types";
 
 export async function getGroupMembers(groupId: string): Promise<GroupMember[]> {
+  const user = await getAuthUser();
+  if (!user || !(await isGroupMember(user.id, groupId))) return [];
+
   const db = createServiceClient();
 
   const { data, error } = await db

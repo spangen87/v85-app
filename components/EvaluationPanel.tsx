@@ -43,6 +43,7 @@ interface Props {
   overall: Overall;
   games: GameEval[];
   allGames: GameSummary[];
+  isAdmin: boolean;
 }
 
 function StatCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
@@ -58,7 +59,7 @@ function StatCard({ label, value, sub }: { label: string; value: string; sub?: s
   );
 }
 
-export function EvaluationPanel({ overall, games, allGames }: Props) {
+export function EvaluationPanel({ overall, games, allGames, isAdmin }: Props) {
   const router = useRouter();
   const [openGame, setOpenGame] = useState<string | null>(null);
   const [showAllGames, setShowAllGames] = useState(false);
@@ -135,14 +136,17 @@ export function EvaluationPanel({ overall, games, allGames }: Props) {
                       >
                         Saknar resultat
                       </span>
-                      <button
-                        onClick={() => handleDeleteGame(g.game_id)}
-                        title="Ta bort omgång"
-                        className="text-sm leading-none px-1 transition"
-                        style={{ color: "var(--tn-text-faint)", background: "none", border: "none", cursor: "pointer" }}
-                      >
-                        ×
-                      </button>
+                      {isAdmin && (
+                        <button
+                          onClick={() => handleDeleteGame(g.game_id)}
+                          title="Ta bort omgång"
+                          aria-label="Ta bort omgång"
+                          className="text-sm leading-none px-1 transition"
+                          style={{ color: "var(--tn-text-faint)", background: "none", border: "none", cursor: "pointer" }}
+                        >
+                          ×
+                        </button>
+                      )}
                     </>
                   )}
                 </div>

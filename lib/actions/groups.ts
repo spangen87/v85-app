@@ -2,18 +2,18 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/server";
+import { getAuthUser, isGroupMember } from "@/lib/supabase/guards";
 import { revalidatePath } from "next/cache";
+import { randomBytes } from "crypto";
 import type { Group, Profile } from "@/lib/types";
 
-function generateInviteCode(): string {
-  return Math.random().toString(36).substring(2, 8).toUpperCase();
-}
+// 32 tecken (utan lättförväxlade I/O/0/1) — jämn delare av 256 ger ingen modulo-bias
+const INVITE_CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
-/** Hämta inloggad användare — returnerar null om ej inloggad */
-async function getAuthUser() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  return user;
+function generateInviteCode(): string {
+  return Array.from(randomBytes(10))
+    .map((b) => INVITE_CODE_CHARS[b % INVITE_CODE_CHARS.length])
+    .join("");
 }
 
 export async function getProfile(): Promise<Profile | null> {
@@ -149,6 +149,10 @@ export async function leaveGroup(groupId: string): Promise<{ error: string | nul
 }
 
 export async function getGroupById(groupId: string): Promise<Group | null> {
+  // Innehåller invite_code — endast medlemmar får läsa
+  const user = await getAuthUser();
+  if (!user || !(await isGroupMember(user.id, groupId))) return null;
+
   const db = createServiceClient();
   const { data } = await db
     .from("groups")
