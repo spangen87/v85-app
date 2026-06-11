@@ -287,7 +287,7 @@ Sällskap låter dig och dina spelvänner diskutera hästar, dela anteckningar o
 
 ### 7.3 Flikar i sällskapet
 
-Inne i ett sällskap finns tre flikar:
+Inne i ett sällskap finns fyra flikar:
 
 **Forum**
 - Diskutera hästar och omgångar i ett chattliknande format.
@@ -298,6 +298,12 @@ Inne i ett sällskap finns tre flikar:
 **Anteckningar**
 - Visar alla hästanteckningar från sällskapets medlemmar, grupperade per omgång.
 - Anteckningar skrivs direkt på hästkorten på huvudsidan (se avsnitt 8).
+
+**Spel**
+- Visar sällskapets sparade system och utkast för vald omgång.
+- När resultat hämtats rättas systemen automatiskt — antal rätt visas som t.ex. **6/8** och vinnande hästar markeras gröna.
+- Under **Insatser** registrerar du dina spel (speltyp, eventuell avdelning/häst och insats i kronor). När omgången är avgjord fyller du i utdelningen på dina egna insatser.
+- **ROI per medlem** visar varje medlems totala insats, utdelning och avkastning över alla omgångar.
 
 **Sällskap**
 - Administrera sällskapets inställningar (se avsnitt 7.4).
