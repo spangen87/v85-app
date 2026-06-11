@@ -47,6 +47,39 @@ function makeStarter(overrides: Partial<AtgStarter> = {}): AtgStarter {
 
 const defaultRace = { distance: 2140, start_method: "auto", field_size: 10 };
 
+describe("nya komponenter (streck, kuskform, galopprisk)", () => {
+  it("ger högre CS för häst med högre streckning", () => {
+    const hot = makeStarter({ bet_distribution: 35 });
+    const cold = makeStarter({ start_number: 2, bet_distribution: 5 });
+    const scores = calculateCompositeScore([hot, cold], defaultRace);
+    expect(scores[0]).toBeGreaterThan(scores[1]);
+  });
+
+  it("kuskform: högre vinstprocent ger högre komponent", () => {
+    const starters = [
+      makeStarter({ driver_win_pct: 20 }),
+      makeStarter({ start_number: 2, driver_win_pct: 5 }),
+      makeStarter({ start_number: 3, driver_win_pct: null }),
+    ];
+    const c = computeComponents(starters, defaultRace);
+    expect(c.driver[0]).toBeGreaterThan(c.driver[1]);
+    expect(c.driver[2]).toBe(0);
+  });
+
+  it("galopprisk: bokstavsplaceringar sänker komponenten, utan data = neutral", () => {
+    const mkStart = (place: string) => ({
+      place, date: "2025-01-01", track: "Solvalla", time: "1:14,5", post_position: null,
+    });
+    const galloper = makeStarter({ last_5_results: [mkStart("d"), mkStart("1")] });
+    const clean = makeStarter({ start_number: 2, last_5_results: [mkStart("1"), mkStart("2")] });
+    const noData = makeStarter({ start_number: 3 });
+    const c = computeComponents([galloper, clean, noData], defaultRace);
+    expect(c.gallop[0]).toBeCloseTo(0.5); // 1 av 2 starter med galopp/disk
+    expect(c.gallop[1]).toBe(1);
+    expect(c.gallop[2]).toBe(0.5); // neutral utan data
+  });
+});
+
 describe("computeComponents med trackConfig", () => {
   it("open stretch-spår får högre spårkomponent när trackConfig skickas in", () => {
     const config = {

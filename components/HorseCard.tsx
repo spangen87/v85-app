@@ -78,7 +78,7 @@ const DIST_LABEL: Record<string, string> = {
 };
 
 const CS_EXPLANATION =
-  "CS – Composite Score (0–100): viktat index baserat på odds (65%), distansrekord (20%), konsistens (10%) och form (5%). Vikterna är kalibrerade mot historiska resultat.";
+  "CS – Composite Score (0–100): viktat index baserat på streckning (55%), distansrekord (20%), odds (10%), konsistens (10%) och form (5%). Vikterna är kalibrerade mot historiska resultat.";
 
 /* ── Form ring ───────────────────────────────────────────────── */
 function FormRing({ score }: { score: number | null }) {

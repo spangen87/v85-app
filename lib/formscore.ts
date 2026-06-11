@@ -31,18 +31,24 @@ export interface RaceContext {
  * Vikter för Composite Score — summerar till 1.0.
  *
  * Kalibrerade 2026-06-11 mot 155 lopp med facit (scripts/backtest-weights.ts):
- * topp-3-täckning 81 % (mot 67 % för de ursprungliga vikterna 30/20/15/15/10/5/5).
+ * toppval-träff 48,7 % och topp-3-täckning 81,8 % (mot 38/67 % för de
+ * ursprungliga vikterna). Streckningen (V85-procenten) visade sig vara den
+ * starkaste enskilda prediktorn, före vinnarodds.
  * Komponenter med vikt 0 behålls i strukturen och visas fortfarande i UI;
- * kör om backtesten när fler omgångar med komplett starthistorik samlats in.
+ * kusk/galopp/spår/form saknade historisk data vid kalibreringen — kör om
+ * backtesten när fler omgångar med komplett starthistorik samlats in.
  */
 export const CS_WEIGHTS = {
   form: 0.05,
   winRate: 0.0,
-  odds: 0.65,
+  odds: 0.10,
   time: 0.0,
   consistency: 0.10,
   distance: 0.20,
   track: 0.0,
+  streck: 0.55,
+  driver: 0.0,
+  gallop: 0.0,
 } as const;
 
 export type ComponentName = keyof typeof CS_WEIGHTS;
@@ -51,7 +57,7 @@ export type ComponentName = keyof typeof CS_WEIGHTS;
 export type ComponentVectors = Record<ComponentName, number[]>;
 
 /**
- * Beräknar de sju normaliserade delkomponenterna (0–1) per häst i ett lopp.
+ * Beräknar de normaliserade delkomponenterna (0–1) per häst i ett lopp.
  * Bryts ut separat så att backtest-skriptet kan vikta om dem utan att
  * duplicera beräkningslogiken.
  */
@@ -149,6 +155,32 @@ export function computeComponents(
     trackRange > 0 ? (f - trackMin) / trackRange : 0.5
   );
 
+  // --- Komponent 8: Streckning — spelarnas kollektiva ranking (insatsprocent) ---
+  const streckValues = starters.map((s) => Number(s.bet_distribution) || 0);
+  const streckMin = Math.min(...streckValues);
+  const streckMax = Math.max(...streckValues);
+  const streckComponents = streckValues.map((v) =>
+    normalize(v, streckMin, streckMax)
+  );
+
+  // --- Komponent 9: Kuskform — vinstprocent i år relativt fältet ---
+  const driverPcts = starters.map((s) => s.driver_win_pct);
+  const validDriverPcts = driverPcts.filter((p): p is number => p != null);
+  const driverMin = validDriverPcts.length ? Math.min(...validDriverPcts) : 0;
+  const driverMax = validDriverPcts.length ? Math.max(...validDriverPcts) : 100;
+  const driverComponents = driverPcts.map((p) =>
+    p == null ? 0 : normalize(p, driverMin, driverMax)
+  );
+
+  // --- Komponent 10: Galopprisk — andel felfria starter i last_5 ---
+  // Bokstav i placeringen (d, u, g …) = diskad/galopp; siffror och "–" räknas inte
+  const gallopComponents = starters.map((s) => {
+    const results = s.last_5_results;
+    if (!results || results.length === 0) return 0.5; // neutral utan data
+    const risky = results.filter((r) => /[a-zåäö]/i.test(r.place)).length;
+    return 1 - risky / results.length;
+  });
+
   return {
     form: formComponents,
     winRate: winRates,
@@ -157,6 +189,9 @@ export function computeComponents(
     consistency: consistencyComponents,
     distance: distComponents,
     track: trackComponents,
+    streck: streckComponents,
+    driver: driverComponents,
+    gallop: gallopComponents,
   };
 }
 

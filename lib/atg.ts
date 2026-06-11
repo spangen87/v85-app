@@ -260,7 +260,12 @@ function winPct(
   personStats: Record<string, unknown>,
   year: string
 ): number | null {
-  const years = (personStats["years"] as Record<string, unknown>) ?? {};
+  // ATG nästlar kusk-/tränarstatistik under "statistics" (samma struktur som
+  // hästens) — fallback till platt struktur om API:t ändras
+  const stats = (personStats["statistics"] as Record<string, unknown>) ?? personStats;
+  const years = (stats["years"] as Record<string, unknown>)
+    ?? (personStats["years"] as Record<string, unknown>)
+    ?? {};
   const yr = (years[year] as Record<string, unknown>) ?? {};
   const starts = Number(yr["starts"] ?? 0);
   if (starts === 0) return null;

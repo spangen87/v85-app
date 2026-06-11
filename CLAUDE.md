@@ -161,11 +161,12 @@ spelvärde = beräknad chans − streckning%
 
 ### Composite Score (CS) – `lib/formscore.ts → calculateCompositeScore()`
 ```
-CS = 65% odds + 20% distansrekord + 10% konsistens + 5% form
+CS = 55% streckning + 20% distansrekord + 10% odds + 10% konsistens + 5% form
 ```
 Vikterna definieras i `CS_WEIGHTS` (lib/formscore.ts) och kalibreras mot faktiska
-resultat med `npm run backtest` (scripts/backtest-weights.ts). Vinstprocent, tid
-och spårfaktor har för närvarande vikt 0 men beräknas och visas fortfarande i UI.
+resultat med `npm run backtest` (scripts/backtest-weights.ts). Vinstprocent, tid,
+spårfaktor, kuskform och galopprisk har för närvarande vikt 0 men beräknas och
+visas fortfarande i UI.
 Häst markeras som "Värde" om CS > 55 och värdeindex > 0.
 
 ### Distansfaktor
