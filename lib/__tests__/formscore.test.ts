@@ -1,4 +1,4 @@
-import { calculateCompositeScore, calculateFormscore } from "../formscore";
+import { calculateCompositeScore, calculateFormscore, computeComponents } from "../formscore";
 import type { AtgStarter } from "../atg";
 
 function makeStarter(overrides: Partial<AtgStarter> = {}): AtgStarter {
@@ -47,8 +47,8 @@ function makeStarter(overrides: Partial<AtgStarter> = {}): AtgStarter {
 
 const defaultRace = { distance: 2140, start_method: "auto", field_size: 10 };
 
-describe("calculateCompositeScore med trackConfig", () => {
-  it("open stretch-spår får högre CS när trackConfig skickas in", () => {
+describe("computeComponents med trackConfig", () => {
+  it("open stretch-spår får högre spårkomponent när trackConfig skickas in", () => {
     const config = {
       track_name: "Solvalla",
       open_stretch: true,
@@ -64,10 +64,10 @@ describe("calculateCompositeScore med trackConfig", () => {
       makeStarter({ start_number: 7, post_position: 7, horse_id: "h7" }),
     ];
     const race = { distance: 2140, start_method: "volte", field_size: 2 };
-    const without = calculateCompositeScore(starters, race);
-    const withConfig = calculateCompositeScore(starters, race, config);
-    expect(without[1]).toBeLessThan(without[0]);
-    expect(withConfig[1]).toBeGreaterThan(withConfig[0]);
+    const without = computeComponents(starters, race);
+    const withConfig = computeComponents(starters, race, config);
+    expect(without.track[1]).toBeLessThan(without.track[0]);
+    expect(withConfig.track[1]).toBeGreaterThan(withConfig.track[0]);
   });
 });
 

@@ -159,10 +159,13 @@ slutpoäng = baspoäng × distansfaktor (×0.6–×1.35)
 spelvärde = beräknad chans − streckning%
 ```
 
-### Utökad analys / Composite Score (CS) – `lib/analysis.ts → analyzeRaceEnhanced()`
+### Composite Score (CS) – `lib/formscore.ts → calculateCompositeScore()`
 ```
-CS = 30% form + 20% vinstprocent + 15% odds + 15% tid + 10% konsistens + 5% distans + 5% spårfaktor
+CS = 65% odds + 20% distansrekord + 10% konsistens + 5% form
 ```
+Vikterna definieras i `CS_WEIGHTS` (lib/formscore.ts) och kalibreras mot faktiska
+resultat med `npm run backtest` (scripts/backtest-weights.ts). Vinstprocent, tid
+och spårfaktor har för närvarande vikt 0 men beräknas och visas fortfarande i UI.
 Häst markeras som "Värde" om CS > 55 och värdeindex > 0.
 
 ### Distansfaktor
