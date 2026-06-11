@@ -141,6 +141,34 @@ describe("computeTrackFactor", () => {
     expect(factor).toBeGreaterThanOrEqual(0);
   });
 
+  it("ignorerar starter från avlägsna spår i dynamisk beräkning", () => {
+    // 6 vinster från spår 10–12 säger inget om förmågan från spår 1
+    const farAway: HorseStart[] = Array.from({ length: 6 }, (_, i) => ({
+      place: "1",
+      date: `2025-01-0${i + 1}`,
+      track: "Solvalla",
+      time: "1:14,5",
+      post_position: 10 + (i % 3),
+    }));
+    const factor = computeTrackFactor(1, "volte", farAway);
+    const staticOnly = computeTrackFactor(1, "volte", []);
+    expect(factor).toBeCloseTo(staticOnly, 5);
+  });
+
+  it("räknar med starter från angränsande spår (±1) i dynamisk beräkning", () => {
+    // Spår 2 och 4 är angränsande till spår 3 — alla 6 räknas
+    const adjacent: HorseStart[] = Array.from({ length: 6 }, (_, i) => ({
+      place: "1",
+      date: `2025-01-0${i + 1}`,
+      track: "Solvalla",
+      time: "1:14,5",
+      post_position: i % 2 === 0 ? 2 : 4,
+    }));
+    const factor = computeTrackFactor(3, "volte", adjacent);
+    const staticOnly = computeTrackFactor(3, "volte", []);
+    expect(factor).toBeGreaterThan(staticOnly);
+  });
+
   it("exkluderar starter med null post_position från dynamisk beräkning", () => {
     const mixed: HorseStart[] = [
       { place: "1", date: "2025-01-01", track: "Test", time: "1:12,0", post_position: 3 },

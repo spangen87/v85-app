@@ -1,4 +1,5 @@
 import type { AtgStarter, LifeRecord } from "./atg";
+import type { TrackConfig } from "./types";
 import { computeDistanceSignal, computeTrackFactor, parseTimeToSeconds } from "./analysis";
 
 // Vikter för senaste 5 starter (nyast → äldst)
@@ -34,7 +35,8 @@ export interface RaceContext {
  */
 export function calculateCompositeScore(
   starters: AtgStarter[],
-  race: RaceContext
+  race: RaceContext,
+  trackConfig?: TrackConfig
 ): number[] {
   // --- Komponent 1: Senaste form (30%) ---
   const formComponents = starters.map((s) => {
@@ -112,7 +114,9 @@ export function calculateCompositeScore(
     computeTrackFactor(
       s.post_position ?? 1,
       race.start_method,
-      s.horse_starts_history ?? []
+      s.horse_starts_history ?? [],
+      trackConfig,
+      race.distance
     )
   );
   // Normalisera min-max relativt fältet

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchGame, fetchHorseStarts, HorseStart } from "@/lib/atg";
 import { calculateCompositeScore } from "@/lib/formscore";
+import { getTrackConfig } from "@/lib/actions/tracks";
 import { createServiceClient } from "@/lib/supabase/server";
 
 type ExistingStarter = {
@@ -22,6 +23,10 @@ export async function POST(request: NextRequest) {
 
   try {
     const game = await fetchGame(gameType, gameId);
+
+    // Banspecifik konfiguration (open stretch m.m.) ska påverka spårfaktorn i CS
+    const trackConfigRaw = game.track ? await getTrackConfig(game.track) : null;
+    const trackConfig = trackConfigRaw?.active ? trackConfigRaw : undefined;
 
     const supabase = createServiceClient();
 
@@ -127,7 +132,7 @@ export async function POST(request: NextRequest) {
         distance: race.distance,
         start_method: race.start_method,
         field_size: uniqueStarters.length,
-      });
+      }, trackConfig);
       if (scores.length !== uniqueStarters.length) {
         console.error(`[fetch] Formscore-längd matchar inte starters (${scores.length} vs ${uniqueStarters.length}) avd ${race.race_number}`);
       }

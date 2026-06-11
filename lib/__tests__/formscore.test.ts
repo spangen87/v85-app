@@ -47,6 +47,30 @@ function makeStarter(overrides: Partial<AtgStarter> = {}): AtgStarter {
 
 const defaultRace = { distance: 2140, start_method: "auto", field_size: 10 };
 
+describe("calculateCompositeScore med trackConfig", () => {
+  it("open stretch-spår får högre CS när trackConfig skickas in", () => {
+    const config = {
+      track_name: "Solvalla",
+      open_stretch: true,
+      open_stretch_lanes: [7, 8],
+      short_race_threshold: 0,
+      active: true,
+      updated_at: "2026-01-01T00:00:00Z",
+    };
+    // Identiska hästar — bara spåret skiljer. Statiskt: spår 6 = 0.65 > spår 7 = 0.58,
+    // men open stretch-bonusen (+0.12) lyfter spår 7 till 0.70 och flippar ordningen.
+    const starters = [
+      makeStarter({ start_number: 6, post_position: 6, horse_id: "h6" }),
+      makeStarter({ start_number: 7, post_position: 7, horse_id: "h7" }),
+    ];
+    const race = { distance: 2140, start_method: "volte", field_size: 2 };
+    const without = calculateCompositeScore(starters, race);
+    const withConfig = calculateCompositeScore(starters, race, config);
+    expect(without[1]).toBeLessThan(without[0]);
+    expect(withConfig[1]).toBeGreaterThan(withConfig[0]);
+  });
+});
+
 describe("calculateCompositeScore", () => {
   it("returnerar poäng i intervallet 0–100", () => {
     const starters = [makeStarter(), makeStarter({ start_number: 2, odds: 10 })];
