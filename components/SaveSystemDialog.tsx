@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Group, SystemSelection } from '@/lib/types'
 import { createSystem, publishDraft } from '@/lib/actions/systems'
@@ -37,6 +37,14 @@ export function SaveSystemDialog({
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [savedName, setSavedName] = useState<string | null>(null)
+
+  // Stäng med Escape
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, onClose])
 
   if (!open) return null
 
@@ -125,6 +133,7 @@ export function SaveSystemDialog({
             value={name}
             onChange={e => setName(e.target.value)}
             maxLength={100}
+            autoFocus
             style={inputStyle}
           />
         </div>

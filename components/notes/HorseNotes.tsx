@@ -16,12 +16,23 @@ export function HorseNotes({ horseId, userGroups, currentUserId }: HorseNotesPro
   const [expanded, setExpanded] = useState(false);
   const [notes, setNotes] = useState<HorseNote[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    getHorseNotes(horseId).then((data) => {
-      setNotes(data);
-      setLoaded(true);
-    });
+    let cancelled = false;
+    getHorseNotes(horseId)
+      .then((data) => {
+        if (cancelled) return;
+        setNotes(data);
+        setError(null);
+      })
+      .catch(() => {
+        if (!cancelled) setError("Kunde inte ladda anteckningar. Försök igen senare.");
+      })
+      .finally(() => {
+        if (!cancelled) setLoaded(true);
+      });
+    return () => { cancelled = true; };
   }, [horseId]);
 
   const handleAdded = useCallback((note: HorseNote) => {
@@ -73,7 +84,15 @@ export function HorseNotes({ horseId, userGroups, currentUserId }: HorseNotesPro
 
       {expanded && (
         <div className="mt-3 space-y-3">
-          {loaded && notes.length === 0 && (
+          {!loaded && (
+            <p className="text-xs italic" style={{ color: "var(--tn-text-faint)" }}>
+              Laddar anteckningar…
+            </p>
+          )}
+          {error && (
+            <p className="text-xs" style={{ color: "var(--tn-value-low)" }}>{error}</p>
+          )}
+          {loaded && !error && notes.length === 0 && (
             <p className="text-xs italic" style={{ color: "var(--tn-text-faint)" }}>
               Inga anteckningar ännu.
             </p>

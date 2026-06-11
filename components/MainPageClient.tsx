@@ -48,7 +48,7 @@ export function MainPageClient({
   const [showSaveDialog, setShowSaveDialog] = useState(false)
   const [showDrawer, setShowDrawer] = useState(false)
   const [activeDraftId, setActiveDraftId] = useState<string | null>(draftId)
-  const [draftSaveStatus, setDraftSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
+  const [draftSaveStatus, setDraftSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [draftName, setDraftName] = useState('Utkast')
   const [savedDrafts, setSavedDrafts] = useState<GameSystem[]>([])
 
@@ -72,7 +72,7 @@ export function MainPageClient({
         }
         setDraftSaveStatus('saved')
       } catch {
-        setDraftSaveStatus('idle')
+        setDraftSaveStatus('error')
       }
     }, 3000)
     return () => { if (draftTimerRef.current) clearTimeout(draftTimerRef.current) }
@@ -227,6 +227,9 @@ export function MainPageClient({
               )}
               {draftSaveStatus === 'saved' && (
                 <span className="text-xs" style={{ color: "var(--tn-text-faint)" }}>Utkast sparat</span>
+              )}
+              {draftSaveStatus === 'error' && (
+                <span className="text-xs" style={{ color: "var(--tn-value-low)" }}>Kunde inte spara utkast</span>
               )}
             </div>
           </button>

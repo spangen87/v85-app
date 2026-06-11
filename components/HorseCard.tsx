@@ -396,6 +396,7 @@ export function HorseCard({
           <button
             onClick={(e) => { e.stopPropagation(); onSelect(); }}
             title={isSelected ? "Ta bort från system" : "Lägg till i system"}
+            aria-label={isSelected ? `Ta bort nr ${starter.start_number} från system` : `Lägg till nr ${starter.start_number} i system`}
             className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold tn-mono transition-colors shrink-0"
             style={
               isSelected

@@ -23,7 +23,7 @@ interface SystemSidebarProps {
   onCancel: () => void;
   totalRows: number;
   gameType: string | null;
-  draftSaveStatus?: "idle" | "saving" | "saved";
+  draftSaveStatus?: "idle" | "saving" | "saved" | "error";
   draftName: string;
   onDraftNameChange: (name: string) => void;
   savedDrafts?: GameSystem[];
@@ -151,6 +151,9 @@ export function SystemSidebar({
           )}
           {draftSaveStatus === "saved" && (
             <span className="text-xs" style={{ color: "var(--tn-value-high)" }}>Utkast sparat ✓</span>
+          )}
+          {draftSaveStatus === "error" && (
+            <span className="text-xs" style={{ color: "var(--tn-value-low)" }}>Kunde inte spara utkast</span>
           )}
         </div>
         <button
