@@ -78,7 +78,7 @@ const DIST_LABEL: Record<string, string> = {
 };
 
 const CS_EXPLANATION =
-  "CS – Composite Score (0–100): viktat index baserat på form (30%), vinstprocent (20%), odds (15%), tid (15%), konsistens (10%), distans (5%) och spårfaktor (5%).";
+  "CS – Composite Score (0–100): viktat index baserat på streckning (55%), distansrekord (20%), odds (10%), konsistens (10%) och form (5%). Vikterna är kalibrerade mot historiska resultat.";
 
 /* ── Form ring ───────────────────────────────────────────────── */
 function FormRing({ score }: { score: number | null }) {
@@ -396,6 +396,7 @@ export function HorseCard({
           <button
             onClick={(e) => { e.stopPropagation(); onSelect(); }}
             title={isSelected ? "Ta bort från system" : "Lägg till i system"}
+            aria-label={isSelected ? `Ta bort nr ${starter.start_number} från system` : `Lägg till nr ${starter.start_number} i system`}
             className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold tn-mono transition-colors shrink-0"
             style={
               isSelected

@@ -29,6 +29,7 @@ export function GamePickerBar({ savedGames, selectedId }: GamePickerBarProps) {
   const [loadingGames, setLoadingGames] = useState(false);
   const [fetchingId, setFetchingId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [listError, setListError] = useState<string | null>(null);
 
   const selectedGame = savedGames.find((g) => g.id === selectedId) ?? null;
 
@@ -37,13 +38,27 @@ export function GamePickerBar({ savedGames, selectedId }: GamePickerBarProps) {
     let cancelled = false;
     setLoadingGames(true);
     setAvailableGames([]);
+    setListError(null);
     fetch(`/api/games/available?date=${date}`)
       .then((r) => r.json())
       .then((data) => { if (!cancelled) setAvailableGames(data.games ?? []); })
-      .catch(() => { if (!cancelled) setAvailableGames([]); })
+      .catch(() => {
+        if (!cancelled) {
+          setAvailableGames([]);
+          setListError("Kunde inte ladda spel — försök igen.");
+        }
+      })
       .finally(() => { if (!cancelled) setLoadingGames(false); });
     return () => { cancelled = true; };
   }, [date, open]);
+
+  // Stäng dropdown med Escape
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
 
   const handleFetch = useCallback(async (game: AvailableGame) => {
     setFetchingId(game.id);
@@ -176,6 +191,8 @@ export function GamePickerBar({ savedGames, selectedId }: GamePickerBarProps) {
             {/* Available games */}
             {loadingGames ? (
               <div className="text-sm text-center py-3" style={{ color: "var(--tn-text-faint)" }}>Letar spel...</div>
+            ) : listError ? (
+              <div className="text-sm text-center py-3" style={{ color: "var(--tn-value-low)" }}>{listError}</div>
             ) : availableGames.length === 0 ? (
               <div className="text-sm text-center py-3" style={{ color: "var(--tn-text-faint)" }}>
                 Inga spel {date === todayLocal() ? "idag" : date === tomorrowLocal() ? "imorgon" : date}

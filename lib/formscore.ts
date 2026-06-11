@@ -1,4 +1,5 @@
 import type { AtgStarter, LifeRecord } from "./atg";
+import type { TrackConfig } from "./types";
 import { computeDistanceSignal, computeTrackFactor, parseTimeToSeconds } from "./analysis";
 
 // Vikter för senaste 5 starter (nyast → äldst)
@@ -27,16 +28,45 @@ export interface RaceContext {
 }
 
 /**
- * Beräknar Composite Score (0–100) per häst i ett lopp.
+ * Vikter för Composite Score — summerar till 1.0.
  *
- * CS = 30% senaste form + 20% vinstprocent + 15% odds-index
- *    + 15% tidindex + 10% konsistens + 5% distansfaktor + 5% spårfaktor
+ * Kalibrerade 2026-06-11 mot 155 lopp med facit (scripts/backtest-weights.ts):
+ * toppval-träff 48,7 % och topp-3-täckning 81,8 % (mot 38/67 % för de
+ * ursprungliga vikterna). Streckningen (V85-procenten) visade sig vara den
+ * starkaste enskilda prediktorn, före vinnarodds.
+ * Komponenter med vikt 0 behålls i strukturen och visas fortfarande i UI;
+ * kusk/galopp/spår/form saknade historisk data vid kalibreringen — kör om
+ * backtesten när fler omgångar med komplett starthistorik samlats in.
  */
-export function calculateCompositeScore(
+export const CS_WEIGHTS = {
+  form: 0.05,
+  winRate: 0.0,
+  odds: 0.10,
+  time: 0.0,
+  consistency: 0.10,
+  distance: 0.20,
+  track: 0.0,
+  streck: 0.55,
+  driver: 0.0,
+  gallop: 0.0,
+} as const;
+
+export type ComponentName = keyof typeof CS_WEIGHTS;
+
+/** Normaliserade delkomponenter (0–1) per häst, i startordning */
+export type ComponentVectors = Record<ComponentName, number[]>;
+
+/**
+ * Beräknar de normaliserade delkomponenterna (0–1) per häst i ett lopp.
+ * Bryts ut separat så att backtest-skriptet kan vikta om dem utan att
+ * duplicera beräkningslogiken.
+ */
+export function computeComponents(
   starters: AtgStarter[],
-  race: RaceContext
-): number[] {
-  // --- Komponent 1: Senaste form (30%) ---
+  race: RaceContext,
+  trackConfig?: TrackConfig
+): ComponentVectors {
+  // --- Komponent 1: Senaste form ---
   const formComponents = starters.map((s) => {
     const results = s.last_5_results;
     if (results.length > 0) {
@@ -60,7 +90,7 @@ export function calculateCompositeScore(
     return lifeStarts > 0 ? lifeWins / lifeStarts : 0;
   });
 
-  // --- Komponent 2: Vinstprocent (20%) ---
+  // --- Komponent 2: Vinstprocent ---
   const winRates = starters.map((s) => {
     const currentStarts = Number(s.starts_current_year) || 0;
     const currentWins = Number(s.wins_current_year) || 0;
@@ -71,7 +101,7 @@ export function calculateCompositeScore(
     return combined > 0 ? (currentWins + prevWins) / combined : 0;
   });
 
-  // --- Komponent 3: Odds-index (15%) — lägre odds = bättre ---
+  // --- Komponent 3: Odds-index — lägre odds = bättre ---
   const validOdds = starters.map((s) => s.odds).filter((o): o is number => o != null && o > 0);
   const minOdds = validOdds.length ? Math.min(...validOdds) : 1;
   const maxOdds = validOdds.length ? Math.max(...validOdds) : 100;
@@ -80,7 +110,7 @@ export function calculateCompositeScore(
     return 1 - normalize(s.odds, minOdds, maxOdds);
   });
 
-  // --- Komponent 4: Tidindex (15%) — bästa tid relativt fältet ---
+  // --- Komponent 4: Tidindex — bästa tid relativt fältet ---
   const times = starters.map((s) => parseTimeToSeconds(s.best_time));
   const validTimes = times.filter((t): t is number => t != null);
   const minTime = validTimes.length ? Math.min(...validTimes) : 0;
@@ -90,7 +120,7 @@ export function calculateCompositeScore(
     return 1 - normalize(t, minTime, maxTime); // Snabb tid → högt index
   });
 
-  // --- Komponent 5: Konsistens (10%) — vinst + platsfrekvens ---
+  // --- Komponent 5: Konsistens — vinst + platsfrekvens ---
   const consistencyComponents = starters.map((s) => {
     const starts = Number(s.starts_total) || 0;
     if (starts === 0) return 0;
@@ -99,7 +129,7 @@ export function calculateCompositeScore(
     return 0.6 * (wins / starts) + 0.4 * (places / starts);
   });
 
-  // --- Komponent 6: Distansfaktor (5%) — baserat på life_records ---
+  // --- Komponent 6: Distansfaktor — baserat på life_records ---
   const distComponents = starters.map((s) => {
     const records: LifeRecord[] = Array.isArray(s.life_records) ? s.life_records : [];
     const signal = computeDistanceSignal(records, race.distance, race.start_method);
@@ -107,12 +137,14 @@ export function calculateCompositeScore(
     return normalize(signal.factor, 0.6, 1.35);
   });
 
-  // --- Komponent 7: Spårfaktor (5%) — post_position + historik ---
+  // --- Komponent 7: Spårfaktor — post_position + historik ---
   const rawTrackFactors = starters.map((s) =>
     computeTrackFactor(
       s.post_position ?? 1,
       race.start_method,
-      s.horse_starts_history ?? []
+      s.horse_starts_history ?? [],
+      trackConfig,
+      race.distance
     )
   );
   // Normalisera min-max relativt fältet
@@ -123,16 +155,61 @@ export function calculateCompositeScore(
     trackRange > 0 ? (f - trackMin) / trackRange : 0.5
   );
 
-  // --- Vägt slutresultat (0–100) ---
+  // --- Komponent 8: Streckning — spelarnas kollektiva ranking (insatsprocent) ---
+  const streckValues = starters.map((s) => Number(s.bet_distribution) || 0);
+  const streckMin = Math.min(...streckValues);
+  const streckMax = Math.max(...streckValues);
+  const streckComponents = streckValues.map((v) =>
+    normalize(v, streckMin, streckMax)
+  );
+
+  // --- Komponent 9: Kuskform — vinstprocent i år relativt fältet ---
+  const driverPcts = starters.map((s) => s.driver_win_pct);
+  const validDriverPcts = driverPcts.filter((p): p is number => p != null);
+  const driverMin = validDriverPcts.length ? Math.min(...validDriverPcts) : 0;
+  const driverMax = validDriverPcts.length ? Math.max(...validDriverPcts) : 100;
+  const driverComponents = driverPcts.map((p) =>
+    p == null ? 0 : normalize(p, driverMin, driverMax)
+  );
+
+  // --- Komponent 10: Galopprisk — andel felfria starter i last_5 ---
+  // Bokstav i placeringen (d, u, g …) = diskad/galopp; siffror och "–" räknas inte
+  const gallopComponents = starters.map((s) => {
+    const results = s.last_5_results;
+    if (!results || results.length === 0) return 0.5; // neutral utan data
+    const risky = results.filter((r) => /[a-zåäö]/i.test(r.place)).length;
+    return 1 - risky / results.length;
+  });
+
+  return {
+    form: formComponents,
+    winRate: winRates,
+    odds: oddsComponents,
+    time: timeComponents,
+    consistency: consistencyComponents,
+    distance: distComponents,
+    track: trackComponents,
+    streck: streckComponents,
+    driver: driverComponents,
+    gallop: gallopComponents,
+  };
+}
+
+/**
+ * Beräknar Composite Score (0–100) per häst i ett lopp som en viktad summa
+ * av delkomponenterna — vikterna definieras i CS_WEIGHTS.
+ */
+export function calculateCompositeScore(
+  starters: AtgStarter[],
+  race: RaceContext,
+  trackConfig?: TrackConfig
+): number[] {
+  const c = computeComponents(starters, race, trackConfig);
   return starters.map((_, i) => {
-    const score =
-      formComponents[i] * 0.30 +
-      winRates[i] * 0.20 +
-      oddsComponents[i] * 0.15 +
-      timeComponents[i] * 0.15 +
-      consistencyComponents[i] * 0.10 +
-      distComponents[i] * 0.05 +
-      trackComponents[i] * 0.05;
+    const score = (Object.keys(CS_WEIGHTS) as ComponentName[]).reduce(
+      (sum, name) => sum + c[name][i] * CS_WEIGHTS[name],
+      0
+    );
     return Math.round(score * 100);
   });
 }

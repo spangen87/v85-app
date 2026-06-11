@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchGame, fetchHorseStarts, HorseStart } from "@/lib/atg";
 import { calculateCompositeScore } from "@/lib/formscore";
+import { getTrackConfig } from "@/lib/actions/tracks";
 import { createServiceClient } from "@/lib/supabase/server";
+
+// Historikhämtningen körs i batchar med retry — en hel omgång kan ta längre
+// tid än standardgränsen
+export const maxDuration = 60;
 
 type ExistingStarter = {
   horse_id: string;
   last_5_results: HorseStart[] | null;
+  horse_starts_history: HorseStart[] | null;
   formscore: number | null;
   finish_position: number | null;
   finish_time: string | null;
@@ -22,6 +28,10 @@ export async function POST(request: NextRequest) {
 
   try {
     const game = await fetchGame(gameType, gameId);
+
+    // Banspecifik konfiguration (open stretch m.m.) ska påverka spårfaktorn i CS
+    const trackConfigRaw = game.track ? await getTrackConfig(game.track) : null;
+    const trackConfig = trackConfigRaw?.active ? trackConfigRaw : undefined;
 
     const supabase = createServiceClient();
 
@@ -43,7 +53,7 @@ export async function POST(request: NextRequest) {
       const oldIds = oldRaces.map((r: { id: string }) => r.id);
       const { data: existingStarterData } = await supabase
         .from("starters")
-        .select("horse_id, last_5_results, formscore, finish_position, finish_time")
+        .select("horse_id, last_5_results, horse_starts_history, formscore, finish_position, finish_time")
         .in("race_id", oldIds);
       for (const s of (existingStarterData ?? []) as ExistingStarter[]) {
         existingMap.set(s.horse_id, s);
@@ -96,21 +106,35 @@ export async function POST(request: NextRequest) {
 
       console.log(`[fetch] Avd ${race.race_number}: ATG=${race.starters.length}, giltiga=${validStarters.length}, unika=${uniqueStarters.length}`);
 
-      // Hämta starterhistorik (last_5_results + spårdata) per häst
-      await Promise.all(
-        uniqueStarters.map(async (starter) => {
-          try {
-            const starts = await fetchHorseStarts(starter.horse_id);
-            if (starts.length > 0) {
-              starter.last_5_results = starts.slice(0, 5);
-              starter.horse_starts_history = starts;
-              // Används in-memory för spårfaktoranalys, sparas ej i DB
+      // Hämta starterhistorik (last_5_results + spårdata) per häst.
+      // Små batchar i stället för full parallellism — ATG rate-limitar och
+      // svarar med fel vid för många samtidiga anrop
+      const HISTORY_BATCH_SIZE = 3;
+      for (let b = 0; b < uniqueStarters.length; b += HISTORY_BATCH_SIZE) {
+        await Promise.all(
+          uniqueStarters.slice(b, b + HISTORY_BATCH_SIZE).map(async (starter) => {
+            try {
+              const starts = await fetchHorseStarts(starter.horse_id);
+              if (starts.length > 0) {
+                starter.last_5_results = starts.slice(0, 5);
+                starter.horse_starts_history = starts;
+              }
+            } catch (err) {
+              console.warn(`[fetch] Kunde inte hämta starterhistorik för häst ${starter.horse_id}:`, err instanceof Error ? err.message : String(err));
             }
-          } catch (err) {
-            console.warn(`[fetch] Kunde inte hämta starterhistorik för häst ${starter.horse_id}:`, err instanceof Error ? err.message : String(err));
+          })
+        );
+      }
+
+      // Fallback: bevara historik från tidigare hämtning om ATG-anropet misslyckades
+      for (const starter of uniqueStarters) {
+        if (!starter.horse_starts_history || starter.horse_starts_history.length === 0) {
+          const existing = existingMap.get(starter.horse_id);
+          if (existing?.horse_starts_history && existing.horse_starts_history.length > 0) {
+            starter.horse_starts_history = existing.horse_starts_history;
           }
-        })
-      );
+        }
+      }
 
       // Upsert horses — uppdatera namn om det har ändrats
       const horseUpserts = uniqueStarters.map((s) => ({
@@ -127,7 +151,7 @@ export async function POST(request: NextRequest) {
         distance: race.distance,
         start_method: race.start_method,
         field_size: uniqueStarters.length,
-      });
+      }, trackConfig);
       if (scores.length !== uniqueStarters.length) {
         console.error(`[fetch] Formscore-längd matchar inte starters (${scores.length} vs ${uniqueStarters.length}) avd ${race.race_number}`);
       }
@@ -177,6 +201,7 @@ export async function POST(request: NextRequest) {
           best_time: s.best_time,
           life_records: s.life_records,
           last_5_results: s.last_5_results,
+          horse_starts_history: s.horse_starts_history ?? null,
           formscore: scores[i],
           // Bevara resultat från tidigare hämtning
           finish_position: existing?.finish_position ?? null,

@@ -149,7 +149,7 @@ Klicka på **▼ Visa detaljer** på ett hästkort för att se mer information:
 
 **FS – Formscore (0–100):** viktat index baserat på senaste form (40%), vinstprocent år (20%), odds (20%) och bästa tid (20%). Innevarande år prioriteras; föregående år kompletterar vid få starter.
 
-**CS – Composite Score (0–100):** bredare helhetsbedömning som kombinerar form (30%), vinstprocent (20%), odds (15%), tid (15%), konsistens (10%), distans (5%) och spårfaktor (5%). Se sektion 6.2 för detaljer.
+**CS – Composite Score (0–100):** bredare helhetsbedömning som kombinerar streckning (55%), distansrekord (20%), odds (10%), konsistens (10%) och form (5%). Vikterna är kalibrerade mot historiska resultat. Se sektion 6.2 för detaljer.
 
 Färgkoder för båda poäng:
 - **Grön** (≥70) – stark häst
@@ -224,16 +224,21 @@ En andra tabell med mer detaljerade komponenter:
 #### Formel för sammansatt poäng (CS)
 
 ```
-CS = 30% × form
-   + 20% × vinstprocent
-   + 15% × odds
-   + 15% × tid
+CS = 55% × streckning
+   + 20% × distansrekord
+   + 10% × odds
    + 10% × konsistens
-   +  5% × distans
-   +  5% × spårfaktor
+   +  5% × form
 ```
 
-**Spårfaktor** väger in hästens startspår. Inre spår (1–3) ger fördel i voltstart, yttre spår (8+) ger nackdel. Vid autostart är effekten lägre. Om hästen har ≥5 historiska starter med spårdata används en dynamisk faktor baserad på hästens egna resultat.
+Vikterna kalibrerades i juni 2026 mot 155 lopp med facit (backtest), vilket höjde
+träffsäkerheten "vinnare bland topp 3" från 67% till 82% och toppval-träffen från
+38% till 49%. Streckningen (spelarnas insatsfördelning) visade sig vara den
+starkaste enskilda prediktorn. Vinstprocent, tidindex, spårfaktor, kuskform och
+galopprisk har för närvarande vikt 0 i CS men beräknas och visas fortfarande;
+vikterna omkalibreras när mer data samlats in.
+
+**Spårfaktor** väger in hästens startspår och visas separat i analysvyn. Inre spår (1–3) ger fördel i voltstart, yttre spår (8+) ger nackdel. Vid autostart är effekten lägre. Om hästen har ≥5 historiska starter från samma eller angränsande spår används en dynamisk faktor baserad på hästens egna resultat.
 
 ---
 
@@ -282,7 +287,7 @@ Sällskap låter dig och dina spelvänner diskutera hästar, dela anteckningar o
 
 ### 7.3 Flikar i sällskapet
 
-Inne i ett sällskap finns tre flikar:
+Inne i ett sällskap finns fyra flikar:
 
 **Forum**
 - Diskutera hästar och omgångar i ett chattliknande format.
@@ -293,6 +298,12 @@ Inne i ett sällskap finns tre flikar:
 **Anteckningar**
 - Visar alla hästanteckningar från sällskapets medlemmar, grupperade per omgång.
 - Anteckningar skrivs direkt på hästkorten på huvudsidan (se avsnitt 8).
+
+**Spel**
+- Visar sällskapets sparade system och utkast för vald omgång.
+- När resultat hämtats rättas systemen automatiskt — antal rätt visas som t.ex. **6/8** och vinnande hästar markeras gröna.
+- Under **Insatser** registrerar du dina spel (speltyp, eventuell avdelning/häst och insats i kronor). När omgången är avgjord fyller du i utdelningen på dina egna insatser.
+- **ROI per medlem** visar varje medlems totala insats, utdelning och avkastning över alla omgångar.
 
 **Sällskap**
 - Administrera sällskapets inställningar (se avsnitt 7.4).

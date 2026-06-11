@@ -129,17 +129,21 @@ export function computeTrackFactor(
     adjustedStaticF -= 0.08;
   }
 
-  const startsWithPos = horseHistory.filter((s) => s.post_position != null);
-  if (startsWithPos.length < 5) {
+  // Dynamisk del: endast starter från samma eller angränsande spår (±1) säger
+  // något om hästens förmåga från detta läge — övriga starter ignoreras
+  const relevantStarts = horseHistory.filter(
+    (s) => s.post_position != null && Math.abs(s.post_position - postPosition) <= 1
+  );
+  if (relevantStarts.length < 5) {
     return adjustedStaticF;
   }
 
-  const wins = startsWithPos.filter((s) => s.place === "1").length;
-  const top3 = startsWithPos.filter((s) => {
+  const wins = relevantStarts.filter((s) => s.place === "1").length;
+  const top3 = relevantStarts.filter((s) => {
     const p = parseInt(s.place);
     return !isNaN(p) && p <= 3;
   }).length;
-  const total = startsWithPos.length;
+  const total = relevantStarts.length;
   const dynamicRaw = 0.6 * (wins / total) + 0.4 * (top3 / total);
   const dynamicF = Math.min(Math.max(dynamicRaw * 2.5, 0), 1);
 

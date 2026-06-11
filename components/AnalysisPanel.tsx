@@ -130,7 +130,7 @@ export function AnalysisPanel({ starters, raceMeters, raceStartMethod, trackConf
           Matematisk analys
         </h3>
         <p className="text-xs mt-1" style={{ color: "var(--tn-text-dim)", lineHeight: 1.5 }}>
-          CS (0–100) = form (30%) + vinstprocent (20%) + odds (15%) + tid (15%) + konsistens (10%) + distans (5%) + spår (5%).
+          CS (0–100) = streckning (55%) + distans (20%) + odds (10%) + konsistens (10%) + form (5%), kalibrerat mot historiska resultat.
           {" "}Distans: {distLabel} ({raceMeters} m, {raceStartMethod}start).
           {" "}Spelvärde = CS-andel − streckning.
         </p>

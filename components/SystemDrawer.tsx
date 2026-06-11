@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import type { SystemSelection, SystemHorse } from "@/lib/types";
 import { formatRowCost } from "@/lib/atg";
 
@@ -38,6 +39,14 @@ export function SystemDrawer({
   totalRows,
   gameType,
 }: SystemDrawerProps) {
+  // Stäng med Escape
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
   if (!open) return null;
 
   function isSelected(raceNumber: number, horseId: string): boolean {

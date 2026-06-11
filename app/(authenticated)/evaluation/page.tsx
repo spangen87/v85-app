@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { isAdmin } from "@/lib/supabase/guards";
 import { EvaluationPanel } from "@/components/EvaluationPanel";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { redirect } from "next/navigation";
@@ -217,7 +218,7 @@ export default async function EvaluationPage() {
       </header>
 
       <div className="max-w-4xl mx-auto px-4 py-6">
-        <EvaluationPanel overall={overall} games={games} allGames={allGames} />
+        <EvaluationPanel overall={overall} games={games} allGames={allGames} isAdmin={isAdmin(user.id)} />
       </div>
     </main>
   );

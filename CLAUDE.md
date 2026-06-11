@@ -29,6 +29,7 @@ npm run dev      # Starta dev-server
 npm run build    # Produktionsbygge
 npm run lint     # ESLint
 npx jest         # Kör tester (lib/__tests__/)
+npm run backtest # Kalibrera CS-vikter mot faktiska resultat (kräver Supabase-env)
 ```
 
 ---
@@ -45,7 +46,6 @@ app/
     manual/                 # Manualsida (renderar MANUAL.md)
     sallskap/               # Sällskapssidor
     system/                 # Spelsystem-sida (bygga/spara system)
-    groups.ts               # (äldre, ev. under avveckling)
   api/
     games/
       available/            # GET ?date=YYYY-MM-DD → tillgängliga ATG-spel
@@ -92,10 +92,13 @@ components/
     NoteItem.tsx            # Enskild anteckning med svar
     NoteLabel.tsx           # Etiketter: red|orange|yellow|green|blue|purple
   sallskap/
-    TabBar.tsx              # Flikar: Forum | Anteckningar | Sällskap
+    TabBar.tsx              # Flikar: Forum | Anteckn. | Spel | Sällskap
     admin/AdminTab.tsx      # Inställningar (namn, ATG-lag, inbjudan, medlemmar)
     forum/ForumTab.tsx      # Omgångsbundet diskussionsforum
     notes/NotesTab.tsx      # Anteckningar per omgång i sällskapet
+    spel/SpelTab.tsx        # Sällskapets system (rättade mot resultat) + insatser
+    spel/SystemCard.tsx     # Systemkort med score/8 och vinnarmarkeringar
+    spel/BetsSection.tsx    # Insatser per omgång + ROI per medlem
   groups/
     GroupList.tsx           # Lista sällskap med kopierbar kod/länk
     CreateGroupForm.tsx     # Skapa nytt sällskap
@@ -103,9 +106,12 @@ components/
     UserMenu.tsx            # Profilmeny
     ProfileForm.tsx         # Byt visningsnamn
 
+scripts/
+  backtest-weights.ts       # Grid-söker CS-vikter mot lopp med facit (npm run backtest)
+
 lib/
-  analysis.ts               # Analysformler (FS, CS, distansfaktor, värdeindex)
-  formscore.ts              # Beräkning av Formscore
+  analysis.ts               # Hjälpformler (distanssignal, spårfaktor, tidsparsning)
+  formscore.ts              # Composite Score: computeComponents + CS_WEIGHTS
   atg.ts                    # Typer för ATG-data (AvailableGame m.m.)
   types.ts                  # Delade TS-typer (Group, GroupMember, HorseNote, m.m.)
   supabase/                 # Supabase-klienter (server/browser)
@@ -146,24 +152,21 @@ supabase/
 
 ## Nyckelalgorithmer
 
-### Formscore (FS, 0–100) – `lib/formscore.ts`
-- 40% senaste form (last_5_results)
-- 20% vinstprocent innevarande år (föregående år kompletterar vid <5 starter)
-- 20% odds-index relativt fältet
-- 20% bästa tid relativt fältet
-
-### Matematisk analys – `lib/analysis.ts → analyzeRace()`
+### Composite Score (CS, 0–100) – `lib/formscore.ts → calculateCompositeScore()`
 ```
-baspoäng = 40% karriärvinst-% + 40% senaste form-% + 20% odds-implicit
-slutpoäng = baspoäng × distansfaktor (×0.6–×1.35)
-spelvärde = beräknad chans − streckning%
+CS = 55% streckning + 20% distansrekord + 10% odds + 10% konsistens + 5% form
 ```
-
-### Utökad analys / Composite Score (CS) – `lib/analysis.ts → analyzeRaceEnhanced()`
-```
-CS = 30% form + 20% vinstprocent + 15% odds + 15% tid + 10% konsistens + 5% distans + 5% spårfaktor
-```
+Vikterna definieras i `CS_WEIGHTS` och delkomponenterna beräknas i
+`computeComponents()` (normaliserade 0–1 inom fältet). CS beräknas vid
+omgångshämtning och lagras i kolumnen `starters.formscore`. Vikterna kalibreras
+mot faktiska resultat med `npm run backtest` (scripts/backtest-weights.ts).
+Vinstprocent, tid, spårfaktor, kuskform och galopprisk har för närvarande vikt 0
+men beräknas och visas fortfarande i UI.
 Häst markeras som "Värde" om CS > 55 och värdeindex > 0.
+
+### Analysverktyget – `components/AnalysisPanel.tsx`
+Visar per häst: CS-andel av fältet, spelvärde (CS-andel − streckning%),
+distanssignal och spårfaktor (inkl. banspecifik justering från `track_configs`).
 
 ### Distansfaktor
 | Situation | Faktor |

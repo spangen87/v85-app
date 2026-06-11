@@ -1,15 +1,13 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/server";
+import { getAuthUser, isAdmin } from "@/lib/supabase/guards";
 
 export async function deleteGame(gameId: string): Promise<{ error?: string }> {
-  // Auth check — must be logged in
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Omgångar är delad data för alla användare — endast admin får radera
+  const user = await getAuthUser();
   if (!user) return { error: "Inte inloggad" };
+  if (!isAdmin(user.id)) return { error: "Endast admin kan ta bort omgångar" };
 
   // Use service client to bypass RLS (games table only allows service_role writes)
   const db = createServiceClient();

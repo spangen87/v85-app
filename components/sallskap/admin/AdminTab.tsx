@@ -21,9 +21,9 @@ export function AdminTab({ group, members, currentUserId }: AdminTabProps) {
   const [groupName, setGroupName] = useState(group.name);
   const [atgUrl, setAtgUrl] = useState(group.atg_team_url ?? null);
   const [leaving, setLeaving] = useState(false);
+  const [confirmLeave, setConfirmLeave] = useState(false);
 
   async function handleLeave() {
-    if (!confirm("Vill du lämna sällskapet?")) return;
     setLeaving(true);
     await leaveGroup(group.id);
     router.push("/");
@@ -56,14 +56,35 @@ export function AdminTab({ group, members, currentUserId }: AdminTabProps) {
       </section>
 
       <section className="pt-2" style={{ borderTop: "1px solid var(--tn-border)" }}>
-        <button
-          onClick={handleLeave}
-          disabled={leaving}
-          className="text-sm transition disabled:opacity-50"
-          style={{ color: "var(--tn-value-low)", background: "none", border: "none", cursor: "pointer" }}
-        >
-          {leaving ? "Lämnar…" : "Lämna sällskap"}
-        </button>
+        {!confirmLeave ? (
+          <button
+            onClick={() => setConfirmLeave(true)}
+            className="text-sm transition"
+            style={{ color: "var(--tn-value-low)", background: "none", border: "none", cursor: "pointer" }}
+          >
+            Lämna sällskap
+          </button>
+        ) : (
+          <div className="flex items-center gap-3">
+            <span className="text-sm" style={{ color: "var(--tn-text)" }}>Vill du lämna sällskapet?</span>
+            <button
+              onClick={handleLeave}
+              disabled={leaving}
+              className="text-sm px-3 py-1.5 rounded-lg font-semibold transition disabled:opacity-50"
+              style={{ background: "rgba(248,113,113,0.15)", color: "var(--tn-value-low)", border: "1px solid rgba(248,113,113,0.3)", cursor: "pointer" }}
+            >
+              {leaving ? "Lämnar…" : "Ja, lämna"}
+            </button>
+            <button
+              onClick={() => setConfirmLeave(false)}
+              disabled={leaving}
+              className="text-sm transition"
+              style={{ color: "var(--tn-text-faint)", background: "none", border: "none", cursor: "pointer" }}
+            >
+              Avbryt
+            </button>
+          </div>
+        )}
         {isCreator && (
           <p className="text-xs mt-1" style={{ color: "var(--tn-text-faint)" }}>
             Du är skaparen — sällskapet kvarstår för övriga medlemmar.

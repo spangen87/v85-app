@@ -20,6 +20,8 @@ export function SystemCard({ system, currentUserId, onDeleted, winnersByRace, ga
   const isOwner = system.user_id === currentUserId
   const [isPending, startTransition] = useTransition()
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   function handleCopy() {
     const sortedSelections = [...system.selections].sort((a, b) => a.race_number - b.race_number)
@@ -31,12 +33,17 @@ export function SystemCard({ system, currentUserId, onDeleted, winnersByRace, ga
       `${system.name} — ${system.total_rows} ${system.total_rows === 1 ? 'rad' : 'rader'} · ${formatRowCost(system.total_rows, gameType)}`,
       ...lines
     ].join('\n')
-    navigator.clipboard.writeText(text).catch(() => {})
+    navigator.clipboard.writeText(text)
+      .then(() => {
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+      })
+      .catch(() => setDeleteError('Kunde inte kopiera till urklipp.'))
   }
 
   function handleDelete() {
-    if (!confirm('Ta bort systemet?')) return
     setDeleteError(null)
+    setConfirmDelete(false)
     startTransition(async () => {
       try {
         await deleteSystem(system.id)
@@ -172,20 +179,42 @@ export function SystemCard({ system, currentUserId, onDeleted, winnersByRace, ga
           <button
             onClick={handleCopy}
             className="text-xs px-3 py-1.5 rounded-lg transition"
-            style={{ background: "var(--tn-bg-chip)", border: "1px solid var(--tn-border)", color: "var(--tn-text-dim)", cursor: "pointer" }}
+            style={
+              copied
+                ? { background: "rgba(52,211,153,0.15)", border: "1px solid rgba(52,211,153,0.3)", color: "var(--tn-value-high)", cursor: "pointer" }
+                : { background: "var(--tn-bg-chip)", border: "1px solid var(--tn-border)", color: "var(--tn-text-dim)", cursor: "pointer" }
+            }
           >
-            Kopiera system
+            {copied ? 'Kopierat ✓' : 'Kopiera system'}
           </button>
         )}
-        {isOwner && (
+        {isOwner && !confirmDelete && (
           <button
-            onClick={handleDelete}
+            onClick={() => setConfirmDelete(true)}
             disabled={isPending}
             className="text-xs px-3 py-1.5 rounded-lg transition disabled:opacity-50"
             style={{ border: "1px solid rgba(248,113,113,0.3)", color: "var(--tn-value-low)", background: "none", cursor: "pointer" }}
           >
-            Ta bort
+            {isPending ? 'Tar bort…' : 'Ta bort'}
           </button>
+        )}
+        {isOwner && confirmDelete && (
+          <span className="flex items-center gap-2">
+            <button
+              onClick={handleDelete}
+              className="text-xs px-3 py-1.5 rounded-lg font-semibold transition"
+              style={{ background: "rgba(248,113,113,0.15)", border: "1px solid rgba(248,113,113,0.3)", color: "var(--tn-value-low)", cursor: "pointer" }}
+            >
+              Ja, ta bort
+            </button>
+            <button
+              onClick={() => setConfirmDelete(false)}
+              className="text-xs px-2 py-1.5 transition"
+              style={{ color: "var(--tn-text-faint)", background: "none", border: "none", cursor: "pointer" }}
+            >
+              Avbryt
+            </button>
+          </span>
         )}
       </div>
     </div>

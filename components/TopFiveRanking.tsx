@@ -87,12 +87,14 @@ export function TopFiveRanking({ races, onHorseClick }: TopFiveRankingProps) {
           <p className="tn-eyebrow mb-0.5">Top 5 — Composite Score</p>
           {!collapsed && (
             <p className="text-xs" style={{ color: "var(--tn-text-faint)" }}>
-              Rankad efter CS — form, tid, odds, konsistens, distans och spår
+              Rankad efter CS — streckning, distans, odds, konsistens och form
             </p>
           )}
         </div>
         <button
           onClick={() => setCollapsed((v) => !v)}
+          aria-label={collapsed ? "Visa Top 5-listan" : "Dölj Top 5-listan"}
+          aria-expanded={!collapsed}
           className="tn-mono text-xs ml-3 shrink-0 transition-colors"
           style={{ color: "var(--tn-text-faint)", background: "none", border: "none", cursor: "pointer" }}
         >

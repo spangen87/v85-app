@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { SystemCard } from './SystemCard'
+import { BetsSection } from './BetsSection'
 import { getGroupSystems, getWinnersForGame } from '@/lib/actions/systems'
 import type { GameSystem } from '@/lib/types'
 
@@ -171,6 +172,8 @@ export function SpelTab({ groupId, games, initialGameId, initialSystems, current
           )}
         </div>
       )}
+
+      <BetsSection groupId={groupId} gameId={selectedGameId} currentUserId={currentUserId} />
     </div>
   )
 }
