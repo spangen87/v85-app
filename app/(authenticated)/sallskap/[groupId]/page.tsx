@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { getGroupById } from "@/lib/actions/groups";
 import { getGroupMembers } from "@/lib/actions/sallskap";
+import { markGroupSeen } from "@/lib/actions/activity";
 import { getGroupPosts } from "@/lib/actions/posts";
 import { getGroupNotesForGame } from "@/lib/actions/notes";
 import { getGroupSystems } from "@/lib/actions/systems";
@@ -36,6 +37,9 @@ export default async function SallskapPage({ params }: Props) {
     .single();
 
   if (!membership) redirect("/");
+
+  // Besöket nollställer aktivitetsbadgen för det här sällskapet
+  await markGroupSeen(groupId);
 
   const [group, members, games] = await Promise.all([
     getGroupById(groupId),

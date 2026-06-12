@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { BottomNav } from "@/components/BottomNav";
 import { TopNav } from "@/components/TopNav";
 import { InstallPrompt } from "@/components/InstallPrompt";
+import { getGroupActivity } from "@/lib/actions/activity";
 
 export default async function AuthenticatedLayout({
   children,
@@ -19,11 +20,13 @@ export default async function AuthenticatedLayout({
     .filter(Boolean);
   const isAdmin = user != null && adminIds.includes(user.id);
 
+  const activity = user ? await getGroupActivity() : null;
+
   return (
     <div className="pb-16 md:pb-0">
       <TopNav />
       {children}
-      <BottomNav isAdmin={isAdmin} />
+      <BottomNav isAdmin={isAdmin} sallskapBadge={activity?.unseenTotal ?? 0} />
       <InstallPrompt />
     </div>
   );

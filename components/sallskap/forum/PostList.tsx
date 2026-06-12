@@ -13,8 +13,10 @@ interface PostListProps {
 export function PostList({ posts, groupId, gameId, currentUserId, onDeleted, onReplied }: PostListProps) {
   if (posts.length === 0) {
     return (
-      <p className="text-sm italic py-4 text-center" style={{ color: "var(--tn-text-faint)" }}>
-        Inga inlägg ännu. Dela din analys!
+      <p className="text-sm py-4 text-center leading-relaxed" style={{ color: "var(--tn-text-faint)" }}>
+        Inga inlägg ännu för den här omgången.
+        <br />
+        Dela dina spikar och skrällbud — vem öppnar diskussionen inför lördagen?
       </p>
     );
   }

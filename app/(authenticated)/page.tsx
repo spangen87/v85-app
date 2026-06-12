@@ -10,6 +10,8 @@ import { CollapsibleControls } from "@/components/CollapsibleControls";
 import { RaceTabBar } from "@/components/RaceTabBar";
 import { RaceTabProvider } from "@/components/RaceTabContext";
 import { getProfile, getMyGroups } from "@/lib/actions/groups";
+import { getGroupActivity } from "@/lib/actions/activity";
+import { GroupActivitySection } from "@/components/groups/GroupActivitySection";
 import { getDraftForGame } from "@/lib/actions/systems";
 import { getTrackConfig } from "@/lib/actions/tracks";
 import { redirect } from "next/navigation";
@@ -60,10 +62,11 @@ export default async function HomePage({
   if (!user) redirect("/login");
 
   const params = await searchParams;
-  const [games, profile, userGroups] = await Promise.all([
+  const [games, profile, userGroups, activity] = await Promise.all([
     getAllGames(supabase),
     getProfile(),
     getMyGroups(),
+    getGroupActivity(),
   ]);
 
   // Välj spel: URL-param → senaste sparade
@@ -136,6 +139,7 @@ export default async function HomePage({
                 profile={profile}
                 groups={userGroups}
                 userEmail={user.email ?? ""}
+                unseenByGroup={activity.unseenByGroup}
               />
             </div>
           </div>
@@ -172,6 +176,8 @@ export default async function HomePage({
       </header>
 
       <div className="px-4 lg:px-[5%] xl:px-[8%] py-6">
+        <GroupActivitySection activity={activity} />
+
         <div className="mb-6">
           <UsefulLinks />
         </div>

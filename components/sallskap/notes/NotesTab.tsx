@@ -71,8 +71,11 @@ export function NotesTab({ groupId, games, initialGameId, initialNotes }: NotesT
       {loading && <p className="text-sm text-center py-4" style={{ color: "var(--tn-text-faint)" }}>Laddar…</p>}
 
       {!loading && selectedGameId && races.length === 0 && (
-        <p className="text-sm italic text-center py-6" style={{ color: "var(--tn-text-faint)" }}>
-          Inga sällskapsanteckningar finns för denna omgång.
+        <p className="text-sm text-center py-6 leading-relaxed" style={{ color: "var(--tn-text-faint)" }}>
+          Inga sällskapsanteckningar för den här omgången ännu.
+          <br />
+          Skriv anteckningar direkt på hästkorten i loppvyn — de samlas här och
+          följer hästen till nästa start.
         </p>
       )}
 

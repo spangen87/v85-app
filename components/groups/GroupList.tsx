@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { leaveGroup } from "@/lib/actions/groups";
 import type { Group } from "@/lib/types";
 
@@ -43,7 +44,16 @@ function CopyLinkButton({ inviteCode }: { inviteCode: string }) {
   );
 }
 
-export function GroupList({ groups, onLeft }: { groups: Group[]; onLeft: (groupId: string) => void }) {
+export function GroupList({
+  groups,
+  onLeft,
+  unseenByGroup = {},
+}: {
+  groups: Group[];
+  onLeft: (groupId: string) => void;
+  /** Osedda händelser per sällskap — visas som badge bredvid namnet */
+  unseenByGroup?: Record<string, number>;
+}) {
   const [leaving, setLeaving] = useState<string | null>(null);
 
   async function handleLeave(groupId: string) {
@@ -70,7 +80,23 @@ export function GroupList({ groups, onLeft }: { groups: Group[]; onLeft: (groupI
           style={{ background: "var(--tn-bg-chip)" }}
         >
           <div className="min-w-0">
-            <p className="text-sm font-medium truncate" style={{ color: "var(--tn-text)" }}>{g.name}</p>
+            <Link
+              href={`/sallskap/${g.id}`}
+              className="text-sm font-medium truncate block hover:underline"
+              style={{ color: "var(--tn-text)" }}
+            >
+              {g.name}{" "}
+              {(unseenByGroup[g.id] ?? 0) > 0 && (
+                <span
+                  className="inline-flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full text-[9px] font-bold align-middle mr-1"
+                  style={{ background: "var(--tn-accent)", color: "#fff" }}
+                  aria-label={`${unseenByGroup[g.id]} nya händelser`}
+                >
+                  {unseenByGroup[g.id]! > 9 ? "9+" : unseenByGroup[g.id]}
+                </span>
+              )}
+              <span style={{ color: "var(--tn-accent)" }}>→</span>
+            </Link>
             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
               <div className="flex items-center gap-1">
                 <span className="text-xs" style={{ color: "var(--tn-text-faint)" }}>Kod:</span>
