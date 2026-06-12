@@ -14,6 +14,8 @@ interface SallskapOverviewProps {
   profile: Profile | null;
   initialGroups: Group[];
   userEmail: string;
+  /** Osedda händelser per sällskap — visas som badge i listan */
+  unseenByGroup?: Record<string, number>;
 }
 
 /**
@@ -21,7 +23,7 @@ interface SallskapOverviewProps {
  * BottomNav) och profilinställningar. Desktop når samma funktioner via
  * profilmenyn, men sidan fungerar på alla skärmstorlekar.
  */
-export function SallskapOverview({ profile, initialGroups, userEmail }: SallskapOverviewProps) {
+export function SallskapOverview({ profile, initialGroups, userEmail, unseenByGroup }: SallskapOverviewProps) {
   const [groups, setGroups] = useState<Group[]>(initialGroups);
   const router = useRouter();
 
@@ -71,7 +73,7 @@ export function SallskapOverview({ profile, initialGroups, userEmail }: Sallskap
             sällskap nedan eller gå med i ett befintligt via en inbjudningskod.
           </p>
         )}
-        <GroupList groups={groups} onLeft={handleLeft} />
+        <GroupList groups={groups} onLeft={handleLeft} unseenByGroup={unseenByGroup} />
       </section>
 
       <section>

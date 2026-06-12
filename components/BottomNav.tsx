@@ -44,7 +44,14 @@ const tabs = [
   },
 ];
 
-export function BottomNav({ isAdmin = false }: { isAdmin?: boolean }) {
+export function BottomNav({
+  isAdmin = false,
+  sallskapBadge = 0,
+}: {
+  isAdmin?: boolean;
+  /** Antal osedda händelser i användarens sällskap — visas som badge på Profil-fliken */
+  sallskapBadge?: number;
+}) {
   const pathname = usePathname();
 
   return (
@@ -67,6 +74,7 @@ export function BottomNav({ isAdmin = false }: { isAdmin?: boolean }) {
         {tabs.map((tab) => {
           const isActive =
             tab.href === "/" ? pathname === "/" : pathname.startsWith(tab.href);
+          const showBadge = tab.href === "/sallskap" && sallskapBadge > 0;
           return (
             <Link
               key={tab.href}
@@ -80,7 +88,18 @@ export function BottomNav({ isAdmin = false }: { isAdmin?: boolean }) {
                 textTransform: "uppercase",
               }}
             >
-              {tab.icon}
+              <span className="relative">
+                {tab.icon}
+                {showBadge && (
+                  <span
+                    className="absolute -top-1 -right-2 min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center text-[9px] font-bold"
+                    style={{ background: "var(--tn-accent)", color: "#fff", letterSpacing: 0 }}
+                    aria-label={`${sallskapBadge} nya händelser i dina sällskap`}
+                  >
+                    {sallskapBadge > 9 ? "9+" : sallskapBadge}
+                  </span>
+                )}
+              </span>
               {tab.label}
             </Link>
           );

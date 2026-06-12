@@ -2,6 +2,7 @@ import { NavActiveLink } from "@/components/NavActiveLink";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { UserMenu } from "@/components/groups/UserMenu";
 import { getProfile, getMyGroups } from "@/lib/actions/groups";
+import { getGroupActivity } from "@/lib/actions/activity";
 import { createClient } from "@/lib/supabase/server";
 
 const tabs = [
@@ -17,9 +18,9 @@ export async function TopNav() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [profile, groups] = user
-    ? await Promise.all([getProfile(), getMyGroups()])
-    : [null, []];
+  const [profile, groups, activity] = user
+    ? await Promise.all([getProfile(), getMyGroups(), getGroupActivity()])
+    : [null, [], null];
 
   const adminIds = (process.env.ADMIN_USER_IDS ?? "")
     .split(",")
@@ -60,6 +61,7 @@ export async function TopNav() {
             profile={profile}
             groups={groups}
             userEmail={user.email ?? ""}
+            unseenByGroup={activity?.unseenByGroup}
           />
         )}
       </div>

@@ -11,9 +11,11 @@ interface UserMenuProps {
   profile: Profile | null;
   groups: Group[];
   userEmail: string;
+  /** Osedda händelser per sällskap — visar prick på avataren och antal i listan */
+  unseenByGroup?: Record<string, number>;
 }
 
-export function UserMenu({ profile, groups, userEmail }: UserMenuProps) {
+export function UserMenu({ profile, groups, userEmail, unseenByGroup = {} }: UserMenuProps) {
   const [open, setOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -21,6 +23,7 @@ export function UserMenu({ profile, groups, userEmail }: UserMenuProps) {
 
   const displayName = profile?.display_name || userEmail.split("@")[0];
   const initials = displayName.slice(0, 2).toUpperCase();
+  const unseenTotal = Object.values(unseenByGroup).reduce((a, b) => a + b, 0);
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -41,11 +44,18 @@ export function UserMenu({ profile, groups, userEmail }: UserMenuProps) {
       <div className="relative" ref={menuRef}>
         <button
           onClick={() => setOpen((v) => !v)}
-          className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 transition"
+          className="relative w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 transition"
           style={{ background: "var(--tn-accent)", color: "#fff" }}
-          title={displayName}
+          title={unseenTotal > 0 ? `${displayName} — ${unseenTotal} nya händelser i dina sällskap` : displayName}
         >
           {initials}
+          {unseenTotal > 0 && (
+            <span
+              className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full"
+              style={{ background: "var(--tn-warn)", border: "2px solid var(--tn-bg)" }}
+              aria-label={`${unseenTotal} nya händelser i dina sällskap`}
+            />
+          )}
         </button>
 
         {open && (
@@ -63,17 +73,28 @@ export function UserMenu({ profile, groups, userEmail }: UserMenuProps) {
               {groups.length > 0 && (
                 <div className="px-4 py-2" style={{ borderBottom: "1px solid var(--tn-border)" }}>
                   <p className="text-xs mb-1" style={{ color: "var(--tn-text-faint)" }}>Sällskap</p>
-                  {groups.map((g) => (
-                    <Link
-                      key={g.id}
-                      href={`/sallskap/${g.id}`}
-                      onClick={() => setOpen(false)}
-                      className="block text-xs truncate py-0.5 transition"
-                      style={{ color: "var(--tn-text-dim)" }}
-                    >
-                      {g.name}
-                    </Link>
-                  ))}
+                  {groups.map((g) => {
+                    const unseen = unseenByGroup[g.id] ?? 0;
+                    return (
+                      <Link
+                        key={g.id}
+                        href={`/sallskap/${g.id}`}
+                        onClick={() => setOpen(false)}
+                        className="flex items-center gap-2 text-xs py-0.5 transition"
+                        style={{ color: "var(--tn-text-dim)" }}
+                      >
+                        <span className="truncate">{g.name}</span>
+                        {unseen > 0 && (
+                          <span
+                            className="shrink-0 min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center text-[9px] font-bold"
+                            style={{ background: "var(--tn-accent)", color: "#fff" }}
+                          >
+                            {unseen > 9 ? "9+" : unseen}
+                          </span>
+                        )}
+                      </Link>
+                    );
+                  })}
                 </div>
               )}
 
