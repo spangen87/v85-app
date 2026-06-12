@@ -98,8 +98,9 @@ components/
     admin/AdminTab.tsx      # Inställningar (namn, ATG-lag, inbjudan, medlemmar)
     forum/ForumTab.tsx      # Omgångsbundet diskussionsforum
     notes/NotesTab.tsx      # Anteckningar per omgång i sällskapet
-    spel/SpelTab.tsx        # Sällskapets system (rättade mot resultat) + insatser
+    spel/SpelTab.tsx        # Sällskapets system (rättade mot resultat) + liga + insatser
     spel/SystemCard.tsx     # Systemkort med score/8 och vinnarmarkeringar
+    spel/LeagueTable.tsx    # Sällskapsligan: topplista över systemträffar per medlem
     spel/BetsSection.tsx    # Insatser per omgång + ROI per medlem
   groups/
     SallskapOverview.tsx    # /sallskap-sidans innehåll (sällskapslista, skapa/gå med, profil, logga ut)

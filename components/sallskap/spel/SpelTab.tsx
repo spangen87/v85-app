@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { SystemCard } from './SystemCard'
 import { BetsSection } from './BetsSection'
-import { getGroupSystems, getWinnersForGame } from '@/lib/actions/systems'
+import { LeagueTable } from './LeagueTable'
+import { getGroupSystems, getWinnersForGame, type GroupLeague } from '@/lib/actions/systems'
 import type { GameSystem } from '@/lib/types'
 
 type Game = { id: string; date: string; track: string | null; game_type?: string }
@@ -14,10 +15,11 @@ interface SpelTabProps {
   games: Game[]
   initialGameId: string | null
   initialSystems: GameSystem[]
+  league: GroupLeague
   currentUserId: string
 }
 
-export function SpelTab({ groupId, games, initialGameId, initialSystems, currentUserId }: SpelTabProps) {
+export function SpelTab({ groupId, games, initialGameId, initialSystems, league, currentUserId }: SpelTabProps) {
   const [selectedGameId, setSelectedGameId] = useState<string | null>(initialGameId)
   const [systems, setSystems] = useState<GameSystem[]>(initialSystems)
   const [loading, setLoading] = useState(false)
@@ -175,6 +177,8 @@ export function SpelTab({ groupId, games, initialGameId, initialSystems, current
           )}
         </div>
       )}
+
+      <LeagueTable league={league} />
 
       <BetsSection groupId={groupId} gameId={selectedGameId} currentUserId={currentUserId} />
     </div>
