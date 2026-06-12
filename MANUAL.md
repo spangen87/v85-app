@@ -260,6 +260,16 @@ Sällskap låter dig och dina spelvänner diskutera hästar, dela anteckningar o
 
 **Profil-fliken** i mobilnavigeringen (eller **profilmenyn** uppe till höger på desktop) öppnar sällskapsöversikten. Där ser du dina sällskap (klicka på namnet för att öppna), skapar nya, går med via inbjudningskod, byter visningsnamn och loggar ut.
 
+### Nytt sedan sist
+
+När andra medlemmar skrivit foruminlägg, antecknat på hästar eller sparat system sedan du senast besökte sällskapet visas det som:
+
+- En **siffer-badge** på Profil-fliken (mobil) och en prick på din avatar (desktop).
+- Sektionen **"Nytt i dina sällskap"** högst upp på startsidan med de senaste händelserna — klicka för att gå direkt till sällskapet.
+- Antal nya händelser bredvid sällskapets namn i listor och menyer.
+
+Badgen nollställs för ett sällskap när du öppnar det. Endast andras aktivitet räknas — dina egna inlägg skapar inga notiser.
+
 ### 7.1 Skapa ett sällskap
 
 1. Gå till sällskapsöversikten via **Profil**-fliken (mobil) eller **profilmenyn → Hantera sällskap** (desktop).
@@ -320,13 +330,13 @@ Anteckningar är kopplade till en specifik häst och visas för alla i de sälls
 1. Öppna en avdelning och hitta hästen du vill kommentera.
 2. Klicka på **▼ Anteckningar** längst ner på hästkortet.
 3. Skriv din text i textfältet.
-4. Välj en **etikett** (färgkod) för att kategorisera din notering:
-   - 🔴 **Röd**
-   - 🟠 **Orange**
-   - 🟡 **Gul**
-   - 🟢 **Grön**
-   - 🔵 **Blå**
-   - 🟣 **Lila**
+4. Välj en **etikett** (färgkod) för att kategorisera din notering. Färgerna har en gemensam betydelse så att alla i sällskapet läser dem likadant:
+   - 🟢 **Grön = Spik** — hästen ska med, gärna ensam.
+   - 🟡 **Gul = Skrällbud** — lågt streckad häst du tror på.
+   - 🔴 **Röd = Undvik** — stryk hästen trots streckningen.
+   - 🟠 **Orange = Risk/galopp** — osäker häst, galopprisk eller tveksam form.
+   - 🔵 **Blå = Info** — neutral fakta (skoändring, kuskbyte, etc.).
+   - 🟣 **Lila = Bevaka** — intressant till kommande starter.
 5. Välj om anteckningen ska tillhöra ett **sällskap** eller vara **Personlig**.
 6. Klicka på **Lägg till**.
 
@@ -385,4 +395,4 @@ Sidan visar:
 
 ---
 
-*Manual version 2.4 – V85 Analys*
+*Manual version 2.5 – V85 Analys*

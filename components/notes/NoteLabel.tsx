@@ -9,13 +9,17 @@ const LABEL_HEX: Record<NoteLabel, string> = {
   purple: "#a78bfa",
 };
 
+/**
+ * Gemensam betydelse per färg så att etiketterna säger samma sak för alla i
+ * sällskapet. Dokumenterad i MANUAL.md avsnitt 8.
+ */
 const LABEL_NAMES: Record<NoteLabel, string> = {
-  red: "Röd",
-  orange: "Orange",
-  yellow: "Gul",
-  green: "Grön",
-  blue: "Blå",
-  purple: "Lila",
+  red: "Undvik",
+  orange: "Risk/galopp",
+  yellow: "Skrällbud",
+  green: "Spik",
+  blue: "Info",
+  purple: "Bevaka",
 };
 
 export const NOTE_LABELS: NoteLabel[] = ["red", "orange", "yellow", "green", "blue", "purple"];
@@ -58,14 +62,20 @@ export function NoteLabelPicker({
         />
       ))}
       {value && (
-        <button
-          type="button"
-          onClick={() => onChange(null)}
-          className="text-xs ml-1"
-          style={{ color: "var(--tn-text-faint)", background: "none", border: "none", cursor: "pointer" }}
-        >
-          ✕
-        </button>
+        <>
+          <span className="text-xs ml-0.5" style={{ color: "var(--tn-text-dim)" }}>
+            {LABEL_NAMES[value]}
+          </span>
+          <button
+            type="button"
+            onClick={() => onChange(null)}
+            className="text-xs ml-1"
+            style={{ color: "var(--tn-text-faint)", background: "none", border: "none", cursor: "pointer" }}
+            aria-label="Ta bort etikett"
+          >
+            ✕
+          </button>
+        </>
       )}
     </div>
   );

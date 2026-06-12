@@ -102,6 +102,7 @@ components/
     spel/BetsSection.tsx    # Insatser per omgång + ROI per medlem
   groups/
     SallskapOverview.tsx    # /sallskap-sidans innehåll (sällskapslista, skapa/gå med, profil, logga ut)
+    GroupActivitySection.tsx # "Nytt i dina sällskap" på startsidan (osedda händelser)
     GroupList.tsx           # Lista sällskap med länk in + kopierbar kod/länk
     CreateGroupForm.tsx     # Skapa nytt sällskap
     JoinGroupForm.tsx       # Gå med via kod
@@ -121,6 +122,7 @@ lib/
   types.ts                  # Delade TS-typer (Group, GroupMember, HorseNote, m.m.)
   supabase/                 # Supabase-klienter (server/browser)
   actions/
+    activity.ts             # Aktivitetssignaler: getGroupActivity (React-cachad) + markGroupSeen
     bets.ts                 # Server actions: spelförslag/bets
     games.ts                # Server actions: spel
     groups.ts               # Server actions: skapa/lämna sällskap
@@ -152,6 +154,7 @@ supabase/
 **game_systems** – sparade spelsystem (name, game_id, selections)
 **drafts** – utkast till spelsystem
 **track_configs** – banspecifik konfiguration (open_stretch, short_race_threshold)
+**group_last_seen** – när användare senast besökte ett sällskap (aktivitetsbadges)
 
 ---
 

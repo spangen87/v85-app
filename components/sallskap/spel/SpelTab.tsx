@@ -106,8 +106,11 @@ export function SpelTab({ groupId, games, initialGameId, initialSystems, current
         </div>
       ) : isEmpty ? (
         <div className="text-center py-10">
-          <p className="mb-2 text-sm" style={{ color: "var(--tn-text-faint)" }}>
-            Inga system sparade för denna omgång ännu.
+          <p className="mb-2 text-sm leading-relaxed" style={{ color: "var(--tn-text-faint)" }}>
+            Inga system sparade för den här omgången ännu.
+            <br />
+            Spara ett system så rättas det automatiskt mot resultaten — och ni ser
+            vem i sällskapet som prickade flest vinnare.
           </p>
           {selectedGame && (
             <Link
