@@ -111,6 +111,8 @@ export async function POST(request: NextRequest) {
       // svarar med fel vid för många samtidiga anrop
       const HISTORY_BATCH_SIZE = 3;
       for (let b = 0; b < uniqueStarters.length; b += HISTORY_BATCH_SIZE) {
+        // Paus mellan batcharna — ATG rate-limitar vid för tät anropstakt
+        if (b > 0) await new Promise((r) => setTimeout(r, 300));
         await Promise.all(
           uniqueStarters.slice(b, b + HISTORY_BATCH_SIZE).map(async (starter) => {
             try {
@@ -134,6 +136,16 @@ export async function POST(request: NextRequest) {
             starter.horse_starts_history = existing.horse_starts_history;
           }
         }
+      }
+
+      // Logga datatäckningen — tysta bortfall här har tidigare gjort att form-,
+      // galopp- och kuskkomponenterna saknat data utan att det syntes
+      const withHistory = uniqueStarters.filter((s) => s.last_5_results.length > 0).length;
+      const withDriverPct = uniqueStarters.filter((s) => s.driver_win_pct != null).length;
+      if (withHistory < uniqueStarters.length || withDriverPct === 0) {
+        console.warn(
+          `[fetch] Avd ${race.race_number}: starterhistorik ${withHistory}/${uniqueStarters.length}, kuskstatistik ${withDriverPct}/${uniqueStarters.length}`
+        );
       }
 
       // Upsert horses — uppdatera namn om det har ändrats

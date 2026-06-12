@@ -91,6 +91,8 @@ export interface AtgStarter {
 
 export interface AtgRace {
   race_number: number;
+  /** ATG:s lopp-id (t.ex. "2026-06-13_5_4") — används för extended-anrop */
+  atg_race_id: string;
   race_name: string;
   distance: number;
   start_method: string;
@@ -159,7 +161,59 @@ export async function fetchGame(gameType: string, gameId: string): Promise<AtgGa
   if (!res.ok) throw new Error(`ATG API svarade ${res.status} för ${gameId}`);
 
   const raw = await res.json();
-  return parseGame(raw, gameType);
+  const game = parseGame(raw, gameType);
+  await enrichPersonStats(game);
+  return game;
+}
+
+/**
+ * Kusk-/tränarstatistik saknas ofta i /games-svaret (alla winPct blir null).
+ * Den finns i stället i /races/{id}/extended — hämta därifrån för avdelningar
+ * där spelsvaret inte gav någon statistik alls.
+ */
+async function enrichPersonStats(game: AtgGame): Promise<void> {
+  const currentYear = String(new Date().getFullYear());
+  const prevYear = String(new Date().getFullYear() - 1);
+
+  for (const race of game.races) {
+    if (!race.atg_race_id) continue;
+    const allMissing = race.starters.every((s) => s.driver_win_pct == null);
+    if (!allMissing || race.starters.length === 0) continue;
+
+    try {
+      const res = await fetch(`${ATG_BASE}/races/${race.atg_race_id}/extended`, {
+        headers: HEADERS,
+        next: { revalidate: 0 },
+      });
+      if (!res.ok) {
+        console.warn(`[enrichPersonStats] /races/${race.atg_race_id}/extended svarade ${res.status}`);
+        continue;
+      }
+      const raw = await res.json();
+      const starts = (raw["starts"] as Record<string, unknown>[]) ?? [];
+      if (!Array.isArray(starts)) continue;
+
+      const byNumber = new Map<number, Record<string, unknown>>();
+      for (const s of starts) byNumber.set(Number(s["number"] ?? 0), s);
+
+      let filled = 0;
+      for (const starter of race.starters) {
+        const s = byNumber.get(starter.start_number);
+        if (!s) continue;
+        const driver = (s["driver"] as Record<string, unknown>) ?? {};
+        const horse = (s["horse"] as Record<string, unknown>) ?? {};
+        const trainer = (horse["trainer"] as Record<string, unknown>) ?? {};
+        starter.driver_win_pct =
+          winPct(driver, currentYear) ?? winPct(driver, prevYear);
+        starter.trainer_win_pct =
+          winPct(trainer, currentYear) ?? winPct(trainer, prevYear);
+        if (starter.driver_win_pct != null) filled++;
+      }
+      console.log(`[enrichPersonStats] Avd ${race.race_number}: kuskstatistik för ${filled}/${race.starters.length} via extended`);
+    } catch (err) {
+      console.warn(`[enrichPersonStats] Fel för ${race.atg_race_id}:`, err instanceof Error ? err.message : String(err));
+    }
+  }
 }
 
 export async function fetchV85Game(gameDate?: string): Promise<AtgGame> {
@@ -179,7 +233,7 @@ function formatTime(timeObj: Record<string, number> | null | undefined): string 
 
 // Backoff-fördröjningar vid 429/5xx från ATG — utan retry tappas historiken
 // tyst för de flesta hästar när många anrop görs i följd
-const HORSE_STARTS_RETRY_DELAYS_MS = [500, 1500];
+const HORSE_STARTS_RETRY_DELAYS_MS = [500, 1500, 4000];
 
 export async function fetchHorseStarts(
   horseId: string
@@ -193,7 +247,10 @@ export async function fetchHorseStarts(
       });
       if (res.ok) break;
       const retryable = res.status === 429 || res.status >= 500;
-      if (!retryable || attempt >= HORSE_STARTS_RETRY_DELAYS_MS.length) return [];
+      if (!retryable || attempt >= HORSE_STARTS_RETRY_DELAYS_MS.length) {
+        console.warn(`[fetchHorseStarts] ATG svarade ${res.status} för häst ${horseId} — ger upp efter ${attempt + 1} försök`);
+        return [];
+      }
       await new Promise((r) => setTimeout(r, HORSE_STARTS_RETRY_DELAYS_MS[attempt]));
     }
     const raw = await res.json();
@@ -268,10 +325,19 @@ function winPct(
     ?? {};
   const yr = (years[year] as Record<string, unknown>) ?? {};
   const starts = Number(yr["starts"] ?? 0);
-  if (starts === 0) return null;
-  const placement = (yr["placement"] as Record<string, string>) ?? {};
-  const wins = Number(placement["1"] ?? 0);
-  return Math.round((wins / starts) * 1000) / 10; // en decimal
+  if (starts > 0) {
+    const placement = (yr["placement"] as Record<string, string>) ?? {};
+    const wins = Number(placement["1"] ?? 0);
+    return Math.round((wins / starts) * 1000) / 10; // en decimal
+  }
+  // Fallback: ATG:s färdigberäknade winPercentage — heltal i hundradels
+  // procent (1393 = 13,93 %) i vissa svar, vanlig procent i andra
+  const wpRaw = yr["winPercentage"] ?? stats["winPercentage"];
+  const wp = Number(wpRaw);
+  if (wpRaw != null && !isNaN(wp) && wp > 0) {
+    return wp > 100 ? Math.round(wp / 10) / 10 : wp;
+  }
+  return null;
 }
 
 function parseGameResults(raw: Record<string, unknown>): AtgGameResults {
@@ -397,9 +463,11 @@ function parseGame(raw: Record<string, unknown>, gameType: string): AtgGame {
         pedigree_father: father,
         home_track: homeTrack,
         driver: `${driver["firstName"] ?? ""} ${driver["lastName"] ?? ""}`.trim(),
-        driver_win_pct: winPct(driver as Record<string, unknown>, currentYear),
+        driver_win_pct:
+          winPct(driver, currentYear) ?? winPct(driver, prevYear),
         trainer: `${trainer["firstName"] ?? ""} ${trainer["lastName"] ?? ""}`.trim(),
-        trainer_win_pct: winPct(trainer as Record<string, unknown>, currentYear),
+        trainer_win_pct:
+          winPct(trainer, currentYear) ?? winPct(trainer, prevYear),
         odds: oddsFloat,
         p_odds: pOdds,
         bet_distribution: betDistribution,
@@ -430,6 +498,7 @@ function parseGame(raw: Record<string, unknown>, gameType: string): AtgGame {
 
     return {
       race_number: avdIndex + 1, // avdelningsnummer 1-N (inte banans interna löpnummer)
+      atg_race_id: String(race["id"] ?? ""),
       race_name: String(race["name"] ?? ""),
       distance: Number(race["distance"] ?? 0),
       start_method: startMethod,
