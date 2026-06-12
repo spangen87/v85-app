@@ -185,16 +185,23 @@ async function loadRaces(): Promise<RaceData[]> {
 interface Metrics {
   top1: number;
   top3: number;
+  /** Genomsnittlig log-loss på vinnaren (lägre = bättre kalibrerat) */
+  logloss: number;
 }
 
 function evaluate(races: RaceData[], w: number[]): Metrics {
   let top1 = 0;
   let top3 = 0;
+  let llSum = 0;
   for (const race of races) {
     const { comp, n, winnerIdx } = race;
     let winnerScore = 0;
-    for (let k = 0; k < N_COMP; k++) {
-      winnerScore += w[k] * comp[winnerIdx * N_COMP + k];
+    let fieldSum = 0;
+    for (let i = 0; i < n; i++) {
+      let score = 0;
+      for (let k = 0; k < N_COMP; k++) score += w[k] * comp[i * N_COMP + k];
+      fieldSum += score;
+      if (i === winnerIdx) winnerScore = score;
     }
     // Vinnarens rang = 1 + antal hästar med strikt högre poäng
     let better = 0;
@@ -206,8 +213,44 @@ function evaluate(races: RaceData[], w: number[]): Metrics {
     }
     if (better === 0) top1++;
     if (better <= 2) top3++;
+    // Sannolikhet = vinnarens poängandel av fältet (samma normalisering som
+    // appens "chans"); likformig fördelning om alla poäng är 0
+    const pWinner = fieldSum > 0 ? winnerScore / fieldSum : 1 / n;
+    llSum += -Math.log(Math.max(pWinner, 1e-12));
   }
-  return { top1: top1 / races.length, top3: top3 / races.length };
+  return {
+    top1: top1 / races.length,
+    top3: top3 / races.length,
+    logloss: llSum / races.length,
+  };
+}
+
+/** Deterministisk PRNG (mulberry32) så att train/test-splitten är reproducerbar */
+function makeRng(seed: number): () => number {
+  let a = seed >>> 0;
+  return () => {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/** Blandar och delar loppen i train/test (Fisher–Yates med seedad RNG) */
+function trainTestSplit(
+  races: RaceData[],
+  testFraction: number,
+  seed: number
+): { train: RaceData[]; test: RaceData[] } {
+  const rng = makeRng(seed);
+  const shuffled = [...races];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  const nTest = Math.round(shuffled.length * testFraction);
+  return { test: shuffled.slice(0, nTest), train: shuffled.slice(nTest) };
 }
 
 /** Alla sätt att fördela `units` enheter över N_COMP vikter (kompositioner) */
@@ -231,64 +274,97 @@ function fmtWeights(w: number[]): string {
   return COMPONENT_ORDER.map((name, k) => `${name}=${(w[k] * 100).toFixed(0)}%`).join(" ");
 }
 
+/** Binomial standardfel i procentenheter för en andel p över n försök */
+function sePct(p: number, n: number): number {
+  if (n <= 0) return 0;
+  return Math.sqrt((p * (1 - p)) / n) * 100;
+}
+
+function fmtMetrics(m: Metrics, n: number): string {
+  return (
+    `logloss=${m.logloss.toFixed(4)}  ` +
+    `top1=${(m.top1 * 100).toFixed(1)}±${sePct(m.top1, n).toFixed(1)}%  ` +
+    `top3=${(m.top3 * 100).toFixed(1)}±${sePct(m.top3, n).toFixed(1)}%`
+  );
+}
+
+function argValue(flag: string): string | undefined {
+  const i = process.argv.indexOf(flag);
+  return i >= 0 ? process.argv[i + 1] : undefined;
+}
+
 async function main() {
   loadEnv();
-  const stepArg = process.argv.indexOf("--step");
   // steg i hundradelar: 5 → vikter i steg om 0.05
-  const stepPct = stepArg >= 0 ? parseInt(process.argv[stepArg + 1]) : 5;
+  const stepPct = parseInt(argValue("--step") ?? "5");
   const units = Math.round(100 / stepPct);
+  const seed = parseInt(argValue("--seed") ?? "42");
+  const testFraction = parseFloat(argValue("--test") ?? "0.3");
+  // optimeringsmål på träningsdelen: "logloss" (default) eller "top3"
+  const objective = (argValue("--objective") ?? "logloss") as "logloss" | "top3";
 
   console.log("Hämtar lopp med resultat från Supabase …");
   const races = await loadRaces();
-  console.log(`${races.length} lopp med vinnare hittades.\n`);
+  console.log(`${races.length} lopp med vinnare hittades.`);
 
   if (races.length < 300) {
     console.warn(
-      `⚠ Endast ${races.length} lopp — resultaten är osäkra (±${(
-        (100 / Math.sqrt(races.length)) / 2
-      ).toFixed(1)} procentenheter). Kör om när mer data samlats in.\n`
+      `⚠ Endast ${races.length} lopp — testresultaten har bred osäkerhet. Kör om när mer data samlats in.`
     );
   }
 
-  const baseline = evaluate(
-    races,
-    COMPONENT_ORDER.map((name) => CS_WEIGHTS[name])
-  );
+  const { train, test } = trainTestSplit(races, testFraction, seed);
   console.log(
-    `Nuvarande vikter (${fmtWeights(COMPONENT_ORDER.map((n) => CS_WEIGHTS[n]))}):`
-  );
-  console.log(
-    `  Toppval vinner: ${(baseline.top1 * 100).toFixed(1)}%   Vinnare i topp 3: ${(baseline.top3 * 100).toFixed(1)}%\n`
+    `Split (seed ${seed}): ${train.length} träningslopp, ${test.length} testlopp.\n`
   );
 
-  console.log(`Grid-söker viktrummet i steg om ${stepPct} procentenheter …`);
+  const baseW = COMPONENT_ORDER.map((name) => CS_WEIGHTS[name]);
+  console.log(`Nuvarande vikter (${fmtWeights(baseW)}):`);
+  console.log(`  Train: ${fmtMetrics(evaluate(train, baseW), train.length)}`);
+  console.log(`  Test:  ${fmtMetrics(evaluate(test, baseW), test.length)}\n`);
+
+  console.log(
+    `Grid-söker viktrummet i steg om ${stepPct} pe, optimerar "${objective}" på träningsdelen …`
+  );
+  // Lägre logloss är bättre; högre top3 är bättre
+  const better = (a: Metrics, b: Metrics) =>
+    objective === "logloss"
+      ? a.logloss - b.logloss // sortera stigande
+      : b.top3 - a.top3 || b.top1 - a.top1;
+
   type Result = { w: number[]; m: Metrics };
-  const best: Result[] = [];
+  let best: Result[] = [];
   let count = 0;
   for (const w of weightGrid(units)) {
-    const m = evaluate(races, w);
+    best.push({ w: [...w], m: evaluate(train, w) });
     count++;
-    best.push({ w: [...w], m });
-    // Behåll bara topp 200 (sorterat på top3, sedan top1) för minnets skull
     if (best.length > 5000) {
-      best.sort((a, b) => b.m.top3 - a.m.top3 || b.m.top1 - a.m.top1);
+      best.sort((a, b) => better(a.m, b.m));
       best.length = 200;
     }
   }
-  best.sort((a, b) => b.m.top3 - a.m.top3 || b.m.top1 - a.m.top1);
-  console.log(`${count} viktuppsättningar utvärderade.\n`);
+  best.sort((a, b) => better(a.m, b.m));
+  best = best.slice(0, 200);
+  console.log(`${count} viktuppsättningar utvärderade på träningsdelen.\n`);
 
-  console.log("Topp 15 efter topp-3-täckning:");
-  for (const { w, m } of best.slice(0, 15)) {
-    console.log(
-      `  top3=${(m.top3 * 100).toFixed(1)}%  top1=${(m.top1 * 100).toFixed(1)}%  ${fmtWeights(w)}`
-    );
+  console.log(`Topp 10 på träningsdelen (efter ${objective}):`);
+  for (const { w, m } of best.slice(0, 10)) {
+    console.log(`  ${fmtMetrics(m, train.length)}  ${fmtWeights(w)}`);
   }
 
-  const bestTop1 = [...best].sort((a, b) => b.m.top1 - a.m.top1 || b.m.top3 - a.m.top3)[0];
-  console.log(
-    `\nBäst på toppval-träff: top1=${(bestTop1.m.top1 * 100).toFixed(1)}%  top3=${(bestTop1.m.top3 * 100).toFixed(1)}%  ${fmtWeights(bestTop1.w)}`
-  );
+  // Den ärliga siffran: bästa träningsvikterna utvärderade på testdelen
+  const champion = best[0];
+  const championTest = evaluate(test, champion.w);
+  console.log(`\nBästa träningsvikter: ${fmtWeights(champion.w)}`);
+  console.log(`  Train: ${fmtMetrics(champion.m, train.length)}`);
+  console.log(`  Test:  ${fmtMetrics(championTest, test.length)}   ← ärlig uppskattning av verklig prestanda`);
+
+  const overfit = champion.m.logloss - championTest.logloss;
+  if (overfit < -0.03) {
+    console.log(
+      `\n⚠ Test-logloss är ${Math.abs(overfit).toFixed(3)} sämre än train — tecken på överanpassning. Behåll hellre robusta/jämna vikter.`
+    );
+  }
 }
 
 main().catch((err) => {

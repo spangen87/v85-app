@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { computeWinProbabilities } from "@/lib/probability";
 
 interface StarterForRanking {
   start_number: number;
@@ -41,13 +42,14 @@ export function TopFiveRanking({ races, onHorseClick }: TopFiveRankingProps) {
 
   const allHorses: RankedHorse[] = [];
   for (const race of races) {
-    for (const s of race.starters) {
+    // Kalibrerad chans beräknas över hela avdelningen (samma mått som hästkort/analys)
+    const probs = computeWinProbabilities(race.starters);
+    race.starters.forEach((s, i) => {
       const cs = s.formscore ?? 0;
-      if (cs === 0) continue;
-      const totalCS = race.starters.reduce((sum, st) => sum + (st.formscore ?? 0), 0);
-      const calcPct = totalCS > 0 ? (cs / totalCS) * 100 : 0;
+      if (cs === 0) return;
+      const pPct = (probs[i]?.p ?? 0) * 100;
       const streckPct = s.bet_distribution ?? 0;
-      const isValue = cs > 55 && streckPct > 0 && calcPct > streckPct;
+      const isValue = cs > 55 && streckPct > 0 && pPct > streckPct;
       allHorses.push({
         horseName: s.horses?.name ?? `Nr ${s.start_number}`,
         startNumber: s.start_number,
@@ -58,7 +60,7 @@ export function TopFiveRanking({ races, onHorseClick }: TopFiveRankingProps) {
         finish_position: s.finish_position ?? null,
         finish_time: s.finish_time ?? null,
       });
-    }
+    });
   }
 
   if (allHorses.length === 0) return null;

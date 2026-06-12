@@ -171,14 +171,25 @@ Klicka på knappen **Visa analys** inuti en avdelning för att öppna analyspane
 |--------|-----------|
 | **#** | Rank i loppet enligt CS |
 | **Häst** | Startnummer och namn, med **VÄRDE**- och/eller **SKRÄLL**-märke |
-| **CS** | Composite Score 0–100 (se 5.2) |
+| **CS** | Composite Score 0–100 (se 5.2) — tabellen rankas på denna |
 | **Odds** | Aktuellt vinnarodds |
-| **Ber.** | Beräknad vinstchans: hästens CS som andel av fältets totala CS |
+| **Chans** | Kalibrerad vinstsannolikhet (se nedan) |
 | **Strk.** | Hästens faktiska andel av spelpoolen (marknadens röst) |
 | **Distans** | Distanssignal baserat på hästens historik på aktuell distans och startmetod |
 | **Spår** | Spårfaktor med banspecifik justering — visas bara för banor med konfiguration (se 6.2) |
-| **Värde** | Spelvärde: beräknad chans minus streckning, i procentenheter |
+| **Värde** | Spelvärde: chans minus streckning, i procentenheter |
 | **Res.** | Slutplacering om loppet är avslutat |
+
+#### Kalibrerad vinstchans
+
+**Chans** är systemets bästa skattning av hur ofta hästen verkligen vinner. Den är en jämn blandning (50/50) av två oberoende marknadssignaler:
+
+- **Streckningen** – spelarnas kollektiva insatsfördelning i poolen.
+- **Oddsmarknaden** – vinnaroddsens implicita sannolikhet (1/odds, normaliserad över fältet).
+
+Analys av historiska lopp visar att blandningen är bättre kalibrerad än någon av signalerna ensam — sanningen ligger mitt emellan poolen och oddsmarknaden. Innan poolen öppnat (ingen streckning) används enbart oddsen; saknas odds används enbart streckningen.
+
+Eftersom **Värde = Chans − Streckning** lyfter tabellen fram hästar där den samlade marknaden (särskilt oddsen) tror mer på hästen än vad poolen streckar den för — alltså potentiellt undervärderade hästar.
 
 #### Distansfaktor-symboler
 
@@ -192,11 +203,11 @@ Klicka på knappen **Visa analys** inuti en avdelning för att öppna analyspane
 
 #### Tolka spelvärdet
 
-- **Positiv** (beräknad chans > streckning) → hästen kan vara ett värdebet (fetstil = ≥5 pp).
+- **Positiv** (chans > streckning) → hästen kan vara ett värdebet (fetstil = ≥5 pp).
 - **Negativ** → hästen är hårt streckad relativt systemets bedömning.
 - Rader med **VÄRDE**-märke (CS > 55 och positivt spelvärde) lyfts fram med grön markering.
 
-> **Obs!** Streckningsdata saknas innan poolen öppnat. Hämta om spelet senare för att se spelvärden.
+> **Obs!** Streckningsdata saknas innan poolen öppnat — då bygger chansen enbart på oddsen tills du hämtar om spelet.
 
 #### Skrällkandidater
 
@@ -358,7 +369,8 @@ Sidan visar:
 | **Odds** | ATG:s vinnarodds på hästen |
 | **Streckning / Streck%** | Hästens procentuella andel av V85-poolens insatser |
 | **Composite Score (CS)** | Systemets samlade bedömning (0–100): streckning 55 %, distansrekord 20 %, odds 10 %, konsistens 10 %, form 5 % — kalibrerad mot historiska resultat |
-| **Spelvärde** | Beräknad chans (CS-andel av fältet) minus streckprocent – positivt värde indikerar potentiellt värdebet |
+| **Kalibrerad chans** | Systemets skattning av verklig vinstsannolikhet — 50 % streckning + 50 % oddsmarknad |
+| **Spelvärde** | Kalibrerad chans minus streckprocent – positivt värde indikerar potentiellt värdebet |
 | **Värdebet** | En häst vars verkliga chanser bedöms vara högre än vad marknaden prissätter |
 | **Skrällkandidat** | Lågstreckad häst (<15 %) med hög klass (topp-3 på intjänat/start) som är understreckad mot vinnaroddsen |
 | **Klass** | Intjänade kronor per start – ett mått på vilken nivå hästen tävlat på |
@@ -373,4 +385,4 @@ Sidan visar:
 
 ---
 
-*Manual version 2.2 – V85 Analys*
+*Manual version 2.3 – V85 Analys*
