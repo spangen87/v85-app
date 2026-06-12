@@ -29,7 +29,8 @@ npm run dev      # Starta dev-server
 npm run build    # Produktionsbygge
 npm run lint     # ESLint
 npx jest         # Kör tester (lib/__tests__/)
-npm run backtest # Kalibrera CS-vikter mot faktiska resultat (kräver Supabase-env)
+npm run backtest # Kalibrera CS-vikter mot faktiska resultat (train/test, log-loss; kräver Supabase-env)
+npm run recompute-formscore  # Räkna om lagrad CS för alla omgångar med aktuella vikter (kräver Supabase-env)
 ```
 
 ---
@@ -107,12 +108,14 @@ components/
     ProfileForm.tsx         # Byt visningsnamn
 
 scripts/
-  backtest-weights.ts       # Grid-söker CS-vikter mot lopp med facit (npm run backtest)
+  backtest-weights.ts       # Grid-söker CS-vikter mot lopp med facit, train/test + log-loss (npm run backtest)
+  recompute-formscore.ts    # Räknar om lagrad CS med aktuella vikter (npm run recompute-formscore)
 
 lib/
   analysis.ts               # Hjälpformler (distanssignal, spårfaktor, tidsparsning)
   formscore.ts              # Composite Score: computeComponents + CS_WEIGHTS
   skrall.ts                 # Skrällkandidat-signal (låg streck + odds/streck-diskrepans + klass)
+  probability.ts            # Kalibrerad vinstsannolikhet (50% streck + 50% odds, BLEND_ALPHA)
   atg.ts                    # Typer för ATG-data (AvailableGame m.m.)
   types.ts                  # Delade TS-typer (Group, GroupMember, HorseNote, m.m.)
   supabase/                 # Supabase-klienter (server/browser)
@@ -163,11 +166,20 @@ omgångshämtning och lagras i kolumnen `starters.formscore`. Vikterna kalibrera
 mot faktiska resultat med `npm run backtest` (scripts/backtest-weights.ts).
 Vinstprocent, tid, spårfaktor, kuskform och galopprisk har för närvarande vikt 0
 men beräknas och visas fortfarande i UI.
-Häst markeras som "Värde" om CS > 55 och värdeindex > 0.
+Häst markeras som "Värde" om CS > 55 och kalibrerad chans > streckning.
+CS rankar fältet; den kalibrerade sannolikheten (se nedan) är värdemåttet.
+
+### Kalibrerad vinstsannolikhet – `lib/probability.ts → computeWinProbabilities()`
+Blandning `p = α·streck_norm + (1−α)·odds_norm` med `BLEND_ALPHA = 0.5`,
+normaliserad så fältet summerar till 1. Backtest mot 221 lopp (2026-06-13) gav
+lägst log-loss vid α≈0.5 (1.58 mot 1.62 för rent streck/odds). Faller tillbaka
+på enbart streck (innan pool öppnat: enbart odds). Beräknas i RaceList och
+skickas som `probMap` till AnalysisPanel (kolumnen "Chans", Värde = chans−streck).
 
 ### Analysverktyget – `components/AnalysisPanel.tsx`
-Visar per häst: CS-andel av fältet, spelvärde (CS-andel − streckning%),
-distanssignal och spårfaktor (inkl. banspecifik justering från `track_configs`).
+Visar per häst: CS, kalibrerad chans, spelvärde (chans − streckning%),
+distanssignal och spårfaktor (inkl. banspecifik justering från `track_configs`)
+samt skrällmarkering. CS-rankad tabell.
 
 ### Skrällkandidat – `lib/skrall.ts → computeSkrallSignals()`
 Häst flaggas som skrällkandidat när alla tre villkor uppfylls (trösklar i
