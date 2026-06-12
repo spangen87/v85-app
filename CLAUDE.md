@@ -78,6 +78,7 @@ components/
   ResultsButton.tsx         # Knapp för att hämta loppresultat
   SaveSystemDialog.tsx      # Dialog för att spara spelsystem
   StartCountdown.tsx        # Nedräkning till start
+  SystemOutcomeBanner.tsx   # "Resultaten är rättade"-banner på startsidan (systemutfall)
   SystemDrawer.tsx          # Drawer-panel för systemkonfiguration
   SystemSidebar.tsx         # Sidebar för systembyggaren
   SystemsPageClient.tsx     # Client-wrapper för systemsidan
@@ -123,6 +124,7 @@ lib/
   supabase/                 # Supabase-klienter (server/browser)
   actions/
     activity.ts             # Aktivitetssignaler: getGroupActivity (React-cachad) + markGroupSeen
+    outcome.ts              # Senaste rättade omgångens systemutfall (resultatbannern)
     bets.ts                 # Server actions: spelförslag/bets
     games.ts                # Server actions: spel
     groups.ts               # Server actions: skapa/lämna sällskap

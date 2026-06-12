@@ -12,6 +12,8 @@ import { RaceTabProvider } from "@/components/RaceTabContext";
 import { getProfile, getMyGroups } from "@/lib/actions/groups";
 import { getGroupActivity } from "@/lib/actions/activity";
 import { GroupActivitySection } from "@/components/groups/GroupActivitySection";
+import { getLatestGradedOutcome } from "@/lib/actions/outcome";
+import { SystemOutcomeBanner } from "@/components/SystemOutcomeBanner";
 import { getDraftForGame } from "@/lib/actions/systems";
 import { getTrackConfig } from "@/lib/actions/tracks";
 import { redirect } from "next/navigation";
@@ -62,11 +64,12 @@ export default async function HomePage({
   if (!user) redirect("/login");
 
   const params = await searchParams;
-  const [games, profile, userGroups, activity] = await Promise.all([
+  const [games, profile, userGroups, activity, gradedOutcome] = await Promise.all([
     getAllGames(supabase),
     getProfile(),
     getMyGroups(),
     getGroupActivity(),
+    getLatestGradedOutcome(),
   ]);
 
   // Välj spel: URL-param → senaste sparade
@@ -176,6 +179,7 @@ export default async function HomePage({
       </header>
 
       <div className="px-4 lg:px-[5%] xl:px-[8%] py-6">
+        <SystemOutcomeBanner outcome={gradedOutcome} />
         <GroupActivitySection activity={activity} />
 
         <div className="mb-6">
