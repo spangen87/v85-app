@@ -258,22 +258,22 @@ Klicka på **Se systemet →** direkt efter sparning, eller gå till **System** 
 
 Sällskap låter dig och dina spelvänner diskutera hästar, dela anteckningar och följa varandras synpunkter inför spelet.
 
+**Profil-fliken** i mobilnavigeringen (eller **profilmenyn** uppe till höger på desktop) öppnar sällskapsöversikten. Där ser du dina sällskap (klicka på namnet för att öppna), skapar nya, går med via inbjudningskod, byter visningsnamn och loggar ut.
+
 ### 7.1 Skapa ett sällskap
 
-1. Gå till sällskapssidan via **Profil** i mobilnavigeringen, eller via **profilmenyn** uppe till höger på desktop.
-2. Välj **Skapa nytt sällskap**.
-3. Ange ett namn på sällskapet.
-4. Klicka på **Skapa**.
-5. Du blir automatiskt sällskapets **skapare** och ett unikt **inbjudningskod** genereras.
-6. Dela inbjudningskoden eller inbjudningslänken med de du vill bjuda in.
+1. Gå till sällskapsöversikten via **Profil**-fliken (mobil) eller **profilmenyn → Hantera sällskap** (desktop).
+2. Ange ett namn under **Skapa nytt sällskap**.
+3. Klicka på **Skapa**.
+4. Du blir automatiskt sällskapets **skapare** och en unik **inbjudningskod** genereras.
+5. Dela inbjudningskoden eller inbjudningslänken med de du vill bjuda in.
 
 ### 7.2 Gå med i ett sällskap
 
-1. Gå till sällskapssidan via **Profil** i mobilnavigeringen, eller via **profilmenyn** på desktop.
-2. Välj **Gå med i sällskap**.
-3. Ange den **inbjudningskod** du fått av sällskapets skapare (eller öppna inbjudningslänken direkt).
-4. Klicka på **Gå med**.
-5. Du är nu medlem och kan se och skriva i sällskapet.
+1. Gå till sällskapsöversikten via **Profil**-fliken (mobil) eller **profilmenyn → Hantera sällskap** (desktop).
+2. Ange den **inbjudningskod** du fått av sällskapets skapare under **Gå med via inbjudningskod** (eller öppna inbjudningslänken direkt).
+3. Klicka på **Gå med**.
+4. Du är nu medlem och kan se och skriva i sällskapet.
 
 ### 7.3 Flikar i sällskapet
 
@@ -385,4 +385,4 @@ Sidan visar:
 
 ---
 
-*Manual version 2.3 – V85 Analys*
+*Manual version 2.4 – V85 Analys*

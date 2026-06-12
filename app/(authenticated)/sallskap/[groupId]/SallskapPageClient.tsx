@@ -43,10 +43,10 @@ export function SallskapPageClient({
         style={{ background: "var(--tn-bg)", borderBottom: "1px solid var(--tn-border)" }}
       >
         <Link
-          href="/"
+          href="/sallskap"
           className="text-lg w-8 text-center shrink-0 transition"
           style={{ color: "var(--tn-text-faint)" }}
-          aria-label="Tillbaka"
+          aria-label="Tillbaka till sällskapsöversikten"
         >
           ←
         </Link>

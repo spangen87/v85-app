@@ -101,7 +101,8 @@ components/
     spel/SystemCard.tsx     # Systemkort med score/8 och vinnarmarkeringar
     spel/BetsSection.tsx    # Insatser per omgång + ROI per medlem
   groups/
-    GroupList.tsx           # Lista sällskap med kopierbar kod/länk
+    SallskapOverview.tsx    # /sallskap-sidans innehåll (sällskapslista, skapa/gå med, profil, logga ut)
+    GroupList.tsx           # Lista sällskap med länk in + kopierbar kod/länk
     CreateGroupForm.tsx     # Skapa nytt sällskap
     JoinGroupForm.tsx       # Gå med via kod
     UserMenu.tsx            # Profilmeny

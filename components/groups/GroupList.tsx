@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { leaveGroup } from "@/lib/actions/groups";
 import type { Group } from "@/lib/types";
 
@@ -70,7 +71,13 @@ export function GroupList({ groups, onLeft }: { groups: Group[]; onLeft: (groupI
           style={{ background: "var(--tn-bg-chip)" }}
         >
           <div className="min-w-0">
-            <p className="text-sm font-medium truncate" style={{ color: "var(--tn-text)" }}>{g.name}</p>
+            <Link
+              href={`/sallskap/${g.id}`}
+              className="text-sm font-medium truncate block hover:underline"
+              style={{ color: "var(--tn-text)" }}
+            >
+              {g.name} <span style={{ color: "var(--tn-accent)" }}>→</span>
+            </Link>
             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
               <div className="flex items-center gap-1">
                 <span className="text-xs" style={{ color: "var(--tn-text-faint)" }}>Kod:</span>
