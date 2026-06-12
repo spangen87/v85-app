@@ -112,6 +112,7 @@ scripts/
 lib/
   analysis.ts               # Hjälpformler (distanssignal, spårfaktor, tidsparsning)
   formscore.ts              # Composite Score: computeComponents + CS_WEIGHTS
+  skrall.ts                 # Skrällkandidat-signal (låg streck + odds/streck-diskrepans + klass)
   atg.ts                    # Typer för ATG-data (AvailableGame m.m.)
   types.ts                  # Delade TS-typer (Group, GroupMember, HorseNote, m.m.)
   supabase/                 # Supabase-klienter (server/browser)
@@ -167,6 +168,13 @@ Häst markeras som "Värde" om CS > 55 och värdeindex > 0.
 ### Analysverktyget – `components/AnalysisPanel.tsx`
 Visar per häst: CS-andel av fältet, spelvärde (CS-andel − streckning%),
 distanssignal och spårfaktor (inkl. banspecifik justering från `track_configs`).
+
+### Skrällkandidat – `lib/skrall.ts → computeSkrallSignals()`
+Häst flaggas som skrällkandidat när alla tre villkor uppfylls (trösklar i
+`SKRALL_THRESHOLDS`): streck < 15 %, odds-implicit sannolikhet minst 5
+procentenheter över strecket, samt topp-3 i fältet på intjänat per start.
+Beräknas client-side på hela startfältet (RaceList → HorseCard/AnalysisPanel).
+Trösklarna kommer från databasanalys 2026-06-12 (155 lopp med facit).
 
 ### Distansfaktor
 | Situation | Faktor |

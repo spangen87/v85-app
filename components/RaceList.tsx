@@ -5,6 +5,7 @@ import { HorseCard } from "./HorseCard";
 import { AnalysisPanel } from "./AnalysisPanel";
 import { HorseNotes } from "./notes/HorseNotes";
 import { TopFiveRanking } from "./TopFiveRanking";
+import { computeSkrallMap } from "@/lib/skrall";
 import type { Group, SystemSelection, SystemHorse, TrackConfig } from "@/lib/types";
 
 interface LifeRecord {
@@ -95,6 +96,7 @@ export function RaceList({
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>("composite");
   const [filterValue, setFilterValue] = useState(false);
+  const [filterSkrall, setFilterSkrall] = useState(false);
   const [hideOutsiders, setHideOutsiders] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -135,7 +137,7 @@ export function RaceList({
 
   if (!activeRace) return null;
 
-  const hasActiveFilter = filterValue || hideOutsiders || search.trim().length > 0;
+  const hasActiveFilter = filterValue || filterSkrall || hideOutsiders || search.trim().length > 0;
   const compositeMap = Object.fromEntries(activeRace.starters.map((s) => [s.start_number, s.formscore ?? 0]));
   const totalCS = activeRace.starters.reduce((sum, s) => sum + (s.formscore ?? 0), 0);
   const valueMap = Object.fromEntries(
@@ -146,10 +148,13 @@ export function RaceList({
       return [s.start_number, cs > 55 && streckPct > 0 && calcPct > streckPct];
     })
   );
+  // Skrällsignalen är relativ hela fältet — beräknas före filtrering
+  const skrallMap = computeSkrallMap(activeRace.starters);
 
   const q = search.trim().toLowerCase();
   const filtered = activeRace.starters
     .filter((s) => !filterValue || valueMap[s.start_number])
+    .filter((s) => !filterSkrall || skrallMap[s.start_number]?.isCandidate)
     .filter((s) => !hideOutsiders || s.odds == null || s.odds <= 50)
     .filter((s) => {
       if (!q) return true;
@@ -205,6 +210,20 @@ export function RaceList({
         </button>
 
         <button
+          onClick={() => setFilterSkrall((v) => !v)}
+          className="text-xs font-medium transition-colors"
+          style={{
+            ...chipBase,
+            background: filterSkrall ? "var(--tn-warn-bg)" : "var(--tn-bg-chip)",
+            color: filterSkrall ? "var(--tn-warn)" : "var(--tn-text-dim)",
+            border: filterSkrall ? "1px solid transparent" : "1px solid var(--tn-border)",
+          }}
+          title="Lågstreckade hästar med hög klass där oddsen säger mer än strecken"
+        >
+          Skräll
+        </button>
+
+        <button
           onClick={() => setHideOutsiders((v) => !v)}
           className="text-xs font-medium transition-colors"
           style={{
@@ -219,7 +238,7 @@ export function RaceList({
 
         {hasActiveFilter && (
           <button
-            onClick={() => { setFilterValue(false); setHideOutsiders(false); setSearch(""); }}
+            onClick={() => { setFilterValue(false); setFilterSkrall(false); setHideOutsiders(false); setSearch(""); }}
             className="text-xs transition-colors"
             style={{ color: "var(--tn-text-faint)", background: "none", border: "none", cursor: "pointer" }}
           >
@@ -268,6 +287,7 @@ export function RaceList({
           raceMeters={activeRace.distance}
           raceStartMethod={activeRace.start_method ?? "auto"}
           trackConfig={trackConfig ?? undefined}
+          skrallMap={skrallMap}
         />
       )}
 
@@ -286,6 +306,7 @@ export function RaceList({
               raceDistance={activeRace.distance}
               raceStartMethod={activeRace.start_method ?? "auto"}
               isValue={valueMap[s.start_number] ?? false}
+              skrall={skrallMap[s.start_number]}
               sortRank={sortKey !== "number" ? idx + 1 : undefined}
               trackConfig={trackConfig ?? undefined}
               isSelected={systemMode ? (raceSelections?.horses.some((h) => h.horse_id === s.horse_id) ?? false) : undefined}

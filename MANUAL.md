@@ -101,6 +101,7 @@ Ovanför härtlistan finns tre rader med kontroller:
 | Knapp | Beskrivning |
 |-------|-------------|
 | **Värde** | Visar bara hästar som systemet bedömer som undervärderade |
+| **Skräll** | Visar bara skrällkandidater — lågstreckade hästar med hög klass där vinnaroddsen säger mer än strecken (se 6.1) |
 | **Dölj >50x** | Döljer hästar med odds över 50 |
 
 **Sökning** – skriv namn på häst, kusk eller tränare för att filtrera.
@@ -205,6 +206,16 @@ Baspoängen multipliceras sedan med en **distansfaktor** (×0.6–×1.35) basera
 - **Negativ** → hästen är hårt streckad relativt systemets bedömning.
 
 > **Obs!** Streckningsdata saknas innan V85-poolen öppnat. Hämta om spelet senare för att se spelvärden.
+
+#### Skrällkandidater
+
+Hästar som uppfyller alla tre villkor markeras med **SKRÄLL** (på hästkortet och i analystabellen) och listas överst i analyspanelen:
+
+1. **Låg streckning** — under 15 % av V85-poolen.
+2. **Understreckad mot oddsen** — vinnaroddsens implicita sannolikhet ligger minst 5 procentenheter över streckningen. Vinnaroddsmarknaden är skarpare än V85-poolen.
+3. **Hög klass** — topp 3 i fältet på intjänade kronor per start.
+
+Signalen bygger på historisk analys av appens egna data: lågstreckade hästar vinner ungefär dubbelt så ofta som streckningen antyder, och kombinationen låg streck + hög klass + understreckning mot oddsen har historiskt gett klart förhöjd vinstfrekvens. Ungefär vart fjärde lopp vinns av en häst utanför streck-topp-3 — skrällkandidaterna är tänkta som krydda i systemen, inte som spikar.
 
 ### 6.2 Utökad analys – sammansatt poäng
 
