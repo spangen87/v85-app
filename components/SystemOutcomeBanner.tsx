@@ -1,10 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useSyncExternalStore, useCallback } from "react";
 import Link from "next/link";
 import type { GradedOutcome } from "@/lib/actions/outcome";
 
 const DISMISS_KEY_PREFIX = "outcome-dismissed-";
+
+// localStorage ändras bara via dismiss-knappen i samma komponent —
+// ingen extern prenumeration behövs
+const emptySubscribe = () => () => {};
 
 /**
  * "Resultaten är klara"-banner på startsidan: visar hur användarens och
@@ -12,26 +16,31 @@ const DISMISS_KEY_PREFIX = "outcome-dismissed-";
  * omgång (localStorage) och återkommer först vid nästa rättade omgång.
  */
 export function SystemOutcomeBanner({ outcome }: { outcome: GradedOutcome | null }) {
-  const [visible, setVisible] = useState(false);
+  const gameId = outcome?.game.id ?? "";
+  // Hydreringssäker localStorage-läsning: servern behandlar bannern som dold,
+  // klienten läser verkligt värde efter hydrering — utan setState i effekt
+  const storedDismissed = useSyncExternalStore(
+    emptySubscribe,
+    useCallback(() => {
+      try {
+        return localStorage.getItem(DISMISS_KEY_PREFIX + gameId) != null;
+      } catch {
+        return false;
+      }
+    }, [gameId]),
+    () => true
+  );
+  const [manuallyDismissed, setManuallyDismissed] = useState(false);
 
-  useEffect(() => {
-    if (!outcome) return;
-    try {
-      setVisible(localStorage.getItem(DISMISS_KEY_PREFIX + outcome.game.id) == null);
-    } catch {
-      setVisible(true);
-    }
-  }, [outcome]);
-
-  if (!outcome || !visible) return null;
+  if (!outcome || storedDismissed || manuallyDismissed) return null;
 
   function dismiss() {
     try {
-      localStorage.setItem(DISMISS_KEY_PREFIX + outcome!.game.id, "1");
+      localStorage.setItem(DISMISS_KEY_PREFIX + gameId, "1");
     } catch {
       // localStorage otillgänglig — bannern döljs ändå för sessionen
     }
-    setVisible(false);
+    setManuallyDismissed(true);
   }
 
   const { game, systems, bestScore } = outcome;
