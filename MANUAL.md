@@ -270,6 +270,10 @@ När andra medlemmar skrivit foruminlägg, antecknat på hästar eller sparat sy
 
 Badgen nollställs för ett sällskap när du öppnar det. Endast andras aktivitet räknas — dina egna inlägg skapar inga notiser.
 
+### Resultatbanner
+
+När en omgång rättats där du eller någon i dina sällskap hade sparade system visas en banner högst upp på startsidan: **"🏆 Resultaten är rättade"** med varje systems antal rätt (bästa resultatet guldmarkeras). Klicka på ett system för att gå till sällskapets Spel-flik (eller Systemsidan för privata system). Bannern kan döljas med ✕ och visas i upp till en vecka efter speldagen.
+
 ### 7.1 Skapa ett sällskap
 
 1. Gå till sällskapsöversikten via **Profil**-fliken (mobil) eller **profilmenyn → Hantera sällskap** (desktop).
@@ -395,4 +399,4 @@ Sidan visar:
 
 ---
 
-*Manual version 2.5 – V85 Analys*
+*Manual version 2.6 – V85 Analys*
