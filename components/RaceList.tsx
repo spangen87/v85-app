@@ -6,6 +6,7 @@ import { AnalysisPanel } from "./AnalysisPanel";
 import { HorseNotes } from "./notes/HorseNotes";
 import { TopFiveRanking } from "./TopFiveRanking";
 import { computeSkrallMap } from "@/lib/skrall";
+import { computeWinProbabilities, type WinProbability } from "@/lib/probability";
 import type { Group, SystemSelection, SystemHorse, TrackConfig } from "@/lib/types";
 
 interface LifeRecord {
@@ -139,16 +140,21 @@ export function RaceList({
 
   const hasActiveFilter = filterValue || filterSkrall || hideOutsiders || search.trim().length > 0;
   const compositeMap = Object.fromEntries(activeRace.starters.map((s) => [s.start_number, s.formscore ?? 0]));
-  const totalCS = activeRace.starters.reduce((sum, s) => sum + (s.formscore ?? 0), 0);
+  // Kalibrerad vinstsannolikhet och skrällsignal är relativa hela fältet —
+  // beräknas före filtrering
+  const probList = computeWinProbabilities(activeRace.starters);
+  const probMap: Record<number, WinProbability> = Object.fromEntries(
+    activeRace.starters.map((s, i) => [s.start_number, probList[i]])
+  );
+  // "Värde": kalibrerad chans överstiger streckningen för en reell kandidat
   const valueMap = Object.fromEntries(
     activeRace.starters.map((s) => {
       const cs = s.formscore ?? 0;
-      const calcPct = totalCS > 0 ? (cs / totalCS) * 100 : 0;
+      const pPct = (probMap[s.start_number]?.p ?? 0) * 100;
       const streckPct = s.bet_distribution ?? 0;
-      return [s.start_number, cs > 55 && streckPct > 0 && calcPct > streckPct];
+      return [s.start_number, cs > 55 && streckPct > 0 && pPct > streckPct];
     })
   );
-  // Skrällsignalen är relativ hela fältet — beräknas före filtrering
   const skrallMap = computeSkrallMap(activeRace.starters);
 
   const q = search.trim().toLowerCase();
@@ -288,6 +294,7 @@ export function RaceList({
           raceStartMethod={activeRace.start_method ?? "auto"}
           trackConfig={trackConfig ?? undefined}
           skrallMap={skrallMap}
+          probMap={probMap}
         />
       )}
 

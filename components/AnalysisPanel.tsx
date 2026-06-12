@@ -2,6 +2,7 @@
 
 import { computeDistanceSignal, computeTrackFactor, type LifeRecord, type DistanceSignal } from "@/lib/analysis";
 import type { SkrallSignal } from "@/lib/skrall";
+import type { WinProbability } from "@/lib/probability";
 import type { TrackConfig } from "@/lib/types";
 
 interface AnalysisStarter {
@@ -22,6 +23,8 @@ interface AnalysisPanelProps {
   trackConfig?: TrackConfig;
   /** Skrällsignaler beräknade på hela fältet, nycklade på startnummer */
   skrallMap?: Record<number, SkrallSignal>;
+  /** Kalibrerad vinstsannolikhet beräknad på hela fältet, nycklad på startnummer */
+  probMap?: Record<number, WinProbability>;
 }
 
 function DistBadge({ factor, label }: { factor: number; label: string }) {
@@ -74,8 +77,10 @@ interface RankedStarter {
   starter: AnalysisStarter;
   cs: number;
   distSignal: DistanceSignal;
-  calcPct: number;
+  /** Kalibrerad vinstchans i procent (blandning streck + odds) */
+  chansPct: number;
   streckPct: number;
+  hasChans: boolean;
   value: number;
   rank: number;
   isValue: boolean;
@@ -88,7 +93,8 @@ function rankStarters(
   starters: AnalysisStarter[],
   raceMeters: number,
   raceStartMethod: string,
-  trackConfig?: TrackConfig
+  trackConfig?: TrackConfig,
+  probMap?: Record<number, WinProbability>
 ): RankedStarter[] {
   const withDist = starters.map((s) => {
     const records: LifeRecord[] = Array.isArray(s.life_records) ? s.life_records : [];
@@ -96,9 +102,10 @@ function rankStarters(
     const cs = s.formscore ?? 0;
     const betDist = s.bet_distribution;
     const streckPct = betDist != null && isFinite(Number(betDist)) ? Number(betDist) : 0;
-    const totalCS = starters.reduce((sum, st) => sum + (st.formscore ?? 0), 0);
-    const calcPct = totalCS > 0 ? Math.round(((cs / totalCS) * 100) * 10) / 10 : 0;
-    const value = streckPct > 0 ? Math.round((calcPct - streckPct) * 10) / 10 : 0;
+    const prob = probMap?.[s.start_number];
+    const hasChans = prob != null && prob.source !== "uniform";
+    const chansPct = hasChans ? Math.round(prob!.p * 1000) / 10 : 0;
+    const value = hasChans && streckPct > 0 ? Math.round((chansPct - streckPct) * 10) / 10 : 0;
     const isValue = cs > 55 && value > 0;
     const postPos = (s as { post_position?: number | null }).post_position ?? 1;
     const horseHistory = (s as { horse_starts_history?: unknown[] }).horse_starts_history ?? [];
@@ -107,15 +114,15 @@ function rankStarters(
       ? computeTrackFactor(postPos, raceStartMethod, horseHistory as never[], trackConfig, raceMeters)
       : trackFactorBase;
     const trackFactorDelta = Math.round((trackFactorAdjusted - trackFactorBase) * 100) / 100;
-    return { starter: s, cs, distSignal, calcPct, streckPct, value, rank: 0, isValue, trackFactorBase, trackFactorAdjusted, trackFactorDelta };
+    return { starter: s, cs, distSignal, chansPct, streckPct, hasChans, value, rank: 0, isValue, trackFactorBase, trackFactorAdjusted, trackFactorDelta };
   });
   withDist.sort((a, b) => b.cs - a.cs);
   withDist.forEach((r, i) => (r.rank = i + 1));
   return withDist;
 }
 
-export function AnalysisPanel({ starters, raceMeters, raceStartMethod, trackConfig, skrallMap }: AnalysisPanelProps) {
-  const ranked = rankStarters(starters, raceMeters, raceStartMethod, trackConfig);
+export function AnalysisPanel({ starters, raceMeters, raceStartMethod, trackConfig, skrallMap, probMap }: AnalysisPanelProps) {
+  const ranked = rankStarters(starters, raceMeters, raceStartMethod, trackConfig, probMap);
   const hasStreckning = ranked.some((r) => r.streckPct > 0);
   const distLabel = raceMeters <= 1800 ? "kort" : raceMeters <= 2400 ? "medel" : "lång";
   const skrallCandidates = ranked.filter((r) => skrallMap?.[r.starter.start_number]?.isCandidate);
@@ -134,9 +141,10 @@ export function AnalysisPanel({ starters, raceMeters, raceStartMethod, trackConf
           Matematisk analys
         </h3>
         <p className="text-xs mt-1" style={{ color: "var(--tn-text-dim)", lineHeight: 1.5 }}>
-          CS (0–100) = streckning (55%) + distans (20%) + odds (10%) + konsistens (10%) + form (5%), kalibrerat mot historiska resultat.
+          CS (0–100) rankar fältet: streckning (55%) + distans (20%) + odds (10%) + konsistens (10%) + form (5%).
+          {" "}<strong>Chans</strong> = kalibrerad vinstsannolikhet (50% streckning + 50% oddsmarknad).
           {" "}Distans: {distLabel} ({raceMeters} m, {raceStartMethod}start).
-          {" "}Spelvärde = CS-andel − streckning.
+          {" "}Spelvärde = chans − streckning.
         </p>
         {!hasStreckning && (
           <p
@@ -166,7 +174,7 @@ export function AnalysisPanel({ starters, raceMeters, raceStartMethod, trackConf
         <table className="w-full text-sm">
           <thead>
             <tr style={{ borderBottom: "1px solid var(--tn-border)" }}>
-              {["#", "Häst", "CS", "Odds", "Ber.", "Strk.", "Distans", ...(trackConfig ? ["Spår"] : []), "Värde", "Res."].map((h) => (
+              {["#", "Häst", "CS", "Odds", "Chans", "Strk.", "Distans", ...(trackConfig ? ["Spår"] : []), "Värde", "Res."].map((h) => (
                 <th
                   key={h}
                   className="tn-eyebrow py-2.5 px-2 first:pl-4 last:pr-4 font-normal"
@@ -236,9 +244,9 @@ export function AnalysisPanel({ starters, raceMeters, raceStartMethod, trackConf
                   <td className="py-2.5 pr-2 text-right tn-mono text-xs" style={{ color: "var(--tn-text-dim)" }}>
                     {r.starter.odds != null ? `${r.starter.odds.toFixed(1)}x` : "–"}
                   </td>
-                  {/* Calculated % */}
+                  {/* Calibrated win chance */}
                   <td className="py-2.5 pr-2 text-right tn-mono text-xs font-semibold" style={{ color: "var(--tn-accent)" }}>
-                    {r.calcPct}%
+                    {r.hasChans ? `${r.chansPct}%` : "–"}
                   </td>
                   {/* Streck % */}
                   <td className="py-2.5 pr-2 text-right tn-mono text-xs" style={{ color: "var(--tn-text-dim)" }}>
@@ -272,7 +280,7 @@ export function AnalysisPanel({ starters, raceMeters, raceStartMethod, trackConf
                   )}
                   {/* Value */}
                   <td className="py-2.5 pr-2 text-right">
-                    <DeltaChip value={r.value} hasStreck={r.streckPct > 0} />
+                    <DeltaChip value={r.value} hasStreck={r.hasChans && r.streckPct > 0} />
                   </td>
                   {/* Result */}
                   <td className="py-2.5 pr-4 text-right">
