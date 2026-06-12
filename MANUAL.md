@@ -7,14 +7,14 @@
    - [Registrering och inloggning](#21-registrering-och-inloggning)
 3. [Hämta omgång](#3-hämta-omgång)
 4. [Navigera bland omgångar](#4-navigera-bland-omgångar)
-   - [Top 5 spelvärda hästar](#41-top-5-spelvärda-hästar)
+   - [Top 5 – högst Composite Score](#41-top-5--högst-composite-score)
    - [Sortering, filtrering och sökning](#42-sortering-filtrering-och-sökning)
 5. [Hästarnas informationskort](#5-hästarnas-informationskort)
    - [Expanderad detaljvy](#51-expanderad-detaljvy)
-   - [Formscore (FS) och Composite Score (CS)](#52-formscore-fs-och-composite-score-cs)
+   - [Composite Score (CS)](#52-composite-score-cs)
 6. [Analysverktyget](#6-analysverktyget)
-   - [Matematisk analys – beräknad vinstchans](#61-matematisk-analys--beräknad-vinstchans)
-   - [Utökad analys – sammansatt poäng](#62-utökad-analys--sammansatt-poäng)
+   - [Analystabellen](#61-analystabellen)
+   - [Spårfaktor och banjusteringar](#62-spårfaktor-och-banjusteringar)
    - [Systembyggaren](#63-systembyggaren)
 7. [Sällskap och samarbete](#7-sällskap-och-samarbete)
    - [Skapa ett sällskap](#71-skapa-ett-sällskap)
@@ -75,164 +75,77 @@ På huvudsidan ser du en lista med alla hämtade omgångar.
 - Omgångens **avdelningar** visas som klickbara flikar. Klicka på en avdelning för att visa den – bytet sker direkt utan sidladdning.
 - Hästar i aktiv avdelning visas som **en häst per rad** (ATG-stil).
 
-### 4.1 Top 5 spelvärda hästar
+### 4.1 Top 5 – högst Composite Score
 
-Högst upp visas en widget med de **5 hästar** som har högst sammansatt poäng (CS) i hela omgången. Varje häst visas med avdelning, startnummer, odds och eventuell slutplacering.
+Högst upp visas widgeten **Top 5 — Composite Score** med de 5 hästar som har högst CS i hela omgången. Varje häst visas med avdelning, startnummer, odds och eventuell slutplacering.
 
 - Klicka på **▼ / ▲**-knappen för att minimera/expandera widgeten.
 - Klicka på en häst i listan för att hoppa direkt till hästkortet i rätt avdelning.
 
 ### 4.2 Sortering, filtrering och sökning
 
-Ovanför härtlistan finns tre rader med kontroller:
+Ovanför hästlistan finns en verktygsrad med kontroller:
 
-**Sortering** – välj hur hästar inom varje avdelning sorteras:
+**Sortering** – rullgardinsmeny som styr hur hästarna i avdelningen sorteras:
 
-| Knapp | Beskrivning |
-|-------|-------------|
-| **Nr** | Startnummer (standard ATG-ordning) |
-| **CS – sammansatt poäng** | Kombinerar form, vinstprocent, odds, tid, konsistens, distans och spårfaktor (standardval) |
-| **FS – formscore** | Formpoäng baserat på vinstprocent, odds och tid |
-| **Odds** | Lägst odds först |
-| **Streck%** | Högst streckprocent i V85-poolen först |
+| Val | Beskrivning |
+|-----|-------------|
+| **CS — Composite Score** | Högst sammansatt poäng först (standardval) |
+| **Startnummer** | Standard ATG-ordning |
+| **Odds (lägst)** | Lägst vinnarodds först |
+| **Streck% (högst)** | Högst streckprocent i poolen först |
 
 **Filtrering:**
 
 | Knapp | Beskrivning |
 |-------|-------------|
-| **Värde** | Visar bara hästar som systemet bedömer som undervärderade |
+| **Värde** | Visar bara hästar som systemet bedömer som undervärderade (CS > 55 och CS-andel över streckningen) |
 | **Skräll** | Visar bara skrällkandidater — lågstreckade hästar med hög klass där vinnaroddsen säger mer än strecken (se 6.1) |
 | **Dölj >50x** | Döljer hästar med odds över 50 |
 
 **Sökning** – skriv namn på häst, kusk eller tränare för att filtrera.
 
-Klicka på **Rensa filter ✕** för att återställa alla filter.
+Klicka på **Rensa ✕** för att återställa alla filter.
 
 ---
 
 ## 5. Hästarnas informationskort
 
-När en avdelning är expanderad visas ett kort per häst. Varje kort innehåller:
+När en avdelning är expanderad visas ett kort per häst. Den kompakta raden innehåller:
 
 | Fält | Förklaring |
 |------|-----------|
-| **Sorteringsrank (#)** | Hästens placering i aktuell sortering (visas ej vid sortering på Nr) |
-| **Slutplacering** | Visas om loppresultat hämtats (guldgul = 1:a, silver = 2:a, brons = 3:a) |
+| **Sorteringsrank (#)** | Hästens placering i aktuell sortering (visas ej vid sortering på startnummer) |
 | **Nr** | Startnummer |
-| **Namn** | Hästens namn |
+| **Namn** | Hästens namn — en orange prick (●) intill namnet betyder skoändring inför loppet |
+| **SKRÄLL-märke** | Visas om hästen är skrällkandidat (se 6.1); håll muspekaren över för förklaring |
 | **Kusk** | Kuskens namn |
-| **Streck%** | Hästens andel av V85-poolen (om tillgängligt) |
+| **Streck%** | Hästens andel av spelpoolen (om tillgängligt) |
 | **Odds** | Aktuellt vinnarodds |
-| **Värdeindex (VI)** | Skillnad i % mellan beräknad chans och odds-implicit sannolikhet (grönt = undervärderad) |
-| **FS** | Formscore 0–100 (klickbar förklaring) |
-| **CS** | Composite Score 0–100 (klickbar förklaring) |
-| **Ålder / Kön / Färg** | Grundfakta om hästen |
-| **Far** | Härstamning (fadershäst) |
-| **Hemmaplan** | Hästens hemmaträningsbana |
-| **Skosättning** | Sko fram/bak med ändringsstatus (amber = ändrad inför loppet) |
-| **Sulky** | Typ av vagn som används |
-| **Livs** | Karriärstatistik: vinster-platser (2:a)-platser (3:a) / antal starter |
-| **År** | Vinstprocent innevarande år / antal starter |
-| **Rekord** | Bästa tid och plats-% totalt |
-| **Senaste starter** | Placeringar visas som färgade rutor: guldgul = 1:a, silver = 2:a, orange = 3:a, grå = övriga |
+| **CS-ring** | Composite Score 0–100 som färgad ring — klicka för förklaring av poängen |
+| **Spårjustering (↑/↓)** | Visas vid banor med banspecifik konfiguration (se 6.2) |
+| **Senaste starter** | Placeringar som färgade rutor: guldgul = 1:a, silver = 2:a, orange = 3:a, grå = övriga |
+
+Hästar markerade som **Värde** får en grönaktig kantlinje på kortet.
 
 ### 5.1 Expanderad detaljvy
 
-Klicka på **▼ Visa detaljer** på ett hästkort för att se mer information:
+Klicka på **▼ Detaljer** på ett hästkort för att se mer information:
 
-- **Bästa tider** – tabell med hästens rekord per distans (kort/medel/lång) och startmetod (auto/volt). Aktuellt lopps kombination markeras.
-- **Statistik** – detaljerad karriärstatistik: livs, innevarande år, föregående år, plats%, kr/start, total intjänat.
+- **Slutplacering** – visas högst upp om loppresultat hämtats.
+- **Grundfakta** – ålder/kön/färg, far (härstamning) och hemmaplan.
+- **Skosättning** – sko fram/bak med ändringsstatus ("Ny" = ändrad inför loppet) samt vagnstyp.
+- **Snabbstatistik** – LIVS (vinster-2:or-3:or och antal starter), ÅR (vinstprocent och starter i år) och REKORD (bästa tid och plats-%).
+- **Bästa tider** – tabell med hästens rekord per distans (kort/medel/lång) och startmetod (auto/volt). Dagens kombination markeras.
+- **Statistik** – starter livs/i år/föregående år, plats-%, kr/start och totalt intjänat.
 - **Odds** – vinnarodds och platsodds.
 - **Kusk & Tränare** – namn med årets vinstprocent.
 - **Senaste starter** – klicka **Hämta från ATG** för att ladda en detaljerad starttabell med datum, bana, placering och tid.
+- **Anteckningar** – se avsnitt 8.
 
-### 5.2 Formscore (FS) och Composite Score (CS)
+### 5.2 Composite Score (CS)
 
-**FS – Formscore (0–100):** viktat index baserat på senaste form (40%), vinstprocent år (20%), odds (20%) och bästa tid (20%). Innevarande år prioriteras; föregående år kompletterar vid få starter.
-
-**CS – Composite Score (0–100):** bredare helhetsbedömning som kombinerar streckning (55%), distansrekord (20%), odds (10%), konsistens (10%) och form (5%). Vikterna är kalibrerade mot historiska resultat. Se sektion 6.2 för detaljer.
-
-Färgkoder för båda poäng:
-- **Grön** (≥70) – stark häst
-- **Gul** (40–69) – medel
-- **Grå** (<40) – svag
-
----
-
-## 6. Analysverktyget
-
-Klicka på knappen **Visa analys** inuti en avdelning för att öppna analyspanelen. Panelen innehåller två delar.
-
-### 6.1 Matematisk analys – beräknad vinstchans
-
-En tabell med samtliga hästar och följande kolumner:
-
-| Kolumn | Förklaring |
-|--------|-----------|
-| **Nr** | Startnummer |
-| **Häst** | Hästens namn |
-| **Beräknad** | Systemets estimerade sannolikhet att hästen vinner |
-| **Streckning** | Hästens faktiska andel i V85-poolen (marknadens röst) |
-| **Odds** | Aktuellt vinnarodds |
-| **Distans** | Distanssignal baserat på hästens historik på aktuell distans och startmetod |
-| **Spelvärde** | Beräknad chans minus streckning (positiv = potentiellt värde) |
-| **Resultat** | Slutplacering om loppet är avslutat |
-
-#### Hur beräknas vinstchansen?
-
-Baspoäng viktas samman:
-
-```
-Baspoäng = 40% × karriärvinstprocent
-         + 40% × senaste form-procent (innevar. + föreg. år)
-         + 20% × odds-implicit sannolikhet
-```
-
-Baspoängen multipliceras sedan med en **distansfaktor** (×0.6–×1.35) baserat på hästens historik på aktuell distans och startmetod. Alla hästers råpoäng normaliseras slutligen till 100%.
-
-#### Distansfaktor-symboler
-
-| Symbol | Faktor | Innebär |
-|--------|--------|---------|
-| ↑↑ | ×1.35 | Vunnit på distansen med samma startmetod |
-| ↑ | ×1.10 | Placerat (topp 3) med samma startmetod |
-| → | ×0.90 | Sprungit utan placering, samma startmetod |
-| ↓ | ×0.85–1.05 | Annan startmetod |
-| ↓↓ | ×0.60 | Aldrig sprungit på denna distans |
-
-#### Tolka spelvärdet
-
-- **Positiv** (beräknad chans > streckning) → hästen kan vara ett värdebet (★ = ≥5 pp).
-- **Negativ** → hästen är hårt streckad relativt systemets bedömning.
-
-> **Obs!** Streckningsdata saknas innan V85-poolen öppnat. Hämta om spelet senare för att se spelvärden.
-
-#### Skrällkandidater
-
-Hästar som uppfyller alla tre villkor markeras med **SKRÄLL** (på hästkortet och i analystabellen) och listas överst i analyspanelen:
-
-1. **Låg streckning** — under 15 % av V85-poolen.
-2. **Understreckad mot oddsen** — vinnaroddsens implicita sannolikhet ligger minst 5 procentenheter över streckningen. Vinnaroddsmarknaden är skarpare än V85-poolen.
-3. **Hög klass** — topp 3 i fältet på intjänade kronor per start.
-
-Signalen bygger på historisk analys av appens egna data: lågstreckade hästar vinner ungefär dubbelt så ofta som streckningen antyder, och kombinationen låg streck + hög klass + understreckning mot oddsen har historiskt gett klart förhöjd vinstfrekvens. Ungefär vart fjärde lopp vinns av en häst utanför streck-topp-3 — skrällkandidaterna är tänkta som krydda i systemen, inte som spikar.
-
-### 6.2 Utökad analys – sammansatt poäng
-
-En andra tabell med mer detaljerade komponenter:
-
-| Kolumn | Förklaring |
-|--------|-----------|
-| **Rank** | Plats i loppet enligt sammansatt poäng (🥇 = #1) |
-| **Häst** | Namn, med "Värde"-märke om CS>55 och positivt värdeindex |
-| **Form** | Formscore 0–100 |
-| **Konsistens** | Andel topp-3 placeringar av totala starter (progressionsbar) |
-| **Tid** | Tidsjustering i sekunder relativt fältets median (negativt = snabbare) |
-| **Värde** | Värdeindex: beräknad chans minus odds-implicit sannolikhet |
-| **Poäng** | Sammansatt poäng (CS) |
-| **Resultat** | Slutplacering om loppet är avslutat |
-
-#### Formel för sammansatt poäng (CS)
+**CS – Composite Score (0–100)** är systemets samlade bedömning av hästen och visas som en ring på hästkortet:
 
 ```
 CS = 55% × streckning
@@ -242,36 +155,91 @@ CS = 55% × streckning
    +  5% × form
 ```
 
-Vikterna kalibrerades i juni 2026 mot 155 lopp med facit (backtest), vilket höjde
-träffsäkerheten "vinnare bland topp 3" från 67% till 82% och toppval-träffen från
-38% till 49%. Streckningen (spelarnas insatsfördelning) visade sig vara den
-starkaste enskilda prediktorn. Vinstprocent, tidindex, spårfaktor, kuskform och
-galopprisk har för närvarande vikt 0 i CS men beräknas och visas fortfarande;
-vikterna omkalibreras när mer data samlats in.
+Delkomponenterna normaliseras inom startfältet (bästa hästen i fältet får högst delpoäng). Vikterna är kalibrerade mot historiska loppresultat och omkalibreras löpande när mer data samlats in — vinstprocent, tidindex, spårfaktor, kuskform och galopprisk beräknas och visas i appen men har för närvarande vikt 0 i CS.
 
-**Spårfaktor** väger in hästens startspår och visas separat i analysvyn. Inre spår (1–3) ger fördel i voltstart, yttre spår (8+) ger nackdel. Vid autostart är effekten lägre. Om hästen har ≥5 historiska starter från samma eller angränsande spår används en dynamisk faktor baserad på hästens egna resultat.
+Färgkod för ringen: **grön** (≥70) = stark häst, **blå** (50–69) = medel, **grå** (<50) = svag.
 
 ---
 
-## 6.3 Systembyggaren
+## 6. Analysverktyget
 
-Klicka på **Bygg system** (kugghjuls-knappen) för att öppna systemläget. I systemläget kan du markera hästar per avdelning och bygga ett spelkupong-system.
+Klicka på knappen **Visa analys** inuti en avdelning för att öppna analyspanelen — **Matematisk analys**. Panelen rankar hela fältet efter CS och visar spelvärde, distanssignal och eventuella skrällkandidater.
 
-### Skapa och spara system
+### 6.1 Analystabellen
+
+| Kolumn | Förklaring |
+|--------|-----------|
+| **#** | Rank i loppet enligt CS |
+| **Häst** | Startnummer och namn, med **VÄRDE**- och/eller **SKRÄLL**-märke |
+| **CS** | Composite Score 0–100 (se 5.2) |
+| **Odds** | Aktuellt vinnarodds |
+| **Ber.** | Beräknad vinstchans: hästens CS som andel av fältets totala CS |
+| **Strk.** | Hästens faktiska andel av spelpoolen (marknadens röst) |
+| **Distans** | Distanssignal baserat på hästens historik på aktuell distans och startmetod |
+| **Spår** | Spårfaktor med banspecifik justering — visas bara för banor med konfiguration (se 6.2) |
+| **Värde** | Spelvärde: beräknad chans minus streckning, i procentenheter |
+| **Res.** | Slutplacering om loppet är avslutat |
+
+#### Distansfaktor-symboler
+
+| Symbol | Faktor | Innebär |
+|--------|--------|---------|
+| ↑↑ | ×1.35 | Vunnit på distansen med samma startmetod |
+| ↑ | ×1.10–1.20 | Placerat med samma startmetod, eller vunnit med annan |
+| → | ×0.95–1.05 | Placerat på distansen med annan startmetod |
+| ↓ | ×0.85–0.90 | Sprungit på distansen utan placering |
+| ↓↓ | ×0.60 | Aldrig sprungit på denna distans |
+
+#### Tolka spelvärdet
+
+- **Positiv** (beräknad chans > streckning) → hästen kan vara ett värdebet (fetstil = ≥5 pp).
+- **Negativ** → hästen är hårt streckad relativt systemets bedömning.
+- Rader med **VÄRDE**-märke (CS > 55 och positivt spelvärde) lyfts fram med grön markering.
+
+> **Obs!** Streckningsdata saknas innan poolen öppnat. Hämta om spelet senare för att se spelvärden.
+
+#### Skrällkandidater
+
+Hästar som uppfyller alla tre villkor markeras med **SKRÄLL** (på hästkortet och i analystabellen) och listas överst i analyspanelen:
+
+1. **Låg streckning** — under 15 % av spelpoolen.
+2. **Understreckad mot oddsen** — vinnaroddsens implicita sannolikhet ligger minst 5 procentenheter över streckningen. Vinnaroddsmarknaden är skarpare än V85-poolen.
+3. **Hög klass** — topp 3 i fältet på intjänade kronor per start.
+
+Signalen bygger på historisk analys av appens egna data: lågstreckade hästar vinner ungefär dubbelt så ofta som streckningen antyder, och kombinationen låg streck + hög klass + understreckning mot oddsen har historiskt gett klart förhöjd vinstfrekvens. Ungefär vart fjärde lopp vinns av en häst utanför streck-topp-3 — skrällkandidaterna är tänkta som krydda i systemen, inte som spikar.
+
+### 6.2 Spårfaktor och banjusteringar
+
+**Spårfaktor** väger in hästens startspår. Inre spår (1–3) ger fördel i voltstart, yttre spår (8+) ger nackdel; vid autostart är effekten lägre. Om hästen har ≥5 historiska starter från samma eller angränsande spår (±1) används dessutom en dynamisk faktor baserad på hästens egna resultat från det läget.
+
+För banor med **banspecifik konfiguration** (administreras på adminsidan) justeras spårfaktorn ytterligare:
+
+- **Open stretch** (+0.12) — spår som gynnas av en extra innerfil på upploppet.
+- **Kort lopp** (−0.08) — yttre spår (5+) missgynnas extra i sprinterlopp.
+
+Justeringen syns som ↑/↓-märke på hästkortet och i analystabellens **Spår**-kolumn, och påverkar CS-beräkningen vid omgångshämtning.
+
+---
+
+### 6.3 Systembyggaren
+
+Klicka på **Bygg system** på startsidan för att öppna systemläget. I systemläget markerar du hästar per avdelning och bygger ett spelkupong-system. Antal **rader** och **kostnad i kronor** (beroende på speltyp) visas löpande medan du bygger.
+
+#### Skapa och spara system
 
 1. Klicka på hästar du vill ha med – de markeras med en bock.
-2. Systemet auto-sparas som ett **utkast** var tredje sekund.
-3. Ge utkastet ett namn via namnfältet i sidopanelen (höger på desktop, panel längst ner på mobil).
-4. Välj om systemet ska tillhöra ett **sällskap** eller vara **privat**.
-5. Klicka **Spara system** för att publicera det färdigt.
+2. Dina val auto-sparas som ett **utkast** efter några sekunder; du kan namnge utkastet via namnfältet i sidopanelen (till höger på desktop, panel längst ner på mobil).
+3. Klicka **Spara system →** när du är klar.
+4. I dialogen ger du systemet ett namn och väljer om det ska tillhöra ett **sällskap** eller vara **privat**.
+5. Klicka **Spara system** för att publicera det.
 
-### Ladda ett utkast
+#### Ladda ett utkast
 
-Om du redan har sparade utkast för den aktuella omgången visas de i sidopanelen under **Sparade utkast**. Klicka på ett utkast för att ladda in dina tidigare val.
+Om du har sparade utkast för den aktuella omgången visas de i sidopanelen under **Mina utkast**. Klicka på ett utkast för att ladda in dina tidigare val.
 
-### Se dina system
+#### Se dina system
 
-Klicka på **Se systemet →** direkt efter sparning, eller gå till **Mina system** i menyn.
+Klicka på **Se systemet →** direkt efter sparning, eller gå till **System** i menyn. Där visas dina sparade system, och när loppresultat hämtats rättas de automatiskt.
 
 ---
 
@@ -281,7 +249,7 @@ Sällskap låter dig och dina spelvänner diskutera hästar, dela anteckningar o
 
 ### 7.1 Skapa ett sällskap
 
-1. Klicka på **Sällskap** i menyn.
+1. Gå till sällskapssidan via **Profil** i mobilnavigeringen, eller via **profilmenyn** uppe till höger på desktop.
 2. Välj **Skapa nytt sällskap**.
 3. Ange ett namn på sällskapet.
 4. Klicka på **Skapa**.
@@ -290,7 +258,7 @@ Sällskap låter dig och dina spelvänner diskutera hästar, dela anteckningar o
 
 ### 7.2 Gå med i ett sällskap
 
-1. Klicka på **Sällskap** i menyn.
+1. Gå till sällskapssidan via **Profil** i mobilnavigeringen, eller via **profilmenyn** på desktop.
 2. Välj **Gå med i sällskap**.
 3. Ange den **inbjudningskod** du fått av sällskapets skapare (eller öppna inbjudningslänken direkt).
 4. Klicka på **Gå med**.
@@ -367,17 +335,17 @@ Anteckningar är kopplade till en specifik häst och visas för alla i de sälls
 
 ## 9. Utvärdering
 
-Navigera till **Utvärdering** (i BottomNav på mobil, eller via menyn) för att se hur väl systemets toppval har presterat historiskt.
+Navigera till **Utvärdering** i menyn (fliken heter **Analys** i mobilnavigeringen) för att se hur väl systemets toppval har presterat historiskt.
 
 Sidan visar:
 
-- **Övergripande träffsäkerhet** – andel omgångar och lopp där systemets toppval (högst CS) verkligen vann.
-- **Topp-3-täckning** – hur ofta vinnaren återfanns bland de tre bäst rankade hästarna.
-- **Per omgång** – detaljerad genomgång för varje sparad omgång med resultat per lopp.
+- **Topprankad (CS) vinner** – andel lopp där hästen med högst CS verkligen vann.
+- **Vinnare i topp 3** – hur ofta vinnaren återfanns bland de tre högst rankade hästarna.
+- **Per omgång** – detaljerad genomgång per sparad omgång: vinnare, toppval och träff per avdelning.
 
-> Utvärderingen kräver att loppresultat har hämtats. Hämta om en omgång efter att loppen körts för att uppdatera resultaten.
+> Utvärderingen kräver att loppresultat har hämtats.
 
-> **Tips:** Knappen **Hämta alla resultat** på startsidan hämtar resultat för alla omgångar som saknar dem i ett svep – praktiskt efter en speldag.
+> **Tips:** Knappen **Hämta alla resultat** på utvärderingssidan hämtar resultat för alla omgångar som saknar dem i ett svep – praktiskt efter en speldag.
 
 ---
 
@@ -389,11 +357,11 @@ Sidan visar:
 | **ATG** | AB Trav och Galopp – den svenska speloperatören för travsport |
 | **Odds** | ATG:s vinnarodds på hästen |
 | **Streckning / Streck%** | Hästens procentuella andel av V85-poolens insatser |
-| **Formscore (FS)** | Systemets samlade formpoäng (0–100) baserat på senaste form, vinstprocent, odds och tid |
-| **Composite Score (CS)** | Bredare helhetsbedömning (0–100) som väger in form, vinstprocent, odds, tid, konsistens, distans och spårfaktor |
-| **Värdeindex (VI)** | Skillnad i procentenheter mellan systemets beräknade vinstchans och odds-implicit sannolikhet |
-| **Spelvärde** | Beräknad chans minus streckprocent – positivt värde indikerar potentiellt värdebet |
+| **Composite Score (CS)** | Systemets samlade bedömning (0–100): streckning 55 %, distansrekord 20 %, odds 10 %, konsistens 10 %, form 5 % — kalibrerad mot historiska resultat |
+| **Spelvärde** | Beräknad chans (CS-andel av fältet) minus streckprocent – positivt värde indikerar potentiellt värdebet |
 | **Värdebet** | En häst vars verkliga chanser bedöms vara högre än vad marknaden prissätter |
+| **Skrällkandidat** | Lågstreckad häst (<15 %) med hög klass (topp-3 på intjänat/start) som är understreckad mot vinnaroddsen |
+| **Klass** | Intjänade kronor per start – ett mått på vilken nivå hästen tävlat på |
 | **Distansfaktor** | Multiplikator (×0.6–×1.35) baserat på hästens historik på aktuell distans och startmetod |
 | **Voltstart** | Loppet startas bakom ett rörligt startfordon, alla hästar startar på samma gång |
 | **Autostart** | Hästar startar från startbanden med individuella startnummer |
@@ -405,4 +373,4 @@ Sidan visar:
 
 ---
 
-*Manual version 2.1 – V85 Analys*
+*Manual version 2.2 – V85 Analys*

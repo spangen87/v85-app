@@ -59,7 +59,7 @@ app/
 
 components/
   HorseCard.tsx             # Hästkort (inline FS/CS, expanderbar detaljvy)
-  AnalysisPanel.tsx         # Analysverktyget (2 delar: matematisk + utökad)
+  AnalysisPanel.tsx         # Analysverktyget (CS-rankad tabell + skrällkandidater)
   TopFiveRanking.tsx        # Top 5 widget baserat på CS
   FetchButton.tsx           # Datumväljare + hämtningsknappar
   CollapsibleControls.tsx   # Sortering/filter/sök (kollapsibel på mobil)
@@ -135,7 +135,7 @@ supabase/
 
 ## Datamodell (kortfattad)
 
-**games** – hämtade omgångar (id, game_type, date, track, raw_data)
+**games** – hämtade omgångar (id, game_type, date, track)
 **races** – avdelningar kopplade till game (race_number, distance, start_method)
 **starters** – hästar per avdelning (odds, formscore, finish_position, m.m.)
 **horses** – hästar (id = ATG horse_id, name)
@@ -193,6 +193,11 @@ Trösklarna kommer från databasanalys 2026-06-12 (155 lopp med facit).
 
 - **Server Actions** används för alla databasoperationer (i `lib/actions/`).
 - **Route Handlers** (API) används för externa anrop till ATG (`app/api/`).
+- **MANUAL.md uppdateras ALLTID** när funktionalitet som syns för användaren
+  ändras (nya funktioner, ändrade formler/vikter, flyttade knappar, borttagna
+  vyer). Manualsidan (`/manual`) renderar filen direkt, så inaktuell text syns
+  omedelbart för användarna. Stäm av berörda avsnitt mot komponenterna innan
+  arbetet avslutas.
 - Supabase-klienten skiljer på `createClient` (browser) och `createServerClient` (server/actions).
 - All text i UI är på **svenska**.
 - Teman: mörkt/ljust via `ThemeProvider` + `ThemeToggle` (localStorage).
