@@ -1,6 +1,7 @@
 "use client";
 
 import { computeDistanceSignal, computeTrackFactor, type LifeRecord, type DistanceSignal } from "@/lib/analysis";
+import type { SkrallSignal } from "@/lib/skrall";
 import type { TrackConfig } from "@/lib/types";
 
 interface AnalysisStarter {
@@ -19,6 +20,8 @@ interface AnalysisPanelProps {
   raceMeters: number;
   raceStartMethod: string;
   trackConfig?: TrackConfig;
+  /** Skrällsignaler beräknade på hela fältet, nycklade på startnummer */
+  skrallMap?: Record<number, SkrallSignal>;
 }
 
 function DistBadge({ factor, label }: { factor: number; label: string }) {
@@ -111,10 +114,11 @@ function rankStarters(
   return withDist;
 }
 
-export function AnalysisPanel({ starters, raceMeters, raceStartMethod, trackConfig }: AnalysisPanelProps) {
+export function AnalysisPanel({ starters, raceMeters, raceStartMethod, trackConfig, skrallMap }: AnalysisPanelProps) {
   const ranked = rankStarters(starters, raceMeters, raceStartMethod, trackConfig);
   const hasStreckning = ranked.some((r) => r.streckPct > 0);
   const distLabel = raceMeters <= 1800 ? "kort" : raceMeters <= 2400 ? "medel" : "lång";
+  const skrallCandidates = ranked.filter((r) => skrallMap?.[r.starter.start_number]?.isCandidate);
 
   return (
     <div
@@ -140,6 +144,19 @@ export function AnalysisPanel({ starters, raceMeters, raceStartMethod, trackConf
             style={{ color: "var(--tn-warn)", background: "var(--tn-warn-bg)" }}
           >
             Streckningsdata saknas — hämta om spelet när poolen är öppen.
+          </p>
+        )}
+        {skrallCandidates.length > 0 && (
+          <p
+            className="text-xs mt-2 rounded-lg px-3 py-2"
+            style={{ color: "var(--tn-warn)", background: "var(--tn-warn-bg)", lineHeight: 1.5 }}
+          >
+            <span className="font-bold">Skrällkandidat{skrallCandidates.length > 1 ? "er" : ""}:</span>{" "}
+            {skrallCandidates.map((r) => {
+              const sig = skrallMap![r.starter.start_number];
+              return `${r.starter.start_number}. ${r.starter.horses?.name ?? "–"} (odds säger ${sig.oddsProbPct?.toFixed(1)} % mot ${r.streckPct} % streck, klass ${sig.classRank})`;
+            }).join(" · ")}
+            {" "}— lågstreckad häst med hög klass där vinnaroddsen säger mer än strecken.
           </p>
         )}
       </div>
@@ -192,6 +209,14 @@ export function AnalysisPanel({ starters, raceMeters, raceStartMethod, trackConf
                         style={{ background: "var(--tn-value-high-bg)", color: "var(--tn-value-high)", letterSpacing: "0.08em" }}
                       >
                         VÄRDE
+                      </span>
+                    )}
+                    {skrallMap?.[r.starter.start_number]?.isCandidate && (
+                      <span
+                        className="ml-2 tn-mono text-[9px] font-bold px-1.5 py-0.5 rounded"
+                        style={{ background: "var(--tn-warn-bg)", color: "var(--tn-warn)", letterSpacing: "0.08em" }}
+                      >
+                        SKRÄLL
                       </span>
                     )}
                   </td>

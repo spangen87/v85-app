@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
 import { computeTrackFactor } from "@/lib/analysis";
+import type { SkrallSignal } from "@/lib/skrall";
 import type { TrackConfig } from "@/lib/types";
 
 interface LastResult {
@@ -288,6 +289,7 @@ export function HorseCard({
   raceDistance,
   raceStartMethod,
   isValue,
+  skrall,
   sortRank,
   isSelected,
   onSelect,
@@ -299,6 +301,7 @@ export function HorseCard({
   raceDistance?: number;
   raceStartMethod?: string;
   isValue?: boolean;
+  skrall?: SkrallSignal;
   sortRank?: number;
   isSelected?: boolean;
   onSelect?: () => void;
@@ -439,6 +442,15 @@ export function HorseCard({
                 </span>
               )}
             </span>
+            {skrall?.isCandidate && (
+              <span
+                className="tn-mono text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0"
+                style={{ background: "var(--tn-warn-bg)", color: "var(--tn-warn)", letterSpacing: "0.08em" }}
+                title={`Skrällkandidat: odds säger ${skrall.oddsProbPct?.toFixed(1)} % chans mot ${starter.bet_distribution?.toFixed(1)} % streck, klass ${skrall.classRank} av fältet`}
+              >
+                SKRÄLL
+              </span>
+            )}
           </div>
           <span className="text-xs truncate block" style={{ color: "var(--tn-text-dim)" }}>
             {starter.driver}
