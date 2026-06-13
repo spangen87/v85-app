@@ -8,6 +8,7 @@ import { ProfileForm } from "./ProfileForm";
 import { GroupList } from "./GroupList";
 import { CreateGroupForm } from "./CreateGroupForm";
 import { JoinGroupForm } from "./JoinGroupForm";
+import { NotificationToggle } from "@/components/NotificationToggle";
 import type { Group, Profile } from "@/lib/types";
 
 interface SallskapOverviewProps {
@@ -93,6 +94,10 @@ export function SallskapOverview({ profile, initialGroups, userEmail, unseenByGr
           Syns för övriga medlemmar i dina sällskap.
         </p>
         <ProfileForm initialName={profile?.display_name ?? ""} />
+      </section>
+
+      <section>
+        <NotificationToggle />
       </section>
 
       <section className="pt-1 space-y-2">

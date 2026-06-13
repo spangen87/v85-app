@@ -276,6 +276,10 @@ Badgen nollställs för ett sällskap när du öppnar det. Endast andras aktivit
 
 När en omgång rättats där du eller någon i dina sällskap hade sparade system visas en banner högst upp på startsidan: **"🏆 Resultaten är rättade"** med varje systems antal rätt (bästa resultatet guldmarkeras). Klicka på ett system för att gå till sällskapets Spel-flik (eller Systemsidan för privata system). Bannern kan döljas med ✕ och visas i upp till en vecka efter speldagen.
 
+### Notiser
+
+På sällskapsöversikten (via **Profil**) kan du slå på **notiser**. Då får du en pushnotis till mobilen eller datorn när en omgång rättats och systemen fått sina poäng — så du inte missar resultatkvällen. Notiser kräver att du tillåter dem i webbläsaren. På iPhone måste appen först vara **installerad** på hemskärmen (PWA). Du kan stänga av notiserna när som helst samma väg.
+
 ### 7.1 Skapa ett sällskap
 
 1. Gå till sällskapsöversikten via **Profil**-fliken (mobil) eller **profilmenyn → Hantera sällskap** (desktop).
@@ -402,4 +406,4 @@ Sidan visar:
 
 ---
 
-*Manual version 2.9 – V85 Analys*
+*Manual version 3.0 – V85 Analys*
