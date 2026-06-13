@@ -31,6 +31,7 @@ npm run lint     # ESLint
 npx jest         # Kör tester (lib/__tests__/)
 npm run backtest # Kalibrera CS-vikter mot faktiska resultat (train/test, log-loss; kräver Supabase-env)
 npm run recompute-formscore  # Räkna om lagrad CS för alla omgångar med aktuella vikter (kräver Supabase-env)
+                             # (kan även köras från /admin → "Räkna om alla CS-poäng")
 ```
 
 ---
