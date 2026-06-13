@@ -9,6 +9,7 @@ import { NotesTab } from "@/components/sallskap/notes/NotesTab";
 import { AdminTab } from "@/components/sallskap/admin/AdminTab";
 import type { Group, GroupMember, GroupPost, GameSystem } from "@/lib/types";
 import type { RaceWithNotes } from "@/lib/actions/notes";
+import type { GroupLeague } from "@/lib/actions/systems";
 import { SpelTab } from "@/components/sallskap/spel/SpelTab";
 
 type Game = { id: string; date: string; track: string | null; game_type?: string };
@@ -20,6 +21,7 @@ interface SallskapPageClientProps {
   initialPosts: GroupPost[];
   initialNotes: RaceWithNotes[];
   initialSystems: GameSystem[];
+  league: GroupLeague;
   defaultGameId: string | null;
   currentUserId: string;
 }
@@ -31,6 +33,7 @@ export function SallskapPageClient({
   initialPosts,
   initialNotes,
   initialSystems,
+  league,
   defaultGameId,
   currentUserId,
 }: SallskapPageClientProps) {
@@ -80,6 +83,7 @@ export function SallskapPageClient({
             games={games}
             initialGameId={defaultGameId}
             initialSystems={initialSystems}
+            league={league}
             currentUserId={currentUserId}
           />
         </div>

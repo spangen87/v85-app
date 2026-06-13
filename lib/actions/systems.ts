@@ -237,3 +237,97 @@ export async function getWinnersForGame(
   }
   return result
 }
+
+/** En medlems rad i sällskapsligan */
+export interface LeagueRow {
+  user_id: string
+  display_name: string
+  /** Antal rättade omgångar medlemmen hade system i */
+  rounds: number
+  /** Summa av bästa systemets rätt per omgång */
+  total_score: number
+  /** Snitträtt per omgång (en decimal) */
+  avg_score: number
+  /** Bästa enskilda omgång */
+  best_score: number
+  /** Bäst i sällskapet i den senast rättade omgången */
+  is_last_round_winner: boolean
+}
+
+export interface GroupLeague {
+  rows: LeagueRow[]
+  /** Speldatum för den senast rättade omgången som ingår */
+  last_round_date: string | null
+}
+
+/**
+ * Sällskapsligan: medlemmarnas systemträffar över alla rättade omgångar.
+ * Har en medlem flera system i samma omgång räknas det bästa — ligan mäter
+ * tävlingen, inte volymen. RLS begränsar till sällskapets medlemmar.
+ */
+export async function getGroupLeague(groupId: string): Promise<GroupLeague> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('game_systems')
+    .select('user_id, game_id, score, games(date)')
+    .eq('group_id', groupId)
+    .eq('is_graded', true)
+    .eq('is_draft', false)
+    .not('score', 'is', null)
+
+  if (error) throw error
+
+  type Row = { user_id: string; game_id: string; score: number; games: { date: string } | null }
+  const rows = (data ?? []) as unknown as Row[]
+  if (rows.length === 0) return { rows: [], last_round_date: null }
+
+  // Bästa systemet per medlem och omgång
+  const bestPerUserGame = new Map<string, { user_id: string; game_id: string; score: number; date: string }>()
+  for (const r of rows) {
+    const key = `${r.user_id}|${r.game_id}`
+    const existing = bestPerUserGame.get(key)
+    if (!existing || r.score > existing.score) {
+      bestPerUserGame.set(key, {
+        user_id: r.user_id,
+        game_id: r.game_id,
+        score: r.score,
+        date: r.games?.date ?? '',
+      })
+    }
+  }
+  const entries = [...bestPerUserGame.values()]
+
+  // Senast rättade omgången + dess vinnar-score
+  const lastRoundDate = entries.reduce((max, e) => (e.date > max ? e.date : max), '')
+  const lastRoundEntries = entries.filter((e) => e.date === lastRoundDate)
+  const lastRoundBest = Math.max(...lastRoundEntries.map((e) => e.score))
+  const lastRoundWinners = new Set(
+    lastRoundEntries.filter((e) => e.score === lastRoundBest).map((e) => e.user_id)
+  )
+
+  // Aggregera per medlem
+  const byUser = new Map<string, { rounds: number; total: number; best: number }>()
+  for (const e of entries) {
+    const agg = byUser.get(e.user_id) ?? { rounds: 0, total: 0, best: 0 }
+    agg.rounds += 1
+    agg.total += e.score
+    agg.best = Math.max(agg.best, e.score)
+    byUser.set(e.user_id, agg)
+  }
+
+  const names = await fetchDisplayNames(supabase, [...byUser.keys()])
+
+  const leagueRows: LeagueRow[] = [...byUser.entries()]
+    .map(([user_id, agg]) => ({
+      user_id,
+      display_name: names.get(user_id) ?? 'Okänd',
+      rounds: agg.rounds,
+      total_score: agg.total,
+      avg_score: Math.round((agg.total / agg.rounds) * 10) / 10,
+      best_score: agg.best,
+      is_last_round_winner: lastRoundWinners.has(user_id),
+    }))
+    .sort((a, b) => b.total_score - a.total_score || b.avg_score - a.avg_score)
+
+  return { rows: leagueRows, last_round_date: lastRoundDate || null }
+}
