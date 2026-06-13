@@ -1,17 +1,23 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 import { SystemSelection } from '@/lib/types'
 
+/**
+ * Rättar omgångens ograttade system och returnerar de sällskaps-id:n som fick
+ * minst ett nyrättat (icke-utkast) system. Tom array om inget nytt rättades —
+ * gör att resultatnotisen kan skickas exakt en gång även vid upprepade
+ * resultathämtningar.
+ */
 export async function gradeSystemsForGame(
   supabase: SupabaseClient,
   gameId: string
-): Promise<void> {
+): Promise<string[]> {
   // Hämta antalet avdelningar i spelet
   const { data: races, error: racesError } = await supabase
     .from('races')
     .select('race_number')
     .eq('game_id', gameId)
 
-  if (racesError || !races?.length) return
+  if (racesError || !races?.length) return []
   const totalRaces = races.length
 
   // Hämta vinnare (finish_position = 1) per avdelning för detta spel
@@ -21,7 +27,7 @@ export async function gradeSystemsForGame(
     .eq('races.game_id', gameId)
     .eq('finish_position', 1)
 
-  if (winnersError || !winners?.length) return
+  if (winnersError || !winners?.length) return []
 
   // Bygg map: race_number → winning horse_id
   const winnerMap = new Map<number, string>()
@@ -31,16 +37,16 @@ export async function gradeSystemsForGame(
   }
 
   // Rätta bara om alla avdelningar har en vinnare — annars otillräckliga data
-  if (winnerMap.size < totalRaces) return
+  if (winnerMap.size < totalRaces) return []
 
   // Hämta alla ograttade system för detta game_id
   const { data: systems, error: systemsError } = await supabase
     .from('game_systems')
-    .select('id, selections')
+    .select('id, selections, group_id, is_draft')
     .eq('game_id', gameId)
     .eq('is_graded', false)
 
-  if (systemsError || !systems?.length) return
+  if (systemsError || !systems?.length) return []
 
   // Rätta varje system
   await Promise.all(systems.map(async (system) => {
@@ -57,4 +63,11 @@ export async function gradeSystemsForGame(
       .update({ score, is_graded: true })
       .eq('id', system.id)
   }))
+
+  // Sällskap som fick nyrättade (icke-utkast) system → mål för resultatnotisen
+  const groupIds = new Set<string>()
+  for (const s of systems) {
+    if (!s.is_draft && s.group_id) groupIds.add(s.group_id as string)
+  }
+  return [...groupIds]
 }

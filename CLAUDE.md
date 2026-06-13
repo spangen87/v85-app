@@ -86,6 +86,7 @@ components/
   ThemeToggle.tsx           # Mörkt/ljust tema-växlare
   TopNav.tsx                # Övre navigering (desktop)
   InstallPrompt.tsx         # PWA-installationsprompt
+  NotificationToggle.tsx    # Slå på/av web push-notiser (på sällskapsöversikten)
   UsefulLinks.tsx           # Hjälplänkar
   admin/                    # Adminkomponenter
   notes/
@@ -120,12 +121,15 @@ lib/
   formscore.ts              # Composite Score: computeComponents + CS_WEIGHTS
   skrall.ts                 # Skrällkandidat-signal (låg streck + odds/streck-diskrepans + klass)
   probability.ts            # Kalibrerad vinstsannolikhet (50% streck + 50% odds, BLEND_ALPHA)
+  push.ts                   # Web push-utskick (sendPushToUsers, no-op utan VAPID-env)
+  systems.ts                # gradeSystemsForGame (rättar system, returnerar notifierbara sällskap)
   atg.ts                    # Typer för ATG-data (AvailableGame m.m.)
   types.ts                  # Delade TS-typer (Group, GroupMember, HorseNote, m.m.)
   supabase/                 # Supabase-klienter (server/browser)
   actions/
     activity.ts             # Aktivitetssignaler: getGroupActivity (React-cachad) + markGroupSeen
     outcome.ts              # Senaste rättade omgångens systemutfall (resultatbannern)
+    push.ts                 # Server actions: spara/ta bort web push-prenumeration
     bets.ts                 # Server actions: insatser/ROI + addBetFromSystem (logga sparat system som spel)
     games.ts                # Server actions: spel
     groups.ts               # Server actions: skapa/lämna sällskap
@@ -158,6 +162,7 @@ supabase/
 **drafts** – utkast till spelsystem
 **track_configs** – banspecifik konfiguration (open_stretch, short_race_threshold)
 **group_last_seen** – när användare senast besökte ett sällskap (aktivitetsbadges)
+**push_subscriptions** – web push-prenumerationer per enhet (endpoint, p256dh, auth)
 
 ---
 
@@ -222,6 +227,10 @@ Trösklarna kommer från databasanalys 2026-06-12 (155 lopp med facit).
 - Teman: mörkt/ljust via `ThemeProvider` + `ThemeToggle` (localStorage).
 - Mobil-navigation via `BottomNav` (fast, döljs på md+).
 - Kontroller (sortering/filter) är kollapsibla på mobil via `CollapsibleControls`.
+- **Web push** kräver tre miljövariabler (genereras med `npx web-push generate-vapid-keys`):
+  `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (mailto:/URL).
+  Saknas de är push helt avstängt — `NotificationToggle` döljs och `sendPushToUsers`
+  blir en no-op. Resultatnotisen skickas från `app/api/games/[gameId]/results/route.ts`.
 
 ---
 

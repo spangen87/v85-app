@@ -2,6 +2,41 @@ import { NextRequest, NextResponse } from "next/server";
 import { fetchGameResults } from "@/lib/atg";
 import { createServiceClient } from "@/lib/supabase/server";
 import { gradeSystemsForGame } from "@/lib/systems";
+import { sendPushToUsers } from "@/lib/push";
+
+/**
+ * Skickar resultatnotis till medlemmar i sällskap som fick nyrättade system.
+ * Körs bara när minst ett system faktiskt nyrättades, så upprepade
+ * resultathämtningar inte ger dubbla notiser. Icke-fatal.
+ */
+async function notifyGradedGroups(
+  db: ReturnType<typeof createServiceClient>,
+  gameId: string,
+  groupIds: string[]
+) {
+  if (groupIds.length === 0) return;
+
+  const { data: game } = await db
+    .from("games")
+    .select("game_type, date, track")
+    .eq("id", gameId)
+    .single();
+
+  const { data: members } = await db
+    .from("group_members")
+    .select("user_id")
+    .in("group_id", groupIds);
+  const userIds = [...new Set((members ?? []).map((m) => m.user_id as string))];
+  if (userIds.length === 0) return;
+
+  const label = game ? `${game.game_type} ${game.date}` : "omgången";
+  await sendPushToUsers(userIds, {
+    title: "Resultaten är rättade 🏆",
+    body: `${label} är avgjord — se hur ditt sällskap gick.`,
+    url: "/",
+    tag: `results-${gameId}`,
+  });
+}
 
 export async function POST(
   _request: NextRequest,
@@ -79,9 +114,10 @@ export async function POST(
 
     // Rätta sparade system (isolerat — fel här ska inte påverka svaret)
     try {
-      await gradeSystemsForGame(supabase, gameId)
+      const newlyGradedGroups = await gradeSystemsForGame(supabase, gameId)
+      await notifyGradedGroups(supabase, gameId, newlyGradedGroups)
     } catch (err) {
-      console.warn('[results] gradeSystemsForGame failed (non-fatal):', err)
+      console.warn('[results] gradeSystemsForGame/notify failed (non-fatal):', err)
     }
 
     return NextResponse.json({
