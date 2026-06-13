@@ -23,7 +23,7 @@ export default async function AuthenticatedLayout({
   const activity = user ? await getGroupActivity() : null;
 
   return (
-    <div className="pb-16 md:pb-0">
+    <div className="pb-24 md:pb-0">
       <TopNav />
       {children}
       <BottomNav isAdmin={isAdmin} sallskapBadge={activity?.unseenTotal ?? 0} />

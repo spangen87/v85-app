@@ -204,8 +204,14 @@ export function MainPageClient({
 
       {systemMode && (
         <div
-          className="fixed bottom-16 left-0 right-0 z-50 md:hidden shadow-lg"
-          style={{ background: "var(--tn-bg-raised)", borderTop: "1px solid var(--tn-border)" }}
+          className="fixed left-0 right-0 z-50 md:hidden shadow-lg"
+          style={{
+            // Sitter precis ovanför BottomNav — höjden följer hemindikatorns
+            // säkra yta så kupongraden inte döljs bakom navigeringen
+            bottom: "calc(66px + max(22px, env(safe-area-inset-bottom)))",
+            background: "var(--tn-bg-raised)",
+            borderTop: "1px solid var(--tn-border)",
+          }}
         >
           <button
             aria-label="Öppna kupong"

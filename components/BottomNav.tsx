@@ -68,7 +68,9 @@ export function BottomNav({
         className="grid"
         style={{
           gridTemplateColumns: `repeat(${isAdmin ? 5 : 4}, 1fr)`,
-          padding: "8px 8px 22px",
+          // Botten följer hemindikatorns säkra yta (minst 22px) så ikonerna
+          // inte hamnar under iPhones home-indikator
+          padding: "8px 8px max(22px, env(safe-area-inset-bottom))",
         }}
       >
         {tabs.map((tab) => {
