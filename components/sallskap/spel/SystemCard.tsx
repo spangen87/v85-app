@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { GameSystem } from '@/lib/types'
 import { deleteSystem } from '@/lib/actions/systems'
+import { addBetFromSystem } from '@/lib/actions/bets'
 import { isWinningHorse } from '@/lib/systemsHelpers'
 import { formatRowCost } from '@/lib/atg'
 
@@ -14,14 +15,37 @@ interface SystemCardProps {
   winnersByRace?: Record<number, string>
   gameType?: string
   gameId?: string | null
+  /** True om inloggad användare redan registrerat detta system som insats */
+  alreadyLogged?: boolean
+  /** Anropas när en insats registrerats från systemet (för att uppdatera insatslistan) */
+  onBetLogged?: (systemId: string) => void
 }
 
-export function SystemCard({ system, currentUserId, onDeleted, winnersByRace, gameType = '', gameId }: SystemCardProps) {
+export function SystemCard({ system, currentUserId, onDeleted, winnersByRace, gameType = '', gameId, alreadyLogged = false, onBetLogged }: SystemCardProps) {
   const isOwner = system.user_id === currentUserId
   const [isPending, startTransition] = useTransition()
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [logged, setLogged] = useState(alreadyLogged)
+  const [logging, setLogging] = useState(false)
+  const [logError, setLogError] = useState<string | null>(null)
+
+  // Bara sparade sällskapssystem kan registreras som spel
+  const canLogBet = !system.is_draft && system.group_id != null
+
+  async function handleLogBet() {
+    setLogging(true)
+    setLogError(null)
+    const result = await addBetFromSystem(system.id)
+    setLogging(false)
+    if (result.error) {
+      setLogError(result.error)
+      return
+    }
+    setLogged(true)
+    if (!result.alreadyLogged) onBetLogged?.(system.id)
+  }
 
   function handleCopy() {
     const sortedSelections = [...system.selections].sort((a, b) => a.race_number - b.race_number)
@@ -164,6 +188,7 @@ export function SystemCard({ system, currentUserId, onDeleted, winnersByRace, ga
       </table>
 
       {deleteError && <p className="text-xs mb-2" style={{ color: "var(--tn-value-low)" }}>{deleteError}</p>}
+      {logError && <p className="text-xs mb-2" style={{ color: "var(--tn-value-low)" }}>{logError}</p>}
 
       <div className="flex gap-2 flex-wrap">
         {system.is_draft && isOwner && continueHref && (
@@ -186,6 +211,21 @@ export function SystemCard({ system, currentUserId, onDeleted, winnersByRace, ga
             }
           >
             {copied ? 'Kopierat ✓' : 'Kopiera system'}
+          </button>
+        )}
+        {canLogBet && (
+          <button
+            onClick={handleLogBet}
+            disabled={logged || logging}
+            title={logged ? undefined : `Registrerar ${formatRowCost(system.total_rows, gameType)} som din insats`}
+            className="text-xs px-3 py-1.5 rounded-lg transition disabled:cursor-default"
+            style={
+              logged
+                ? { background: "rgba(52,211,153,0.15)", border: "1px solid rgba(52,211,153,0.3)", color: "var(--tn-value-high)", cursor: "default" }
+                : { background: "var(--tn-accent-faint)", border: "1px solid var(--tn-accent-soft)", color: "var(--tn-accent)", cursor: "pointer" }
+            }
+          >
+            {logged ? '✓ Spelat' : logging ? 'Registrerar…' : 'Jag spelade detta'}
           </button>
         )}
         {isOwner && !confirmDelete && (

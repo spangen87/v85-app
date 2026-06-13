@@ -15,13 +15,15 @@ interface BetsSectionProps {
   groupId: string
   gameId: string | null
   currentUserId: string
+  /** Bumpas av SpelTab när en insats registrerats från ett systemkort — triggar omladdning */
+  refreshSignal?: number
 }
 
 function formatKr(value: number): string {
   return value % 1 === 0 ? `${value} kr` : `${value.toFixed(2).replace('.', ',')} kr`
 }
 
-export function BetsSection({ groupId, gameId, currentUserId }: BetsSectionProps) {
+export function BetsSection({ groupId, gameId, currentUserId, refreshSignal = 0 }: BetsSectionProps) {
   const [bets, setBets] = useState<Bet[]>([])
   const [stats, setStats] = useState<BetStats[]>([])
   const [loading, setLoading] = useState(false)
@@ -58,7 +60,9 @@ export function BetsSection({ groupId, gameId, currentUserId }: BetsSectionProps
 
   useEffect(() => {
     reload()
-  }, [reload])
+    // refreshSignal bumpas när en insats registrerats från ett systemkort
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reload, refreshSignal])
 
   async function handleAdd() {
     if (!gameId) return
@@ -135,9 +139,12 @@ export function BetsSection({ groupId, gameId, currentUserId }: BetsSectionProps
 
   return (
     <section className="mt-8">
-      <h2 className="text-sm font-semibold uppercase tracking-wide mb-3 tn-eyebrow" style={{ color: 'var(--tn-text-dim)' }}>
+      <h2 className="text-sm font-semibold uppercase tracking-wide mb-1 tn-eyebrow" style={{ color: 'var(--tn-text-dim)' }}>
         Insatser
       </h2>
+      <p className="text-xs mb-3" style={{ color: 'var(--tn-text-faint)' }}>
+        Tips: klicka <span style={{ color: 'var(--tn-accent)' }}>Jag spelade detta</span> på ett systemkort så fylls insatsen i automatiskt. Fyll i utdelningen när omgången är avgjord.
+      </p>
 
       {/* Lägg till insats */}
       <div className="rounded-xl p-3 mb-3" style={{ background: 'var(--tn-bg-card)', border: '1px solid var(--tn-border)' }}>
@@ -216,10 +223,25 @@ export function BetsSection({ groupId, gameId, currentUserId }: BetsSectionProps
               >
                 <span className="font-semibold" style={{ color: 'var(--tn-text)' }}>{bet.author_name}</span>
                 <span style={{ color: 'var(--tn-text-dim)' }}>
-                  {bet.bet_type}
-                  {bet.race_number != null && ` · Avd ${bet.race_number}`}
-                  {bet.horse_name && ` · ${bet.horse_name}`}
+                  {bet.system_name ? (
+                    <>🎯 {bet.system_name}</>
+                  ) : (
+                    <>
+                      {bet.bet_type}
+                      {bet.race_number != null && ` · Avd ${bet.race_number}`}
+                      {bet.horse_name && ` · ${bet.horse_name}`}
+                    </>
+                  )}
                 </span>
+                {bet.system_id != null && bet.system_score != null && (
+                  <span
+                    className="tn-mono text-xs font-bold px-1.5 py-0.5 rounded"
+                    style={{ background: 'var(--tn-bg-chip)', color: 'var(--tn-text-dim)' }}
+                    title="Systemets träff"
+                  >
+                    {bet.system_score}/8
+                  </span>
+                )}
                 <span className="ml-auto tn-mono" style={{ color: 'var(--tn-text-dim)' }}>{formatKr(bet.stake)}</span>
                 {isOwner ? (
                   <span className="flex items-center gap-1">

@@ -309,7 +309,7 @@ Inne i ett sällskap finns fyra flikar:
 - Visar sällskapets sparade system och utkast för vald omgång.
 - När resultat hämtats rättas systemen automatiskt — antal rätt visas som t.ex. **6/8** och vinnande hästar markeras gröna.
 - **Sällskapsligan** — topplista över medlemmarnas systemträffar i alla rättade omgångar: antal omgångar, totala rätt, snitt och bästa omgång. Har du flera system i samma omgång räknas det bästa. 👑 markerar vem som vann den senast rättade omgången.
-- Under **Insatser** registrerar du dina spel (speltyp, eventuell avdelning/häst och insats i kronor). När omgången är avgjord fyller du i utdelningen på dina egna insatser.
+- Under **Insatser** registrerar du dina spel. Enklast: klicka **Jag spelade detta** på ett systemkort — insatsen (rader × radpris) fylls i automatiskt och kopplas till systemet, så att insatsraden visar systemets träff (t.ex. 6/8). Du kan även lägga till spel manuellt (speltyp, eventuell avdelning/häst och insats i kronor). När omgången är avgjord fyller du i utdelningen på dina egna insatser.
 - **ROI per medlem** visar varje medlems totala insats, utdelning och avkastning över alla omgångar.
 
 **Sällskap**
@@ -402,4 +402,4 @@ Sidan visar:
 
 ---
 
-*Manual version 2.8 – V85 Analys*
+*Manual version 2.9 – V85 Analys*
