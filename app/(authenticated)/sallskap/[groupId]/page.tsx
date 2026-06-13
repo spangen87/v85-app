@@ -10,6 +10,7 @@ import { SallskapPageClient } from "./SallskapPageClient";
 
 interface Props {
   params: Promise<{ groupId: string }>;
+  searchParams: Promise<{ game?: string }>;
 }
 
 async function getAllGames(supabase: Awaited<ReturnType<typeof createClient>>) {
@@ -20,8 +21,9 @@ async function getAllGames(supabase: Awaited<ReturnType<typeof createClient>>) {
   return data ?? [];
 }
 
-export default async function SallskapPage({ params }: Props) {
+export default async function SallskapPage({ params, searchParams }: Props) {
   const { groupId } = await params;
+  const { game: gameParam } = await searchParams;
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -49,7 +51,9 @@ export default async function SallskapPage({ params }: Props) {
 
   if (!group) redirect("/");
 
-  const defaultGameId = games[0]?.id ?? null;
+  // Djuplänk från loppvyn (?game=) väljer rätt omgång, annars senaste
+  const defaultGameId =
+    (gameParam && games.find((g) => g.id === gameParam)?.id) ?? games[0]?.id ?? null;
 
   const [initialPosts, initialNotes, initialSystems, league] = await Promise.all([
     defaultGameId ? getGroupPosts(groupId, defaultGameId) : Promise.resolve([]),

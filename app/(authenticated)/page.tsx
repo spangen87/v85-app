@@ -15,8 +15,11 @@ import { GroupActivitySection } from "@/components/groups/GroupActivitySection";
 import { getLatestGradedOutcome } from "@/lib/actions/outcome";
 import { SystemOutcomeBanner } from "@/components/SystemOutcomeBanner";
 import { getDraftForGame } from "@/lib/actions/systems";
+import { getNoteCountsForHorses } from "@/lib/actions/notes";
+import { getGamePostSummary } from "@/lib/actions/posts";
 import { getTrackConfig } from "@/lib/actions/tracks";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { Suspense } from "react";
 import type { SystemSelection, TrackConfig } from "@/lib/types";
 
@@ -80,9 +83,15 @@ export default async function HomePage({
   const selectedGame = games.find((g) => g.id === selectedId) ?? null;
   const races = selectedId ? await getRaces(supabase, selectedId) : [];
 
-  const trackConfig: TrackConfig | null = selectedGame
-    ? await getTrackConfig(selectedGame.track)
-    : null;
+  // Socialt i loppvyn: anteckningsantal per häst + forumdiskussion om omgången
+  const horseIds = Array.from(
+    new Set(races.flatMap((r) => (r.starters ?? []).map((s: { horse_id: string }) => s.horse_id)))
+  );
+  const [noteCounts, postSummary, trackConfig] = await Promise.all([
+    horseIds.length ? getNoteCountsForHorses(horseIds) : Promise.resolve({}),
+    selectedId ? getGamePostSummary(selectedId) : Promise.resolve(null),
+    selectedGame ? getTrackConfig(selectedGame.track) : Promise.resolve(null),
+  ]) as [Record<string, number>, Awaited<ReturnType<typeof getGamePostSummary>>, TrackConfig | null];
 
   const initialSystemMode = params.systemMode === '1'
   const initialGroupId = params.groupId ?? null
@@ -166,6 +175,15 @@ export default async function HomePage({
             <span style={{ color: "var(--tn-accent)", fontWeight: 600 }}>{selectedGame.game_type}</span>
             <span style={{ color: "var(--tn-border-strong)" }}>·</span>
             <span>{selectedGame.track}</span>
+            {postSummary && selectedId && (
+              <Link
+                href={`/sallskap/${postSummary.group_id}?game=${selectedId}`}
+                className="ml-auto flex items-center gap-1 transition"
+                style={{ color: "var(--tn-accent)" }}
+              >
+                💬 {postSummary.count} inlägg om omgången →
+              </Link>
+            )}
           </div>
         )}
 
@@ -200,6 +218,7 @@ export default async function HomePage({
           draftId={draftId}
           initialSelections={initialSelections}
           trackConfig={trackConfig}
+          noteCounts={noteCounts}
         />
       </div>
     </main>

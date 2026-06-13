@@ -74,6 +74,7 @@ På huvudsidan ser du en lista med alla hämtade omgångar.
 - Välj omgång via **rullgardinsmenyn** (GameSelector) längst upp.
 - Omgångens **avdelningar** visas som klickbara flikar. Klicka på en avdelning för att visa den – bytet sker direkt utan sidladdning.
 - Hästar i aktiv avdelning visas som **en häst per rad** (ATG-stil).
+- Pågår en diskussion om omgången i något av dina sällskap visas **💬 N inlägg om omgången** i informationsraden — klicka för att gå direkt till sällskapets forum för rätt omgång.
 
 ### 4.1 Top 5 – högst Composite Score
 
@@ -119,6 +120,7 @@ När en avdelning är expanderad visas ett kort per häst. Den kompakta raden in
 | **Nr** | Startnummer |
 | **Namn** | Hästens namn — en orange prick (●) intill namnet betyder skoändring inför loppet |
 | **SKRÄLL-märke** | Visas om hästen är skrällkandidat (se 6.1); håll muspekaren över för förklaring |
+| **💬 Anteckningsbubbla** | Antal anteckningar på hästen (även från tidigare omgångar) — expandera kortet och öppna **Anteckningar** för att läsa dem |
 | **Kusk** | Kuskens namn |
 | **Streck%** | Hästens andel av spelpoolen (om tillgängligt) |
 | **Odds** | Aktuellt vinnarodds |
@@ -400,4 +402,4 @@ Sidan visar:
 
 ---
 
-*Manual version 2.7 – V85 Analys*
+*Manual version 2.8 – V85 Analys*

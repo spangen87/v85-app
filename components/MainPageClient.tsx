@@ -28,6 +28,8 @@ interface MainPageClientProps {
   draftId?: string | null
   initialSelections?: SystemSelection[]
   trackConfig?: TrackConfig | null
+  /** Antal anteckningar per häst-id — pratbubbla på hästkortet */
+  noteCounts?: Record<string, number>
 }
 
 export function MainPageClient({
@@ -41,6 +43,7 @@ export function MainPageClient({
   draftId = null,
   initialSelections = [],
   trackConfig = null,
+  noteCounts = {},
 }: MainPageClientProps) {
   const [systemMode, setSystemMode] = useState(initialSystemMode)
   const { activeRaceNumber: activeRace, setActiveRaceNumber: setActiveRace } = useRaceTab()
@@ -177,6 +180,7 @@ export function MainPageClient({
             onToggleHorse={handleToggleHorse}
             onHorseClick={handleHorseClick}
             trackConfig={trackConfig}
+            noteCounts={noteCounts}
           />
         )}
       </div>

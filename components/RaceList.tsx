@@ -83,6 +83,7 @@ export function RaceList({
   onToggleHorse,
   onHorseClick,
   trackConfig,
+  noteCounts = {},
 }: {
   races: Race[];
   activeRaceNumber: number;
@@ -93,6 +94,7 @@ export function RaceList({
   onToggleHorse?: (raceNumber: number, horse: SystemHorse) => void;
   onHorseClick?: (raceNumber: number, startNumber: number) => void;
   trackConfig?: TrackConfig | null;
+  noteCounts?: Record<string, number>;
 }) {
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>("composite");
@@ -314,6 +316,7 @@ export function RaceList({
               raceStartMethod={activeRace.start_method ?? "auto"}
               isValue={valueMap[s.start_number] ?? false}
               skrall={skrallMap[s.start_number]}
+              noteCount={noteCounts[s.horse_id] ?? 0}
               sortRank={sortKey !== "number" ? idx + 1 : undefined}
               trackConfig={trackConfig ?? undefined}
               isSelected={systemMode ? (raceSelections?.horses.some((h) => h.horse_id === s.horse_id) ?? false) : undefined}

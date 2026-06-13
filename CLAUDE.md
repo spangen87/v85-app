@@ -129,8 +129,8 @@ lib/
     bets.ts                 # Server actions: spelförslag/bets
     games.ts                # Server actions: spel
     groups.ts               # Server actions: skapa/lämna sällskap
-    notes.ts                # Server actions: hämta/skapa/ta bort anteckningar
-    posts.ts                # Server actions: foruminlägg
+    notes.ts                # Server actions: anteckningar + getNoteCountsForHorses (pratbubbla i loppvyn)
+    posts.ts                # Server actions: foruminlägg + getGamePostSummary (forumlänk i loppvyn)
     sallskap.ts             # Server actions: sällskapsdata
     systems.ts              # Server actions: spelsystem (game_systems, drafts)
     tracks.ts               # Server actions: bandata/TrackConfig

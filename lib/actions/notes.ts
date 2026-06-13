@@ -228,3 +228,29 @@ export async function deleteNote(noteId: string): Promise<{ error: string | null
   if (error) return { error: error.message };
   return { error: null };
 }
+
+/**
+ * Antal anteckningar (inkl. svar) per häst som användaren får se, för en lista
+ * av häst-id:n. Driver pratbubblan på hästkortet i loppvyn — anteckningar
+ * följer hästen mellan omgångar, så siffran signalerar "här finns historik".
+ * RLS filtrerar till sällskaps- och egna personliga anteckningar.
+ */
+export async function getNoteCountsForHorses(
+  horseIds: string[]
+): Promise<Record<string, number>> {
+  if (horseIds.length === 0) return {};
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("horse_notes")
+    .select("horse_id")
+    .in("horse_id", horseIds);
+
+  if (error || !data) return {};
+
+  const counts: Record<string, number> = {};
+  for (const row of data as { horse_id: string }[]) {
+    counts[row.horse_id] = (counts[row.horse_id] ?? 0) + 1;
+  }
+  return counts;
+}
