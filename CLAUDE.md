@@ -126,11 +126,11 @@ lib/
   actions/
     activity.ts             # Aktivitetssignaler: getGroupActivity (React-cachad) + markGroupSeen
     outcome.ts              # Senaste rättade omgångens systemutfall (resultatbannern)
-    bets.ts                 # Server actions: spelförslag/bets
+    bets.ts                 # Server actions: insatser/ROI + addBetFromSystem (logga sparat system som spel)
     games.ts                # Server actions: spel
     groups.ts               # Server actions: skapa/lämna sällskap
-    notes.ts                # Server actions: hämta/skapa/ta bort anteckningar
-    posts.ts                # Server actions: foruminlägg
+    notes.ts                # Server actions: anteckningar + getNoteCountsForHorses (pratbubbla i loppvyn)
+    posts.ts                # Server actions: foruminlägg + getGamePostSummary (forumlänk i loppvyn)
     sallskap.ts             # Server actions: sällskapsdata
     systems.ts              # Server actions: spelsystem (game_systems, drafts)
     tracks.ts               # Server actions: bandata/TrackConfig
@@ -153,7 +153,7 @@ supabase/
 **group_members** – koppling användare↔sällskap
 **horse_notes** – anteckningar (horse_id, group_id nullable, label, parent_id)
 **group_posts** – foruminlägg (group_id, game_id, parent_id)
-**bets** – spelförslag per omgång (game_id, user_id, horse selections)
+**bets** – insatser per omgång (game_id, user_id, stake, payout, system_id nullable → koppling till spelat system)
 **game_systems** – sparade spelsystem (name, game_id, selections)
 **drafts** – utkast till spelsystem
 **track_configs** – banspecifik konfiguration (open_stretch, short_race_threshold)

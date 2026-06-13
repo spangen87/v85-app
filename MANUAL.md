@@ -74,6 +74,7 @@ På huvudsidan ser du en lista med alla hämtade omgångar.
 - Välj omgång via **rullgardinsmenyn** (GameSelector) längst upp.
 - Omgångens **avdelningar** visas som klickbara flikar. Klicka på en avdelning för att visa den – bytet sker direkt utan sidladdning.
 - Hästar i aktiv avdelning visas som **en häst per rad** (ATG-stil).
+- Pågår en diskussion om omgången i något av dina sällskap visas **💬 N inlägg om omgången** i informationsraden — klicka för att gå direkt till sällskapets forum för rätt omgång.
 
 ### 4.1 Top 5 – högst Composite Score
 
@@ -119,6 +120,7 @@ När en avdelning är expanderad visas ett kort per häst. Den kompakta raden in
 | **Nr** | Startnummer |
 | **Namn** | Hästens namn — en orange prick (●) intill namnet betyder skoändring inför loppet |
 | **SKRÄLL-märke** | Visas om hästen är skrällkandidat (se 6.1); håll muspekaren över för förklaring |
+| **💬 Anteckningsbubbla** | Antal anteckningar på hästen (även från tidigare omgångar) — expandera kortet och öppna **Anteckningar** för att läsa dem |
 | **Kusk** | Kuskens namn |
 | **Streck%** | Hästens andel av spelpoolen (om tillgängligt) |
 | **Odds** | Aktuellt vinnarodds |
@@ -307,7 +309,7 @@ Inne i ett sällskap finns fyra flikar:
 - Visar sällskapets sparade system och utkast för vald omgång.
 - När resultat hämtats rättas systemen automatiskt — antal rätt visas som t.ex. **6/8** och vinnande hästar markeras gröna.
 - **Sällskapsligan** — topplista över medlemmarnas systemträffar i alla rättade omgångar: antal omgångar, totala rätt, snitt och bästa omgång. Har du flera system i samma omgång räknas det bästa. 👑 markerar vem som vann den senast rättade omgången.
-- Under **Insatser** registrerar du dina spel (speltyp, eventuell avdelning/häst och insats i kronor). När omgången är avgjord fyller du i utdelningen på dina egna insatser.
+- Under **Insatser** registrerar du dina spel. Enklast: klicka **Jag spelade detta** på ett systemkort — insatsen (rader × radpris) fylls i automatiskt och kopplas till systemet, så att insatsraden visar systemets träff (t.ex. 6/8). Du kan även lägga till spel manuellt (speltyp, eventuell avdelning/häst och insats i kronor). När omgången är avgjord fyller du i utdelningen på dina egna insatser.
 - **ROI per medlem** visar varje medlems totala insats, utdelning och avkastning över alla omgångar.
 
 **Sällskap**
@@ -400,4 +402,4 @@ Sidan visar:
 
 ---
 
-*Manual version 2.7 – V85 Analys*
+*Manual version 2.9 – V85 Analys*

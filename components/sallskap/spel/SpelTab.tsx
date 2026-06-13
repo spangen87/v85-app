@@ -6,6 +6,7 @@ import { SystemCard } from './SystemCard'
 import { BetsSection } from './BetsSection'
 import { LeagueTable } from './LeagueTable'
 import { getGroupSystems, getWinnersForGame, type GroupLeague } from '@/lib/actions/systems'
+import { getMyLoggedSystemIds } from '@/lib/actions/bets'
 import type { GameSystem } from '@/lib/types'
 
 type Game = { id: string; date: string; track: string | null; game_type?: string }
@@ -24,11 +25,24 @@ export function SpelTab({ groupId, games, initialGameId, initialSystems, league,
   const [systems, setSystems] = useState<GameSystem[]>(initialSystems)
   const [loading, setLoading] = useState(false)
   const [winnersByRace, setWinnersByRace] = useState<Record<number, string>>({})
+  const [loggedSystemIds, setLoggedSystemIds] = useState<Set<string>>(new Set())
+  const [betsRefresh, setBetsRefresh] = useState(0)
 
   useEffect(() => {
     if (!initialGameId) return
     getWinnersForGame(initialGameId).then(setWinnersByRace).catch(() => {})
   }, [initialGameId])
+
+  useEffect(() => {
+    getMyLoggedSystemIds(groupId)
+      .then((ids) => setLoggedSystemIds(new Set(ids)))
+      .catch(() => {})
+  }, [groupId])
+
+  function handleBetLogged(systemId: string) {
+    setLoggedSystemIds(prev => new Set(prev).add(systemId))
+    setBetsRefresh(n => n + 1)
+  }
 
   async function handleGameChange(gameId: string) {
     setSelectedGameId(gameId)
@@ -170,6 +184,8 @@ export function SpelTab({ groupId, games, initialGameId, initialSystems, league,
                     winnersByRace={winnersByRace}
                     gameType={gameType}
                     gameId={selectedGameId}
+                    alreadyLogged={loggedSystemIds.has(system.id)}
+                    onBetLogged={handleBetLogged}
                   />
                 ))}
               </div>
@@ -180,7 +196,7 @@ export function SpelTab({ groupId, games, initialGameId, initialSystems, league,
 
       <LeagueTable league={league} />
 
-      <BetsSection groupId={groupId} gameId={selectedGameId} currentUserId={currentUserId} />
+      <BetsSection groupId={groupId} gameId={selectedGameId} currentUserId={currentUserId} refreshSignal={betsRefresh} />
     </div>
   )
 }

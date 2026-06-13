@@ -122,3 +122,39 @@ export async function deletePost(postId: string): Promise<{ error: string | null
   if (error) return { error: error.message };
   return { error: null };
 }
+
+export interface GamePostSummary {
+  group_id: string;
+  group_name: string;
+  count: number;
+}
+
+/**
+ * Sammanfattning av forumdiskussionen om en omgång för länken i loppvyn.
+ * Returnerar det av användarens sällskap som har flest inlägg om omgången
+ * (RLS begränsar till sällskap användaren är medlem i), eller null om inga
+ * inlägg finns. Driver "💬 N inlägg om omgången"-länken på startsidan.
+ */
+export async function getGamePostSummary(gameId: string): Promise<GamePostSummary | null> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("group_posts")
+    .select("group_id, groups(name)")
+    .eq("game_id", gameId);
+
+  if (error || !data || data.length === 0) return null;
+
+  const counts = new Map<string, { name: string; count: number }>();
+  for (const row of data as unknown as { group_id: string; groups: { name: string } | null }[]) {
+    const entry = counts.get(row.group_id) ?? { name: row.groups?.name ?? "Sällskap", count: 0 };
+    entry.count += 1;
+    counts.set(row.group_id, entry);
+  }
+
+  let best: GamePostSummary | null = null;
+  for (const [group_id, { name, count }] of counts) {
+    if (!best || count > best.count) best = { group_id, group_name: name, count };
+  }
+  return best;
+}

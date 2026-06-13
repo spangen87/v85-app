@@ -290,6 +290,7 @@ export function HorseCard({
   raceStartMethod,
   isValue,
   skrall,
+  noteCount = 0,
   sortRank,
   isSelected,
   onSelect,
@@ -302,6 +303,7 @@ export function HorseCard({
   raceStartMethod?: string;
   isValue?: boolean;
   skrall?: SkrallSignal;
+  noteCount?: number;
   sortRank?: number;
   isSelected?: boolean;
   onSelect?: () => void;
@@ -449,6 +451,19 @@ export function HorseCard({
                 title={`Skrällkandidat: odds säger ${skrall.oddsProbPct?.toFixed(1)} % chans mot ${starter.bet_distribution?.toFixed(1)} % streck, klass ${skrall.classRank} av fältet`}
               >
                 SKRÄLL
+              </span>
+            )}
+            {noteCount > 0 && (
+              <span
+                className="inline-flex items-center gap-0.5 text-[10px] font-semibold px-1 py-0.5 rounded shrink-0"
+                style={{ background: "var(--tn-accent-faint)", color: "var(--tn-accent)" }}
+                title={`${noteCount} anteckning${noteCount === 1 ? "" : "ar"} på hästen (även från tidigare omgångar)`}
+                aria-label={`${noteCount} anteckningar på hästen`}
+              >
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7A8.38 8.38 0 0 1 4 11.5 8.5 8.5 0 0 1 12.5 3 8.38 8.38 0 0 1 21 11.5z" />
+                </svg>
+                {noteCount}
               </span>
             )}
           </div>
