@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getAuthUser, isAdmin } from "@/lib/supabase/guards";
 import { getAllTrackConfigs } from "@/lib/actions/tracks";
 import { TrackConfigRow } from "@/components/admin/TrackConfigRow";
+import { RecomputeFormscoreButton } from "@/components/admin/RecomputeFormscoreButton";
 
 export default async function AdminPage() {
   const user = await getAuthUser();
@@ -32,6 +33,17 @@ export default async function AdminPage() {
           ))}
         </div>
       )}
+
+      <section className="pt-6" style={{ borderTop: "1px solid var(--tn-border)" }}>
+        <h2 className="text-base font-bold mb-1" style={{ color: "var(--tn-text)" }}>
+          Underhåll
+        </h2>
+        <p className="text-sm mb-3" style={{ color: "var(--tn-text-faint)" }}>
+          Räknar om lagrad Composite Score för alla omgångar med de aktuella vikterna.
+          Kör efter att vikterna ändrats så att Top 5, sortering och utvärderingssidan stämmer.
+        </p>
+        <RecomputeFormscoreButton />
+      </section>
     </main>
   );
 }
