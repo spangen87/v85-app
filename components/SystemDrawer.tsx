@@ -57,11 +57,11 @@ export function SystemDrawer({
 
   return (
     <>
-      <div className="fixed inset-0 z-40 md:hidden" style={{ background: "rgba(0,0,0,0.6)" }} onClick={onClose} />
+      <div className="fixed inset-0 z-[55] md:hidden" style={{ background: "rgba(0,0,0,0.6)" }} onClick={onClose} />
       <div
         role="dialog"
         aria-modal="true"
-        className="fixed bottom-0 left-0 right-0 z-50 md:hidden rounded-t-2xl max-h-[70vh] flex flex-col"
+        className="fixed bottom-0 left-0 right-0 z-[60] md:hidden rounded-t-2xl max-h-[80vh] flex flex-col"
         style={{ background: "var(--tn-bg-raised)", border: "1px solid var(--tn-border)" }}
       >
         <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
@@ -118,8 +118,12 @@ export function SystemDrawer({
         </div>
 
         <div
-          className="px-4 py-3 flex-shrink-0"
-          style={{ borderTop: "2px solid var(--tn-accent)" }}
+          className="px-4 pt-3 flex-shrink-0"
+          style={{
+            borderTop: "2px solid var(--tn-accent)",
+            // Plats för home-indikatorn så Spara-/Avbryt-knapparna inte döljs
+            paddingBottom: "calc(12px + env(safe-area-inset-bottom))",
+          }}
         >
           <div className="flex items-baseline justify-between mb-1">
             <span className="text-lg font-extrabold" style={{ color: "var(--tn-accent)" }}>

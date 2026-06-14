@@ -121,7 +121,7 @@ export function SaveSystemDialog({
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background: "rgba(0,0,0,0.6)" }}>
       <div
-        className="w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-6 pb-[calc(1.5rem+4rem)] sm:pb-6 shadow-xl"
+        className="w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-6 pb-[calc(1.5rem+4rem+env(safe-area-inset-bottom))] sm:pb-6 shadow-xl"
         style={{ background: "var(--tn-bg-raised)", border: "1px solid var(--tn-border)" }}
       >
         <h2 className="text-lg font-bold mb-4" style={{ color: "var(--tn-text)" }}>Spara system</h2>
