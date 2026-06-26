@@ -1,18 +1,15 @@
-import { createClient } from "@/lib/supabase/server";
 import { BottomNav } from "@/components/BottomNav";
 import { TopNav } from "@/components/TopNav";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { getGroupActivity } from "@/lib/actions/activity";
+import { getAuthUser } from "@/lib/supabase/guards";
 
 export default async function AuthenticatedLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   const adminIds = (process.env.ADMIN_USER_IDS ?? "")
     .split(",")

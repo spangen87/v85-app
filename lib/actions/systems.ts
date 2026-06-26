@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { getAuthUser } from '@/lib/supabase/guards'
 import type { GameSystem, SystemSelection } from '@/lib/types'
 
 type RawSystemRow = Omit<GameSystem, 'author_display_name' | 'group_name'>
@@ -56,7 +57,7 @@ export async function createSystem(
 /** Hämtar användarens utkast för ett visst spel (max ett per spel och användare) */
 export async function getDraftForGame(gameId: string): Promise<GameSystem | null> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthUser()
   if (!user) return null
 
   const { data, error } = await supabase

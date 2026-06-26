@@ -3,7 +3,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { UserMenu } from "@/components/groups/UserMenu";
 import { getProfile, getMyGroups } from "@/lib/actions/groups";
 import { getGroupActivity } from "@/lib/actions/activity";
-import { createClient } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/supabase/guards";
 
 const tabs = [
   { label: "Lopp", href: "/" },
@@ -13,10 +13,7 @@ const tabs = [
 ];
 
 export async function TopNav() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   const [profile, groups, activity] = user
     ? await Promise.all([getProfile(), getMyGroups(), getGroupActivity()])

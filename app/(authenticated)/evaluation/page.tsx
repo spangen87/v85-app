@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { isAdmin } from "@/lib/supabase/guards";
+import { isAdmin, getAuthUser } from "@/lib/supabase/guards";
 import { EvaluationPanel } from "@/components/EvaluationPanel";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { redirect } from "next/navigation";
@@ -147,9 +147,7 @@ function computeEvaluation(rows: StarterRow[]) {
 
 export default async function EvaluationPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
   if (!user) redirect("/login");
 
   const { data: allGamesData } = await supabase

@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { getAuthUser } from '@/lib/supabase/guards'
 import { getSystemsForUser, getWinnersForGame } from '@/lib/actions/systems'
 import { SystemsPageClient } from '@/components/SystemsPageClient'
 
@@ -17,7 +18,7 @@ export default async function SystemPage({
   searchParams: Promise<{ game?: string }>
 }) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthUser()
   if (!user) redirect('/login')
 
   const params = await searchParams
