@@ -6,6 +6,7 @@ import { AnalysisPanel } from "./AnalysisPanel";
 import { HorseNotes } from "./notes/HorseNotes";
 import { TopFiveRanking } from "./TopFiveRanking";
 import { computeSkrallMap } from "@/lib/skrall";
+import { computeEdgeMap } from "@/lib/edge";
 import { computeWinProbabilities, type WinProbability } from "@/lib/probability";
 import type { Group, SystemSelection, SystemHorse, TrackConfig } from "@/lib/types";
 
@@ -100,6 +101,7 @@ export function RaceList({
   const [sortKey, setSortKey] = useState<SortKey>("composite");
   const [filterValue, setFilterValue] = useState(false);
   const [filterSkrall, setFilterSkrall] = useState(false);
+  const [filterEdge, setFilterEdge] = useState(false);
   const [hideOutsiders, setHideOutsiders] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -140,7 +142,7 @@ export function RaceList({
 
   if (!activeRace) return null;
 
-  const hasActiveFilter = filterValue || filterSkrall || hideOutsiders || search.trim().length > 0;
+  const hasActiveFilter = filterValue || filterSkrall || filterEdge || hideOutsiders || search.trim().length > 0;
   const compositeMap = Object.fromEntries(activeRace.starters.map((s) => [s.start_number, s.formscore ?? 0]));
   // Kalibrerad vinstsannolikhet och skrällsignal är relativa hela fältet —
   // beräknas före filtrering
@@ -158,11 +160,14 @@ export function RaceList({
     })
   );
   const skrallMap = computeSkrallMap(activeRace.starters);
+  // Tysta signaler (barfota, toppkusk, formtrend, uppehåll) — relativa fältet
+  const edgeMap = computeEdgeMap(activeRace.starters, activeRace.start_time);
 
   const q = search.trim().toLowerCase();
   const filtered = activeRace.starters
     .filter((s) => !filterValue || valueMap[s.start_number])
     .filter((s) => !filterSkrall || skrallMap[s.start_number]?.isCandidate)
+    .filter((s) => !filterEdge || edgeMap[s.start_number]?.isEdge)
     .filter((s) => !hideOutsiders || s.odds == null || s.odds <= 50)
     .filter((s) => {
       if (!q) return true;
@@ -232,6 +237,20 @@ export function RaceList({
         </button>
 
         <button
+          onClick={() => setFilterEdge((v) => !v)}
+          className="text-xs font-medium transition-colors"
+          style={{
+            ...chipBase,
+            background: filterEdge ? "var(--tn-accent-faint)" : "var(--tn-bg-chip)",
+            color: filterEdge ? "var(--tn-accent)" : "var(--tn-text-dim)",
+            border: filterEdge ? "1px solid transparent" : "1px solid var(--tn-border)",
+          }}
+          title="Hästar med flera positiva tysta signaler (barfota-byte, toppkusk, stigande form) som inte syns i odds och streck"
+        >
+          Signal
+        </button>
+
+        <button
           onClick={() => setHideOutsiders((v) => !v)}
           className="text-xs font-medium transition-colors"
           style={{
@@ -246,7 +265,7 @@ export function RaceList({
 
         {hasActiveFilter && (
           <button
-            onClick={() => { setFilterValue(false); setFilterSkrall(false); setHideOutsiders(false); setSearch(""); }}
+            onClick={() => { setFilterValue(false); setFilterSkrall(false); setFilterEdge(false); setHideOutsiders(false); setSearch(""); }}
             className="text-xs transition-colors"
             style={{ color: "var(--tn-text-faint)", background: "none", border: "none", cursor: "pointer" }}
           >
@@ -297,6 +316,7 @@ export function RaceList({
           trackConfig={trackConfig ?? undefined}
           skrallMap={skrallMap}
           probMap={probMap}
+          edgeMap={edgeMap}
         />
       )}
 
@@ -316,6 +336,7 @@ export function RaceList({
               raceStartMethod={activeRace.start_method ?? "auto"}
               isValue={valueMap[s.start_number] ?? false}
               skrall={skrallMap[s.start_number]}
+              edge={edgeMap[s.start_number]}
               noteCount={noteCounts[s.horse_id] ?? 0}
               sortRank={sortKey !== "number" ? idx + 1 : undefined}
               trackConfig={trackConfig ?? undefined}

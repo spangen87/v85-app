@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { ReactNode } from "react";
 import { computeTrackFactor } from "@/lib/analysis";
 import type { SkrallSignal } from "@/lib/skrall";
+import type { EdgeResult } from "@/lib/edge";
 import type { TrackConfig } from "@/lib/types";
 
 interface LastResult {
@@ -290,6 +291,7 @@ export function HorseCard({
   raceStartMethod,
   isValue,
   skrall,
+  edge,
   noteCount = 0,
   sortRank,
   isSelected,
@@ -303,6 +305,7 @@ export function HorseCard({
   raceStartMethod?: string;
   isValue?: boolean;
   skrall?: SkrallSignal;
+  edge?: EdgeResult;
   noteCount?: number;
   sortRank?: number;
   isSelected?: boolean;
@@ -511,6 +514,34 @@ export function HorseCard({
               </span>
             );
           })}
+        </div>
+      )}
+
+      {/* Tysta signaler — faktorer utanför odds/streck */}
+      {edge && edge.signals.length > 0 && (
+        <div className="px-3.5 pb-2.5 flex items-center gap-1 flex-wrap">
+          {edge.isEdge && (
+            <span
+              className="tn-mono text-[9px] font-bold px-1.5 py-0.5 rounded"
+              style={{ background: "var(--tn-value-high)", color: "#0a0e14", letterSpacing: "0.08em" }}
+              title={`Kantpoäng +${edge.score}: flera positiva signaler som inte syns i odds och streck`}
+            >
+              SIGNAL +{edge.score}
+            </span>
+          )}
+          {edge.signals.map((sig) => (
+            <span
+              key={sig.key}
+              className="tn-mono text-[10px] font-medium px-1.5 py-0.5 rounded"
+              title={sig.detail}
+              style={{
+                color: sig.points > 0 ? "var(--tn-value-high)" : "var(--tn-value-low)",
+                background: sig.points > 0 ? "var(--tn-value-high-bg)" : "var(--tn-value-low-bg)",
+              }}
+            >
+              {sig.label}
+            </span>
+          ))}
         </div>
       )}
 

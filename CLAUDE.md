@@ -121,6 +121,7 @@ lib/
   analysis.ts               # Hjälpformler (distanssignal, spårfaktor, tidsparsning)
   formscore.ts              # Composite Score: computeComponents + CS_WEIGHTS
   skrall.ts                 # Skrällkandidat-signal (låg streck + odds/streck-diskrepans + klass)
+  edge.ts                   # Tysta signaler/kantpoäng (barfota-byte, toppkusk, formtrend, uppehåll)
   probability.ts            # Kalibrerad vinstsannolikhet (50% streck + 50% odds, BLEND_ALPHA)
   push.ts                   # Web push-utskick (sendPushToUsers, no-op utan VAPID-env)
   systems.ts                # gradeSystemsForGame (rättar system, returnerar notifierbara sällskap)
@@ -200,6 +201,14 @@ Häst flaggas som skrällkandidat när alla tre villkor uppfylls (trösklar i
 procentenheter över strecket, samt topp-3 i fältet på intjänat per start.
 Beräknas client-side på hela startfältet (RaceList → HorseCard/AnalysisPanel).
 Trösklarna kommer från databasanalys 2026-06-12 (155 lopp med facit).
+
+### Tysta signaler / kantpoäng – `lib/edge.ts → computeEdgeSignals()`
+Signaler som inte syns i odds/streck: barfota-byte (+2 runt om, +1 fram/bak,
+−1 skor på), toppkusk (topp-2 i fältet på vinstprocent, minst 15 %, +1),
+formtrend från last_5 (senaste 2 vs äldre, ±1) och uppehåll > 60 dagar (−1).
+Trösklar i `EDGE_THRESHOLDS`. Kantpoäng = summan; ≥ +2 flaggas (`isEdge`).
+Beräknas client-side på hela fältet (RaceList → HorseCard/AnalysisPanel) och
+påverkar inte CS eller kalibrerad sannolikhet — ett kvalitativt lager ovanpå.
 
 ### Distansfaktor
 | Situation | Faktor |

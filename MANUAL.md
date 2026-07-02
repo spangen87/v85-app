@@ -102,6 +102,7 @@ Ovanför hästlistan finns en verktygsrad med kontroller:
 |-------|-------------|
 | **Värde** | Visar bara hästar som systemet bedömer som undervärderade (CS > 55 och CS-andel över streckningen) |
 | **Skräll** | Visar bara skrällkandidater — lågstreckade hästar med hög klass där vinnaroddsen säger mer än strecken (se 6.1) |
+| **Signal** | Visar bara hästar med flera positiva tysta signaler (kantpoäng ≥ +2) — faktorer som inte syns i odds och streck (se 6.1) |
 | **Dölj >50x** | Döljer hästar med odds över 50 |
 
 **Sökning** – skriv namn på häst, kusk eller tränare för att filtrera.
@@ -127,6 +128,7 @@ När en avdelning är expanderad visas ett kort per häst. Den kompakta raden in
 | **CS-ring** | Composite Score 0–100 som färgad ring — klicka för förklaring av poängen |
 | **Spårjustering (↑/↓)** | Visas vid banor med banspecifik konfiguration (se 6.2) |
 | **Senaste starter** | Placeringar som färgade rutor: guldgul = 1:a, silver = 2:a, orange = 3:a, grå = övriga |
+| **Tysta signaler** | Rad med gröna/röda märken under senaste starterna: barfota-byte, toppkusk, formtrend och uppehåll (se 6.1). Hästar med kantpoäng ≥ +2 får dessutom märket **SIGNAL +N** |
 
 Hästar markerade som **Värde** får en grönaktig kantlinje på kortet.
 
@@ -165,7 +167,7 @@ Färgkod för ringen: **grön** (≥70) = stark häst, **blå** (50–69) = mede
 
 ## 6. Analysverktyget
 
-Klicka på knappen **Visa analys** inuti en avdelning för att öppna analyspanelen — **Matematisk analys**. Panelen rankar hela fältet efter CS och visar spelvärde, distanssignal och eventuella skrällkandidater.
+Klicka på knappen **Visa analys** inuti en avdelning för att öppna analyspanelen — **Matematisk analys**. Panelen rankar hela fältet efter CS och visar spelvärde, distanssignal, tysta signaler och eventuella skrällkandidater.
 
 ### 6.1 Analystabellen
 
@@ -180,6 +182,7 @@ Klicka på knappen **Visa analys** inuti en avdelning för att öppna analyspane
 | **Distans** | Distanssignal baserat på hästens historik på aktuell distans och startmetod |
 | **Spår** | Spårfaktor med banspecifik justering — visas bara för banor med konfiguration (se 6.2) |
 | **Värde** | Spelvärde: chans minus streckning, i procentenheter |
+| **Signaler** | Tysta signaler — faktorer utanför odds och streck (se nedan) |
 | **Res.** | Slutplacering om loppet är avslutat |
 
 #### Kalibrerad vinstchans
@@ -220,6 +223,24 @@ Hästar som uppfyller alla tre villkor markeras med **SKRÄLL** (på hästkortet
 3. **Hög klass** — topp 3 i fältet på intjänade kronor per start.
 
 Signalen bygger på historisk analys av appens egna data: lågstreckade hästar vinner ungefär dubbelt så ofta som streckningen antyder, och kombinationen låg streck + hög klass + understreckning mot oddsen har historiskt gett klart förhöjd vinstfrekvens. Ungefär vart fjärde lopp vinns av en häst utanför streck-topp-3 — skrällkandidaterna är tänkta som krydda i systemen, inte som spikar.
+
+#### Tysta signaler
+
+Odds och streckning ser alla spelare direkt på ATG — de är redan inprisade i marknaden. **Tysta signaler** letar i stället efter faktorer som *inte* syns i de siffrorna men som erfarna travspelare väger in:
+
+| Signal | Poäng | Innebär |
+|--------|-------|---------|
+| **Barfota** | +2 | Skorna dras runt om inför loppet — klassisk formtoppningssignal från tränaren |
+| **Barfota fram/bak** | +1 | Skon dras fram eller bak — tränaren trimmar för fart |
+| **Skor på** | −1 | Hästen får skor på jämfört med senast — ofta en försiktighetsåtgärd |
+| **Toppkusk** | +1 | Kusken ligger topp 2 i fältet på vinstprocent i år (minst 15 %) — stallet menar allvar |
+| **Form ↑** | +1 | De två senaste starterna är klart bättre än de tidigare — hästen är på väg uppåt |
+| **Form ↓** | −1 | De två senaste starterna är klart sämre — formen pekar nedåt |
+| **Uppehåll** | −1 | Mer än 60 dagar sedan senaste start — tävlingsrytmen är en riskfaktor |
+
+Poängen summeras till en **kantpoäng** per häst. En häst med kantpoäng **≥ +2** (flera oberoende positiva signaler) markeras med **SIGNAL +N** på hästkortet, och lågstreckade sådana hästar (< 20 % streck) listas som **Tysta signaler** överst i analyspanelen. Signalerna visas som gröna (positiva) och röda (negativa) märken både på hästkorten och i analystabellens **Signaler**-kolumn — håll muspekaren över ett märke för förklaring.
+
+Kantpoängen påverkar **inte** CS eller den kalibrerade chansen — den är ett kvalitativt lager ovanpå, tänkt att peka ut var det kan finnas spelvärde som marknaden ännu inte upptäckt. Störst intresse har hästar som kombinerar positiv kantpoäng med lågt streck.
 
 ### 6.2 Spårfaktor och banjusteringar
 
@@ -394,6 +415,9 @@ Sidan visar:
 | **Spelvärde** | Kalibrerad chans minus streckprocent – positivt värde indikerar potentiellt värdebet |
 | **Värdebet** | En häst vars verkliga chanser bedöms vara högre än vad marknaden prissätter |
 | **Skrällkandidat** | Lågstreckad häst (<15 %) med hög klass (topp-3 på intjänat/start) som är understreckad mot vinnaroddsen |
+| **Tysta signaler** | Faktorer utanför odds/streck: barfota-byte, toppkusk-bokning, formtrend och uppehåll |
+| **Kantpoäng** | Summan av de tysta signalernas poäng — ≥ +2 markeras med SIGNAL-märke |
+| **Barfota** | Hästen tävlar utan skor — att skorna dras inför loppet är en klassisk formtoppningssignal |
 | **Klass** | Intjänade kronor per start – ett mått på vilken nivå hästen tävlat på |
 | **Distansfaktor** | Multiplikator (×0.6–×1.35) baserat på hästens historik på aktuell distans och startmetod |
 | **Voltstart** | Loppet startas bakom ett rörligt startfordon, alla hästar startar på samma gång |

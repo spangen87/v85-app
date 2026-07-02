@@ -2,6 +2,7 @@
 
 import { computeDistanceSignal, computeTrackFactor, type LifeRecord, type DistanceSignal } from "@/lib/analysis";
 import type { SkrallSignal } from "@/lib/skrall";
+import type { EdgeResult } from "@/lib/edge";
 import type { WinProbability } from "@/lib/probability";
 import type { TrackConfig } from "@/lib/types";
 
@@ -25,6 +26,31 @@ interface AnalysisPanelProps {
   skrallMap?: Record<number, SkrallSignal>;
   /** Kalibrerad vinstsannolikhet beräknad på hela fältet, nycklad på startnummer */
   probMap?: Record<number, WinProbability>;
+  /** Tysta signaler (barfota, toppkusk, formtrend, uppehåll), nycklade på startnummer */
+  edgeMap?: Record<number, EdgeResult>;
+}
+
+function EdgeChips({ edge }: { edge?: EdgeResult }) {
+  if (!edge || edge.signals.length === 0) {
+    return <span style={{ color: "var(--tn-text-faint)" }}>–</span>;
+  }
+  return (
+    <span className="inline-flex flex-wrap gap-1 justify-end">
+      {edge.signals.map((sig) => (
+        <span
+          key={sig.key}
+          className="tn-mono text-[10px] font-medium px-1.5 py-0.5 rounded whitespace-nowrap"
+          title={sig.detail}
+          style={{
+            color: sig.points > 0 ? "var(--tn-value-high)" : "var(--tn-value-low)",
+            background: sig.points > 0 ? "var(--tn-value-high-bg)" : "var(--tn-value-low-bg)",
+          }}
+        >
+          {sig.label}
+        </span>
+      ))}
+    </span>
+  );
 }
 
 function DistBadge({ factor, label }: { factor: number; label: string }) {
@@ -121,11 +147,15 @@ function rankStarters(
   return withDist;
 }
 
-export function AnalysisPanel({ starters, raceMeters, raceStartMethod, trackConfig, skrallMap, probMap }: AnalysisPanelProps) {
+export function AnalysisPanel({ starters, raceMeters, raceStartMethod, trackConfig, skrallMap, probMap, edgeMap }: AnalysisPanelProps) {
   const ranked = rankStarters(starters, raceMeters, raceStartMethod, trackConfig, probMap);
   const hasStreckning = ranked.some((r) => r.streckPct > 0);
   const distLabel = raceMeters <= 1800 ? "kort" : raceMeters <= 2400 ? "medel" : "lång";
   const skrallCandidates = ranked.filter((r) => skrallMap?.[r.starter.start_number]?.isCandidate);
+  // "Tysta värden": flera positiva signaler utanför odds/streck på en häst poolen inte redan älskar
+  const quietEdges = ranked.filter(
+    (r) => edgeMap?.[r.starter.start_number]?.isEdge && r.streckPct > 0 && r.streckPct < 20
+  );
 
   return (
     <div
@@ -145,6 +175,7 @@ export function AnalysisPanel({ starters, raceMeters, raceStartMethod, trackConf
           {" "}<strong>Chans</strong> = kalibrerad vinstsannolikhet (50% streckning + 50% oddsmarknad).
           {" "}Distans: {distLabel} ({raceMeters} m, {raceStartMethod}start).
           {" "}Spelvärde = chans − streckning.
+          {" "}<strong>Signaler</strong> = faktorer utanför odds/streck: barfota-byte, toppkusk, formtrend och uppehåll.
         </p>
         {!hasStreckning && (
           <p
@@ -167,6 +198,20 @@ export function AnalysisPanel({ starters, raceMeters, raceStartMethod, trackConf
             {" "}— lågstreckad häst med hög klass där vinnaroddsen säger mer än strecken.
           </p>
         )}
+        {quietEdges.length > 0 && (
+          <p
+            className="text-xs mt-2 rounded-lg px-3 py-2"
+            style={{ color: "var(--tn-value-high)", background: "var(--tn-value-high-bg)", lineHeight: 1.5 }}
+          >
+            <span className="font-bold">Tysta signaler:</span>{" "}
+            {quietEdges.map((r) => {
+              const edge = edgeMap![r.starter.start_number];
+              const labels = edge.signals.filter((s) => s.points > 0).map((s) => s.label).join(", ");
+              return `${r.starter.start_number}. ${r.starter.horses?.name ?? "–"} (${labels})`;
+            }).join(" · ")}
+            {" "}— lågstreckade hästar med flera positiva signaler som inte syns i odds och streck.
+          </p>
+        )}
       </div>
 
       {/* Table */}
@@ -174,7 +219,7 @@ export function AnalysisPanel({ starters, raceMeters, raceStartMethod, trackConf
         <table className="w-full text-sm">
           <thead>
             <tr style={{ borderBottom: "1px solid var(--tn-border)" }}>
-              {["#", "Häst", "CS", "Odds", "Chans", "Strk.", "Distans", ...(trackConfig ? ["Spår"] : []), "Värde", "Res."].map((h) => (
+              {["#", "Häst", "CS", "Odds", "Chans", "Strk.", "Distans", ...(trackConfig ? ["Spår"] : []), "Värde", "Signaler", "Res."].map((h) => (
                 <th
                   key={h}
                   className="tn-eyebrow py-2.5 px-2 first:pl-4 last:pr-4 font-normal"
@@ -281,6 +326,10 @@ export function AnalysisPanel({ starters, raceMeters, raceStartMethod, trackConf
                   {/* Value */}
                   <td className="py-2.5 pr-2 text-right">
                     <DeltaChip value={r.value} hasStreck={r.hasChans && r.streckPct > 0} />
+                  </td>
+                  {/* Tysta signaler */}
+                  <td className="py-2.5 pr-2 text-right">
+                    <EdgeChips edge={edgeMap?.[r.starter.start_number]} />
                   </td>
                   {/* Result */}
                   <td className="py-2.5 pr-4 text-right">
