@@ -18,6 +18,7 @@ import { getDraftForGame } from "@/lib/actions/systems";
 import { getNoteCountsForHorses } from "@/lib/actions/notes";
 import { getGamePostSummary } from "@/lib/actions/posts";
 import { getTrackConfig } from "@/lib/actions/tracks";
+import { getAuthUser } from "@/lib/supabase/guards";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -61,9 +62,7 @@ export default async function HomePage({
   searchParams: Promise<{ game?: string; systemMode?: string; groupId?: string; avd?: string; draft?: string }>;
 }) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
   if (!user) redirect("/login");
 
   const params = await searchParams;
@@ -81,33 +80,35 @@ export default async function HomePage({
     : games[0]?.id ?? null;
 
   const selectedGame = games.find((g) => g.id === selectedId) ?? null;
-  const races = selectedId ? await getRaces(supabase, selectedId) : [];
 
-  // Socialt i loppvyn: anteckningsantal per häst + forumdiskussion om omgången
+  // Allt som bara beror på vald omgång hämtas parallellt i ett svep —
+  // forumlänk, bandata och senaste utkast behöver inte vänta på loppdatan.
+  const [races, postSummary, trackConfig, existingDraft] = await Promise.all([
+    selectedId ? getRaces(supabase, selectedId) : Promise.resolve([]),
+    selectedId ? getGamePostSummary(selectedId) : Promise.resolve(null),
+    selectedGame ? getTrackConfig(selectedGame.track) : Promise.resolve(null),
+    selectedId ? getDraftForGame(selectedId) : Promise.resolve(null),
+  ]) as [
+    Awaited<ReturnType<typeof getRaces>>,
+    Awaited<ReturnType<typeof getGamePostSummary>>,
+    TrackConfig | null,
+    Awaited<ReturnType<typeof getDraftForGame>>,
+  ];
+
+  // Anteckningsantal per häst behöver häst-id:n från loppdatan
   const horseIds = Array.from(
     new Set(races.flatMap((r) => (r.starters ?? []).map((s: { horse_id: string }) => s.horse_id)))
   );
-  const [noteCounts, postSummary, trackConfig] = await Promise.all([
-    horseIds.length ? getNoteCountsForHorses(horseIds) : Promise.resolve({}),
-    selectedId ? getGamePostSummary(selectedId) : Promise.resolve(null),
-    selectedGame ? getTrackConfig(selectedGame.track) : Promise.resolve(null),
-  ]) as [Record<string, number>, Awaited<ReturnType<typeof getGamePostSummary>>, TrackConfig | null];
+  const noteCounts: Record<string, number> = horseIds.length
+    ? await getNoteCountsForHorses(horseIds)
+    : {};
 
   const initialSystemMode = params.systemMode === '1'
   const initialGroupId = params.groupId ?? null
 
-  // Ladda utkast om draft-param finns, eller det senaste utkastet för spelet
-  let draftId: string | null = null
-  let initialSelections: SystemSelection[] = []
-
-  if (selectedId) {
-    // Om draft-ID angavs explicit i URL, eller leta upp senaste utkast
-    const existingDraft = await getDraftForGame(selectedId)
-    if (existingDraft) {
-      draftId = existingDraft.id
-      initialSelections = existingDraft.selections ?? []
-    }
-  }
+  // Ladda senaste utkastet för spelet (hämtat ovan)
+  const draftId: string | null = existingDraft?.id ?? null
+  const initialSelections: SystemSelection[] = existingDraft?.selections ?? []
 
   const avdParam = params.avd ? parseInt(params.avd, 10) : NaN;
   const activeRaceNumber = (!isNaN(avdParam) && races.some((r) => r.race_number === avdParam))
