@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import type { AvailableGame } from "@/lib/atg";
+import { OPEN_GAME_PICKER_EVENT } from "@/lib/uiEvents";
 
 interface SavedGame {
   id: string;
@@ -51,6 +52,13 @@ export function GamePickerBar({ savedGames, selectedId }: GamePickerBarProps) {
       .finally(() => { if (!cancelled) setLoadingGames(false); });
     return () => { cancelled = true; };
   }, [date, open]);
+
+  // Genväg från startsidans tomma läge: fäll ut listan med spel direkt
+  useEffect(() => {
+    const onOpen = () => setOpen(true);
+    window.addEventListener(OPEN_GAME_PICKER_EVENT, onOpen);
+    return () => window.removeEventListener(OPEN_GAME_PICKER_EVENT, onOpen);
+  }, []);
 
   // Stäng dropdown med Escape
   useEffect(() => {

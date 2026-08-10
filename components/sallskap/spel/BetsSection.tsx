@@ -10,6 +10,7 @@ import {
   type Bet,
   type BetStats,
 } from '@/lib/actions/bets'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
 
 interface BetsSectionProps {
   groupId: string
@@ -39,6 +40,8 @@ export function BetsSection({ groupId, gameId, currentUserId, refreshSignal = 0 
 
   // Utdelning-redigering per bet
   const [payoutDrafts, setPayoutDrafts] = useState<Record<string, string>>({})
+  const [confirmDelete, setConfirmDelete] = useState<Bet | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   const reload = useCallback(async () => {
     if (!gameId) return
@@ -118,9 +121,12 @@ export function BetsSection({ groupId, gameId, currentUserId, refreshSignal = 0 
 
   async function handleDelete(bet: Bet) {
     setError(null)
+    setDeleting(true)
     const previous = bets
     setBets(prev => prev.filter(b => b.id !== bet.id))
     const result = await deleteBet(bet.id)
+    setDeleting(false)
+    setConfirmDelete(null)
     if (result.error) {
       setBets(previous)
       setError(result.error)
@@ -265,7 +271,7 @@ export function BetsSection({ groupId, gameId, currentUserId, refreshSignal = 0 
                       </button>
                     )}
                     <button
-                      onClick={() => handleDelete(bet)}
+                      onClick={() => setConfirmDelete(bet)}
                       aria-label="Ta bort insats"
                       title="Ta bort insats"
                       className="text-xs px-2 py-1 rounded-md"
@@ -325,6 +331,21 @@ export function BetsSection({ groupId, gameId, currentUserId, refreshSignal = 0 
           )}
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        title="Ta bort insatsen?"
+        description={
+          confirmDelete
+            ? `${confirmDelete.system_name ?? confirmDelete.bet_type} på ${formatKr(confirmDelete.stake)} tas bort permanent och räknas inte längre med i ROI:n.`
+            : undefined
+        }
+        confirmLabel="Ta bort"
+        danger
+        busy={deleting}
+        onConfirm={() => { if (confirmDelete) handleDelete(confirmDelete) }}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </section>
   )
 }

@@ -158,7 +158,7 @@ export default async function HomePage({
           </div>
           {/* Game controls */}
           <div className="mt-2 md:mt-0">
-            <CollapsibleControls>
+            <CollapsibleControls defaultOpen={!selectedGame}>
               <GamePickerBar savedGames={games} selectedId={selectedId} />
               <ResultsButton gameId={selectedId} />
             </CollapsibleControls>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { deleteNote } from "@/lib/actions/notes";
 import { NoteLabelDot } from "./NoteLabel";
 import { NoteForm } from "./NoteForm";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import type { Group, HorseNote } from "@/lib/types";
 
 function relativeTime(dateStr: string): string {
@@ -39,10 +40,22 @@ export function NoteItem({
 }: NoteItemProps) {
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   async function handleDelete() {
     setDeleting(true);
-    await deleteNote(note.id);
+    setDeleteError(null);
+    const { error } = await deleteNote(note.id);
+    setDeleting(false);
+    if (error) {
+      // Anteckningen ligger kvar i listan om servern nekade — annars ser det ut
+      // som att den försvann trots att den finns kvar nästa gång sidan laddas
+      setDeleteError("Kunde inte ta bort anteckningen. Försök igen.");
+      setConfirmDelete(false);
+      return;
+    }
+    setConfirmDelete(false);
     onDeleted(note.id);
   }
 
@@ -93,7 +106,7 @@ export function NoteItem({
           )}
           {note.author_id === currentUserId && (
             <button
-              onClick={handleDelete}
+              onClick={() => setConfirmDelete(true)}
               disabled={deleting}
               className="text-xs transition disabled:opacity-50"
               style={{ color: "var(--tn-value-low)", background: "none", border: "none", cursor: "pointer" }}
@@ -102,7 +115,26 @@ export function NoteItem({
             </button>
           )}
         </div>
+
+        {deleteError && (
+          <p className="text-xs" style={{ color: "var(--tn-value-low)" }}>{deleteError}</p>
+        )}
       </div>
+
+      <ConfirmDialog
+        open={confirmDelete}
+        title={isReply ? "Ta bort svaret?" : "Ta bort anteckningen?"}
+        description={
+          isReply
+            ? "Svaret tas bort permanent och går inte att återställa."
+            : "Anteckningen och alla svar på den tas bort permanent och går inte att återställa."
+        }
+        confirmLabel="Ta bort"
+        danger
+        busy={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmDelete(false)}
+      />
 
       {showReplyForm && !isReply && (
         <div className="mt-2 ml-4">

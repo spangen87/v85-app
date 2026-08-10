@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { leaveGroup } from "@/lib/actions/groups";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import type { Group } from "@/lib/types";
 
 function CopyButton({ text, label, mono }: { text: string; label: string; mono?: boolean }) {
@@ -55,11 +56,21 @@ export function GroupList({
   unseenByGroup?: Record<string, number>;
 }) {
   const [leaving, setLeaving] = useState<string | null>(null);
+  const [confirmLeave, setConfirmLeave] = useState<Group | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleLeave(groupId: string) {
     setLeaving(groupId);
-    await leaveGroup(groupId);
+    setError(null);
+    const { error } = await leaveGroup(groupId);
     setLeaving(null);
+    if (error) {
+      // Sällskapet ligger kvar i listan om servern nekade
+      setError("Kunde inte lämna sällskapet. Försök igen.");
+      setConfirmLeave(null);
+      return;
+    }
+    setConfirmLeave(null);
     onLeft(groupId);
   }
 
@@ -72,6 +83,10 @@ export function GroupList({
   }
 
   return (
+    <>
+    {error && (
+      <p className="text-xs mb-2" style={{ color: "var(--tn-value-low)" }}>{error}</p>
+    )}
     <ul className="space-y-2">
       {groups.map((g) => (
         <li
@@ -106,7 +121,7 @@ export function GroupList({
             </div>
           </div>
           <button
-            onClick={() => handleLeave(g.id)}
+            onClick={() => setConfirmLeave(g)}
             disabled={leaving === g.id}
             className="text-xs disabled:opacity-50 transition shrink-0"
             style={{ color: "var(--tn-value-low)", background: "none", border: "none", cursor: "pointer" }}
@@ -116,5 +131,17 @@ export function GroupList({
         </li>
       ))}
     </ul>
+
+    <ConfirmDialog
+      open={confirmLeave !== null}
+      title={`Lämna ${confirmLeave?.name ?? "sällskapet"}?`}
+      description="Du förlorar åtkomst till sällskapets forum, anteckningar och system. För att komma tillbaka behöver du en ny inbjudningskod."
+      confirmLabel="Lämna sällskapet"
+      danger
+      busy={leaving !== null}
+      onConfirm={() => { if (confirmLeave) handleLeave(confirmLeave.id); }}
+      onCancel={() => setConfirmLeave(null)}
+    />
+    </>
   );
 }
