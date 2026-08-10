@@ -57,11 +57,12 @@ Innan du kan analysera en omgång måste du hämta data från ATG.
 
 > **Snabbväg:** Om nästa V86/V85/V75 är tillgänglig visas en **Hämta**-knapp direkt på startsidan – klicka på den för att hämta utan att välja datum manuellt.
 
-1. Välj ett **datum** i datumväljaren högst upp på sidan.
-2. Tillgängliga spel för det datumet laddas automatiskt och visas som knappar (t.ex. **Hämta V85**, **Hämta V75**).
-3. Om inga spel finns för valt datum visas texten "Inga spel".
-4. Klicka på knappen för det spel du vill hämta.
-5. Om hämtningen lyckas läggs omgången till i listan och du navigeras dit automatiskt.
+1. Öppna spelkontrollerna. På mobil ligger de bakom raden **BYT ELLER HÄMTA OMGÅNG** högst upp – tryck på den för att fälla ut spelväljaren. Har du ingen omgång inladdad är raden redan utfälld, och startsidans knapp **Hämta en omgång** fäller ut väljaren åt dig. På desktop är kontrollerna alltid synliga.
+2. Välj ett **datum** i datumväljaren.
+3. Tillgängliga spel för det datumet laddas automatiskt och visas som knappar (t.ex. **Hämta V85**, **Hämta V75**).
+4. Om inga spel finns för valt datum visas texten "Inga spel".
+5. Klicka på knappen för det spel du vill hämta.
+6. Om hämtningen lyckas läggs omgången till i listan och du navigeras dit automatiskt.
 
 > **Obs!** Du kan välja datum upp till **14 dagar bakåt eller framåt** från dagens datum.
 
@@ -72,7 +73,7 @@ Innan du kan analysera en omgång måste du hämta data från ATG.
 På huvudsidan ser du en lista med alla hämtade omgångar.
 
 - Välj omgång via **rullgardinsmenyn** (GameSelector) längst upp.
-- Omgångens **avdelningar** visas som klickbara flikar. Klicka på en avdelning för att visa den – bytet sker direkt utan sidladdning.
+- Omgångens **avdelningar** visas som klickbara flikar. Klicka på en avdelning för att visa den – bytet sker direkt utan sidladdning. Flikraden rullar automatiskt så att den aktiva avdelningen alltid syns, även när bytet sker från Top 5-listan eller via en länk.
 - Hästar i aktiv avdelning visas som **en häst per rad** (ATG-stil).
 - Pågår en diskussion om omgången i något av dina sällskap visas **💬 N inlägg om omgången** i informationsraden — klicka för att gå direkt till sällskapets forum för rätt omgång.
 
@@ -271,6 +272,10 @@ Klicka på **Bygg system** på startsidan för att öppna systemläget. I system
 
 Om du har sparade utkast för den aktuella omgången visas de i sidopanelen under **Mina utkast**. Klicka på ett utkast för att ladda in dina tidigare val.
 
+#### Avbryta systemläget
+
+**Avbryt systemläge** tömmer dina markeringar. Har du redan markerat hästar frågar appen först om du är säker – välj **Fortsätt bygga** för att gå tillbaka till kupongen. Har utkastet hunnit sparas finns det kvar under **Mina utkast** även om du avbryter.
+
 #### Se dina system
 
 Klicka på **Se systemet →** direkt efter sparning, eller gå till **System** i menyn. Där visas dina sparade system, och när loppresultat hämtats rättas de automatiskt.
@@ -334,7 +339,7 @@ Inne i ett sällskap finns fyra flikar:
 - Visar sällskapets sparade system och utkast för vald omgång.
 - När resultat hämtats rättas systemen automatiskt — antal rätt visas som t.ex. **6/8** och vinnande hästar markeras gröna.
 - **Sällskapsligan** — topplista över medlemmarnas systemträffar i alla rättade omgångar: antal omgångar, totala rätt, snitt och bästa omgång. Har du flera system i samma omgång räknas det bästa. 👑 markerar vem som vann den senast rättade omgången.
-- Under **Insatser** registrerar du dina spel. Enklast: klicka **Jag spelade detta** på ett systemkort — insatsen (rader × radpris) fylls i automatiskt och kopplas till systemet, så att insatsraden visar systemets träff (t.ex. 6/8). Du kan även lägga till spel manuellt (speltyp, eventuell avdelning/häst och insats i kronor). När omgången är avgjord fyller du i utdelningen på dina egna insatser.
+- Under **Insatser** registrerar du dina spel. Enklast: klicka **Jag spelade detta** på ett systemkort — insatsen (rader × radpris) fylls i automatiskt och kopplas till systemet, så att insatsraden visar systemets träff (t.ex. 6/8). Du kan även lägga till spel manuellt (speltyp, eventuell avdelning/häst och insats i kronor). När omgången är avgjord fyller du i utdelningen på dina egna insatser. Du kan ta bort dina egna insatser med **×** – appen frågar först om du är säker, eftersom insatsen då försvinner ur ROI-beräkningen.
 - **ROI per medlem** visar varje medlems totala insats, utdelning och avkastning över alla omgångar.
 
 **Sällskap**
@@ -349,7 +354,7 @@ Skaparen kan:
 - Se den aktiva **inbjudningskoden** och kopiera den eller länken.
 - Se alla **medlemmar** med deras visningsnamn och när de gick med.
 
-Alla medlemmar (inklusive skaparen) kan **lämna sällskapet** via knappen längst ner. Om skaparen lämnar kvarstår sällskapet för övriga.
+Alla medlemmar (inklusive skaparen) kan **lämna sällskapet** via knappen längst ner. Appen frågar först om du är säker – lämnar du sällskapet förlorar du åtkomst till dess forum, anteckningar och system, och behöver en ny inbjudningskod för att komma tillbaka. Om skaparen lämnar kvarstår sällskapet för övriga.
 
 ---
 
@@ -382,7 +387,7 @@ Anteckningar är kopplade till en specifik häst och visas för alla i de sälls
 - Sällskapsanteckningar är synliga för **alla i det valda sällskapet**.
 - Personliga anteckningar syns bara för dig.
 - En anteckning på en häst visas oavsett vilket lopp hästen startar i.
-- Du kan bara ta bort dina **egna** anteckningar.
+- Du kan bara ta bort dina **egna** anteckningar. Appen frågar först om du är säker, eftersom borttagningen inte går att ångra – en anteckning som tas bort tar även med sig svaren på den.
 
 ---
 

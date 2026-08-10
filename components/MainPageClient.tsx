@@ -5,10 +5,12 @@ import { RaceList } from '@/components/RaceList'
 import { SaveSystemDialog } from '@/components/SaveSystemDialog'
 import { SystemSidebar } from '@/components/SystemSidebar'
 import { SystemDrawer } from '@/components/SystemDrawer'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
 import type { SystemSelection, SystemHorse, Group, GameSystem, TrackConfig } from '@/lib/types'
 import { formatRowCost } from '@/lib/atg'
 import { createSystem, updateDraft, getUserDraftsForGame } from '@/lib/actions/systems'
 import { useRaceTab } from '@/components/RaceTabContext'
+import { openGamePicker } from '@/lib/uiEvents'
 
 type RaceListRaces = ComponentProps<typeof RaceList>['races']
 
@@ -50,6 +52,7 @@ export function MainPageClient({
   const [systemSelections, setSystemSelections] = useState<SystemSelection[]>(initialSelections)
   const [showSaveDialog, setShowSaveDialog] = useState(false)
   const [showDrawer, setShowDrawer] = useState(false)
+  const [confirmCancel, setConfirmCancel] = useState(false)
   const [activeDraftId, setActiveDraftId] = useState<string | null>(draftId)
   const [draftSaveStatus, setDraftSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [draftName, setDraftName] = useState('Utkast')
@@ -127,13 +130,24 @@ export function MainPageClient({
     })
   }, [setActiveRace])
 
-  const handleCancelSystemMode = useCallback(() => {
+  const exitSystemMode = useCallback(() => {
     setSystemMode(false)
     setSystemSelections([])
     setActiveDraftId(null)
     setShowDrawer(false)
+    setConfirmCancel(false)
     setDraftSaveStatus('idle')
   }, [])
+
+  // En påbörjad kupong ska inte kunna kastas med ett enda tryck
+  const handleCancelSystemMode = useCallback(() => {
+    if (systemSelections.length > 0) {
+      setShowDrawer(false)
+      setConfirmCancel(true)
+      return
+    }
+    exitSystemMode()
+  }, [systemSelections.length, exitSystemMode])
 
   const handleOpenSaveDialog = useCallback(() => {
     setShowDrawer(false)
@@ -166,8 +180,21 @@ export function MainPageClient({
       <div className={systemMode ? "md:pr-[320px]" : ""}>
         {races.length === 0 ? (
           <div className="text-center py-20" style={{ color: "var(--tn-text-faint)" }}>
-            <p className="text-lg mb-2">Ingen data inladdad ännu.</p>
-            <p className="text-sm">Välj ett datum och klicka på ett spel för att ladda en omgång från ATG.</p>
+            <p className="text-lg mb-2" style={{ color: "var(--tn-text)" }}>Ingen omgång inladdad ännu.</p>
+            <p className="text-sm mb-5">Välj ett datum och ett spel så hämtas omgången från ATG.</p>
+            <button
+              onClick={openGamePicker}
+              className="text-sm font-semibold rounded-lg transition-colors"
+              style={{
+                padding: "10px 20px",
+                background: "var(--tn-accent)",
+                border: "none",
+                color: "#fff",
+                cursor: "pointer",
+              }}
+            >
+              Hämta en omgång
+            </button>
           </div>
         ) : (
           <RaceList
@@ -259,6 +286,22 @@ export function MainPageClient({
           gameType={gameType}
         />
       )}
+
+      <ConfirmDialog
+        open={confirmCancel}
+        title="Avbryt systembygget?"
+        description={
+          `Du har markerat hästar i ${completedRaces} av ${races.length} avdelningar (${totalRows} ${totalRows === 1 ? 'rad' : 'rader'}). ` +
+          (activeDraftId
+            ? 'Markeringarna töms här, men utkastet finns kvar under "Mina utkast".'
+            : 'Markeringarna töms och kan inte återställas.')
+        }
+        confirmLabel="Avbryt bygget"
+        cancelLabel="Fortsätt bygga"
+        danger
+        onConfirm={exitSystemMode}
+        onCancel={() => setConfirmCancel(false)}
+      />
 
       <SaveSystemDialog
         open={showSaveDialog}
