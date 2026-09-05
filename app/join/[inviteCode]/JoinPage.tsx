@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import type { Group } from "@/lib/types";
@@ -196,6 +197,15 @@ export function JoinPage({ group, inviteCode }: Props) {
             >
               {loading ? "Loggar in…" : "Logga in och gå med"}
             </button>
+            <div className="text-center">
+              <Link
+                href="/glomt-losenord"
+                className="text-sm underline underline-offset-4"
+                style={{ color: "var(--tn-text-faint)" }}
+              >
+                Glömt lösenordet?
+              </Link>
+            </div>
           </form>
         )}
       </div>

@@ -47,6 +47,13 @@ Appen är byggd för att ge dig ett bättre beslutsunderlag – den ersätter in
 4. **Redan registrerad?** Ange dina uppgifter och klicka på **Logga in**.
 5. Efter lyckad inloggning hamnar du på huvudsidan.
 
+**Glömt lösenordet?** Klicka på länken **Glömt lösenordet?** under
+inloggningsknappen (den finns även på inbjudningssidan). Ange din e-postadress
+så skickas en återställningslänk till din inkorg. Länken gäller i en timme –
+klicka på den, välj ett nytt lösenord (minst 8 tecken) och du loggas in direkt.
+Öppna länken i samma webbläsare som du beställde den från, och titta i
+skräpposten om mejlet dröjer.
+
 > **Tips:** Ditt visningsnamn kan ändras i profilinställningarna och syns för övriga medlemmar i dina sällskap.
 
 ---
