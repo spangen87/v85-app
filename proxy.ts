@@ -27,11 +27,14 @@ export async function proxy(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  // Skydda alla sidor utom /login och /join (inbjudningslänkar)
+  // Öppna sidor: inloggning, inbjudningslänkar och lösenordsåterställning
+  // (återställningslänken öppnas utan session — token växlas in i webbläsaren).
+  const PUBLIC_PATHS = ["/login", "/join", "/glomt-losenord", "/aterstall-losenord"];
+
+  // Skydda alla sidor utom de öppna
   if (
     !user &&
-    !request.nextUrl.pathname.startsWith("/login") &&
-    !request.nextUrl.pathname.startsWith("/join")
+    !PUBLIC_PATHS.some((path) => request.nextUrl.pathname.startsWith(path))
   ) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";

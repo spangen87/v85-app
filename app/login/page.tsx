@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
@@ -114,6 +115,16 @@ export default function LoginPage() {
               {loading ? "Loggar in..." : "Logga in"}
             </button>
           </form>
+
+          <div className="text-center">
+            <Link
+              href="/glomt-losenord"
+              className="text-sm underline underline-offset-4"
+              style={{ color: "var(--tn-text-faint)" }}
+            >
+              Glömt lösenordet?
+            </Link>
+          </div>
         </div>
       </div>
     </div>
