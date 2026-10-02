@@ -128,7 +128,7 @@ När en avdelning är expanderad visas ett kort per häst. Den kompakta raden in
 | **Odds** | Aktuellt vinnarodds |
 | **CS-ring** | Composite Score 0–100 som färgad ring — klicka för förklaring av poängen |
 | **Spårjustering (↑/↓)** | Visas vid banor med banspecifik konfiguration (se 6.2) |
-| **Senaste starter** | Placeringar som färgade rutor: guldgul = 1:a, silver = 2:a, orange = 3:a, grå = övriga |
+| **Senaste starter** | De 5 senaste starterna före loppet (hämtas automatiskt med omgången) som färgade rutor: guldgul = 1:a, silver = 2:a, orange = 3:a, grå = övriga. **0** = oplacerad, **g** efter siffran = galopp (t.ex. 5g), **d** = diskvalificerad. Håll muspekaren över en ruta för datum, bana och km-tid |
 | **Tysta signaler** | Rad med gröna/röda märken under senaste starterna: barfota-byte, toppkusk, formtrend och uppehåll (se 6.1). Hästar med kantpoäng ≥ +2 får dessutom märket **SIGNAL +N** |
 
 Hästar markerade som **Värde** får en grönaktig kantlinje på kortet.

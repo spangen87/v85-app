@@ -34,11 +34,20 @@ export interface LifeRecord {
 }
 
 export interface HorseStart {
+  /** Placering i travsportnotation: "1"–"9", "0" = oplacerad, "5g" = galopp, "d" = diskad */
   place: string;
   date: string;
   track: string;
   time: string;
   post_position: number | null;
+  // Rådata från ATG — sparas för framtida analys (saknas i äldre rader)
+  galloped?: boolean;
+  disqualified?: boolean;
+  distance?: number | null;
+  start_method?: string | null;
+  track_condition?: string | null;
+  /** Förstapris i kr — mått på loppets klass */
+  first_prize?: number | null;
 }
 
 export interface AtgStarter {
@@ -224,7 +233,8 @@ export async function fetchV85Game(gameDate?: string): Promise<AtgGame> {
 }
 
 function formatTime(timeObj: Record<string, number> | null | undefined): string {
-  if (!timeObj) return "";
+  // Diskade/galopperande hästar får t.ex. { code: "u" } i stället för en tid
+  if (!timeObj || (timeObj["minutes"] == null && timeObj["seconds"] == null)) return "";
   const m = timeObj["minutes"] ?? 0;
   const s = timeObj["seconds"] ?? 0;
   const t = timeObj["tenths"] ?? 0;
@@ -232,67 +242,136 @@ function formatTime(timeObj: Record<string, number> | null | undefined): string 
 }
 
 // Backoff-fördröjningar vid 429/5xx från ATG — utan retry tappas historiken
-// tyst för de flesta hästar när många anrop görs i följd
-const HORSE_STARTS_RETRY_DELAYS_MS = [500, 1500, 4000];
+// tyst när många anrop görs i följd
+const HISTORY_RETRY_DELAYS_MS = [500, 1500, 4000];
 
-export async function fetchHorseStarts(
-  horseId: string
-): Promise<HorseStart[]> {
+/**
+ * Översätter en historikpost från ATG (`horse.results.records[]` i
+ * /races/{id}/extended och /races/{id}/start/{n}) till HorseStart.
+ * Returnerar null för strykningar — de är inga starter.
+ *
+ * Placeringen kodas i travsportnotation så att formkomponent, galopprisk och
+ * hästkortet kan läsa den direkt: "d" = diskad, "5g" = galopp (placering 5),
+ * "0" = oplacerad, "–" = okänd.
+ */
+export function parseHistoryRecord(r: Record<string, unknown>): HorseStart | null {
+  if (r["scratched"]) return null;
+  const race = (r["race"] as Record<string, unknown>) ?? {};
+  const track = (r["track"] as Record<string, unknown>) ?? {};
+  const start = (r["start"] as Record<string, unknown>) ?? {};
+  const galloped = r["galloped"] === true;
+  const disqualified = r["disqualified"] === true;
+
+  const rawPlace = r["place"];
+  const placeNum = rawPlace != null && rawPlace !== "" ? String(rawPlace) : null;
+  let place: string;
+  if (disqualified) place = "d";
+  else if (galloped) place = `${placeNum ?? "0"}g`;
+  else place = placeNum ?? "–";
+
+  const postPos = start["postPosition"];
+  const distance = start["distance"];
+  const firstPrize = race["firstPrize"];
+  return {
+    date: String(r["date"] ?? ""),
+    track: String(track["name"] ?? ""),
+    place,
+    time: formatTime(r["kmTime"] as Record<string, number> | undefined),
+    post_position: postPos != null ? Number(postPos) : null,
+    galloped,
+    disqualified,
+    distance: distance != null ? Number(distance) : null,
+    start_method: race["startMethod"] != null ? String(race["startMethod"]) : null,
+    track_condition: track["condition"] != null ? String(track["condition"]) : null,
+    // ATG anger pris i ören
+    first_prize: firstPrize != null ? Math.round(Number(firstPrize) / 100) : null,
+  };
+}
+
+/** Historikposter → HorseStart[], nyast först, bara starter före `beforeDate` (ISO-datum) */
+export function parseHistoryRecords(
+  records: Record<string, unknown>[],
+  beforeDate?: string
+): HorseStart[] {
+  return records
+    .map(parseHistoryRecord)
+    .filter((h): h is HorseStart => h != null && (!beforeDate || h.date < beforeDate))
+    .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+}
+
+/**
+ * Hämtar de senaste starterna för samtliga hästar i ett lopp med ett enda
+ * anrop (/races/{id}/extended ger 5 starter per häst). Historiken gäller
+ * läget vid loppet — även för avgjorda lopp — så den är fri från läckage.
+ *
+ * Returnerar en map startnummer → starter (nyast först). Tom map vid fel.
+ */
+export async function fetchRaceHistories(
+  atgRaceId: string,
+  raceDate?: string
+): Promise<Map<number, HorseStart[]>> {
+  const result = new Map<number, HorseStart[]>();
   try {
     let res: Response;
     for (let attempt = 0; ; attempt++) {
-      res = await fetch(`${ATG_BASE}/horses/${horseId}`, {
+      res = await fetch(`${ATG_BASE}/races/${atgRaceId}/extended`, {
         headers: HEADERS,
         next: { revalidate: 0 },
       });
       if (res.ok) break;
       const retryable = res.status === 429 || res.status >= 500;
-      if (!retryable || attempt >= HORSE_STARTS_RETRY_DELAYS_MS.length) {
-        console.warn(`[fetchHorseStarts] ATG svarade ${res.status} för häst ${horseId} — ger upp efter ${attempt + 1} försök`);
-        return [];
+      if (!retryable || attempt >= HISTORY_RETRY_DELAYS_MS.length) {
+        console.warn(`[fetchRaceHistories] ATG svarade ${res.status} för lopp ${atgRaceId} — ger upp efter ${attempt + 1} försök`);
+        return result;
       }
-      await new Promise((r) => setTimeout(r, HORSE_STARTS_RETRY_DELAYS_MS[attempt]));
+      await new Promise((r) => setTimeout(r, HISTORY_RETRY_DELAYS_MS[attempt]));
     }
     const raw = await res.json();
-    const startsRaw = (raw["starts"] as Record<string, unknown>[]) ?? [];
-    if (!Array.isArray(startsRaw)) {
-      console.warn(`[fetchHorseStarts] "starts" är inte en array för häst ${horseId}`);
-      return [];
+    const starts = (raw["starts"] as Record<string, unknown>[]) ?? [];
+    for (const s of starts) {
+      const horse = (s["horse"] as Record<string, unknown>) ?? {};
+      const results = (horse["results"] as Record<string, unknown>) ?? {};
+      const records = (results["records"] as Record<string, unknown>[]) ?? [];
+      result.set(Number(s["number"] ?? 0), parseHistoryRecords(records, raceDate));
     }
-    return startsRaw.slice(0, 20).map((s) => {
-      const race = (s["race"] as Record<string, unknown>) ?? {};
-      const track = (race["track"] as Record<string, unknown>) ?? {};
-      const postPos = s["postPosition"] ?? null;
-
-      // Defensiv place-parsing: hantera sträng, nummer, objekt och "result"-fält
-      let placeVal = s["place"] ?? s["result"] ?? "–";
-      if (typeof placeVal === "object" && placeVal !== null) {
-        // Om place är ett objekt (API-ändring), försök extrahera finishOrder/place
-        const po = placeVal as Record<string, unknown>;
-        placeVal = po["finishOrder"] ?? po["place"] ?? po["position"] ?? "–";
-      }
-      const placeStr = String(placeVal);
-
-      // Defensiv time-parsing: hantera både objekt {minutes,seconds,tenths} och sträng
-      let timeStr = "";
-      const timeRaw = s["time"] ?? s["result.time"] ?? null;
-      if (typeof timeRaw === "string") {
-        timeStr = timeRaw;
-      } else if (typeof timeRaw === "object" && timeRaw !== null) {
-        timeStr = formatTime(timeRaw as Record<string, number>);
-      }
-
-      return {
-        date: String(race["date"] ?? s["date"] ?? ""),
-        track: String(track["name"] ?? race["name"] ?? ""),
-        place: placeStr,
-        time: timeStr,
-        post_position: postPos != null ? Number(postPos) : null,
-      };
-    });
   } catch (err) {
-    console.warn(`[fetchHorseStarts] Fel för häst ${horseId}:`, err instanceof Error ? err.message : String(err));
-    return [];
+    console.warn(`[fetchRaceHistories] Fel för lopp ${atgRaceId}:`, err instanceof Error ? err.message : String(err));
+  }
+  return result;
+}
+
+/** Delar vårt interna lopp-id "{gameId}_{avdelning}" → { gameId, raceNumber } */
+export function splitInternalRaceId(
+  internalRaceId: string
+): { gameId: string; raceNumber: number } | null {
+  const i = internalRaceId.lastIndexOf("_");
+  if (i <= 0) return null;
+  const raceNumber = parseInt(internalRaceId.slice(i + 1), 10);
+  if (isNaN(raceNumber) || raceNumber < 1) return null;
+  return { gameId: internalRaceId.slice(0, i), raceNumber };
+}
+
+/**
+ * Slår upp ATG:s lopp-id ("2026-09-16_7_6") för vårt interna lopp-id
+ * ("V86_2026-09-16_40_1_1") via spelet. Lopp-id kan inte härledas ur
+ * spel-id:t: V86 m.fl. går på två banor och avdelningarnas lopp-id följer
+ * respektive banas löpnummer.
+ */
+export async function resolveAtgRaceId(internalRaceId: string): Promise<string | null> {
+  const parts = splitInternalRaceId(internalRaceId);
+  if (!parts) return null;
+  try {
+    const res = await fetch(`${ATG_BASE}/games/${parts.gameId}`, {
+      headers: HEADERS,
+      next: { revalidate: 3600 },
+    });
+    if (!res.ok) return null;
+    const raw = await res.json();
+    const races = (raw["races"] as Record<string, unknown>[]) ?? [];
+    const id = races[parts.raceNumber - 1]?.["id"];
+    return id != null ? String(id) : null;
+  } catch {
+    return null;
   }
 }
 
@@ -340,7 +419,7 @@ function winPct(
   return null;
 }
 
-function parseGameResults(raw: Record<string, unknown>): AtgGameResults {
+export function parseGameResults(raw: Record<string, unknown>): AtgGameResults {
   const gameId = String(raw["id"] ?? "");
   const rawRaces = (raw["races"] as Record<string, unknown>[]) ?? [];
   const results: AtgStarterResult[] = [];
@@ -361,8 +440,8 @@ function parseGameResults(raw: Record<string, unknown>): AtgGameResults {
         : NaN;
       const finish_position = !isNaN(finishNum) && finishNum > 0 ? finishNum : null;
 
-      // Prova result.time → s.time
-      const timeObj = (result["time"] ?? s["time"]) as Record<string, number> | null | undefined;
+      // ATG levererar km-tiden i result.kmTime (äldre svar: result.time / s.time)
+      const timeObj = (result["kmTime"] ?? result["time"] ?? s["time"]) as Record<string, number> | null | undefined;
       const formatted = formatTime(timeObj);
       const finish_time = formatted || null;
 
