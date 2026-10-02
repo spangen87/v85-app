@@ -32,6 +32,8 @@ npx jest         # Kör tester (lib/__tests__/)
 npm run backtest # Kalibrera CS-vikter mot faktiska resultat (train/test, log-loss; kräver Supabase-env)
 npm run recompute-formscore  # Räkna om lagrad CS för alla omgångar med aktuella vikter (kräver Supabase-env)
                              # (kan även köras från /admin → "Räkna om alla CS-poäng")
+npm run backfill-history     # Fyll i hästhistorik + resultat (km-tid) i efterhand för alla omgångar (kräver Supabase-env)
+                             # --dry = torrkörning, --game <id> = en omgång. Kör recompute-formscore efteråt.
 ```
 
 ---
@@ -54,6 +56,9 @@ app/
       fetch/                # POST { gameType, gameId } → hämtar omgång från ATG
       upcoming/             # GET → kommande ATG-spel (används av AutoLoadUpcoming)
       [gameId]/             # GET → hämtar sparad omgång
+      [gameId]/results/     # POST → hämtar resultat (lib/results.ts)
+    cron/
+      results/              # GET (Vercel Cron, vercel.json) → nattlig resultathämtning, kräver CRON_SECRET
     horses/
       [horseId]/starts/     # GET → hämtar häststarter från ATG
   join/                     # Öppen sida för inbjudningslänk /join/[code]
@@ -115,6 +120,7 @@ components/
 
 scripts/
   backtest-weights.ts       # Grid-söker CS-vikter mot lopp med facit, train/test + log-loss (npm run backtest)
+  backfill-history.ts       # Efterkonstruerar historik + resultat för sparade omgångar (npm run backfill-history)
   recompute-formscore.ts    # Räknar om lagrad CS med aktuella vikter (npm run recompute-formscore)
 
 lib/
@@ -125,6 +131,7 @@ lib/
   probability.ts            # Kalibrerad vinstsannolikhet (50% streck + 50% odds, BLEND_ALPHA)
   push.ts                   # Web push-utskick (sendPushToUsers, no-op utan VAPID-env)
   systems.ts                # gradeSystemsForGame (rättar system, returnerar notifierbara sällskap)
+  results.ts                # fetchAndStoreResults (resultat → starters, rättning, notis) — knapp + cron
   atg.ts                    # Typer för ATG-data (AvailableGame m.m.)
   types.ts                  # Delade TS-typer (Group, GroupMember, HorseNote, m.m.)
   supabase/                 # Supabase-klienter (server/browser)
@@ -240,7 +247,12 @@ påverkar inte CS eller kalibrerad sannolikhet — ett kvalitativt lager ovanpå
 - **Web push** kräver tre miljövariabler (genereras med `npx web-push generate-vapid-keys`):
   `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (mailto:/URL).
   Saknas de är push helt avstängt — `NotificationToggle` döljs och `sendPushToUsers`
-  blir en no-op. Resultatnotisen skickas från `app/api/games/[gameId]/results/route.ts`.
+  blir en no-op. Resultatnotisen skickas från `lib/results.ts` (resultatknappen och cron-jobbet).
+- **Nattlig resultathämtning**: Vercel Cron (`vercel.json`) anropar `/api/cron/results` kl. 22 UTC.
+  Kräver miljövariabeln `CRON_SECRET` (Vercel skickar den som Bearer-token); `/api/cron` är
+  undantaget från inloggningskravet i `proxy.ts`.
+- **ATG-historik** hämtas per avdelning via `/races/{atg_race_id}/extended` (`fetchRaceHistories`).
+  Vårt lopp-id går inte att översätta till ATG:s (V86 går på två banor) — använd `resolveAtgRaceId`.
 
 ---
 

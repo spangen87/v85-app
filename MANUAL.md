@@ -401,9 +401,9 @@ Sidan visar:
 - **Vinnare i topp 3** – hur ofta vinnaren återfanns bland de tre högst rankade hästarna.
 - **Per omgång** – detaljerad genomgång per sparad omgång: vinnare, toppval och träff per avdelning.
 
-> Utvärderingen kräver att loppresultat har hämtats.
+> Utvärderingen kräver att loppresultat har hämtats. Resultaten hämtas **automatiskt varje kväll** (runt midnatt) för sparade omgångar från den senaste veckan – systemen rättas och notiser skickas utan att någon behöver trycka på något.
 
-> **Tips:** Knappen **Hämta alla resultat** på utvärderingssidan hämtar resultat för alla omgångar som saknar dem i ett svep – praktiskt efter en speldag.
+> **Tips:** Vill du se resultaten direkt efter sista loppet hämtar knappen **Hämta alla resultat** på utvärderingssidan resultat för alla omgångar som saknar dem i ett svep.
 
 ---
 
