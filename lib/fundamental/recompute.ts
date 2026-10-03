@@ -56,3 +56,32 @@ export function computeFundamentalUpdates(
   }
   return updates;
 }
+
+/** Det minsta av Supabase-klienten som behövs för bulk-skrivningen */
+interface UpsertClient {
+  from(table: string): {
+    upsert(
+      rows: FundamentalUpdate[],
+      opts: { onConflict?: string }
+    ): PromiseLike<{ error: { message: string } | null }>;
+  };
+}
+
+/**
+ * Skriver Grundchans i bulk (upsert på id, 500 rader per anrop) — en rad i
+ * taget tar för lång tid för adminroutens tidsgräns. Kastar vid fel.
+ */
+export async function writeFundamentalUpdates(
+  db: UpsertClient,
+  updates: FundamentalUpdate[],
+  chunkSize = 500
+): Promise<number> {
+  let written = 0;
+  for (let i = 0; i < updates.length; i += chunkSize) {
+    const chunk = updates.slice(i, i + chunkSize);
+    const { error } = await db.from("starters").upsert(chunk, { onConflict: "id" });
+    if (error) throw new Error(`upsert fundamental_p: ${error.message}`);
+    written += chunk.length;
+  }
+  return written;
+}

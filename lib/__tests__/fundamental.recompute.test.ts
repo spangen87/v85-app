@@ -1,4 +1,4 @@
-import { computeFundamentalUpdates } from "../fundamental/recompute";
+import { computeFundamentalUpdates, writeFundamentalUpdates } from "../fundamental/recompute";
 import type { FundamentalModel } from "../fundamental/model";
 import { TABLES } from "../__fixtures__/fundamental";
 
@@ -34,5 +34,35 @@ describe("computeFundamentalUpdates", () => {
   });
   it("hoppar över lopp utan avdelningsdata", () => {
     expect(computeFundamentalUpdates([], dates, [{ ...base, id: "a", start_number: 1 }], MODEL_T)).toEqual([]);
+  });
+});
+
+describe("writeFundamentalUpdates", () => {
+  it("skriver i bulk (upsert på id) i bitar om 500", async () => {
+    const calls: { rows: unknown[]; onConflict?: string }[] = [];
+    const fakeDb = {
+      from: (table: string) => {
+        expect(table).toBe("starters");
+        return {
+          upsert: async (rows: unknown[], opts: { onConflict?: string }) => {
+            calls.push({ rows, onConflict: opts.onConflict });
+            return { error: null };
+          },
+        };
+      },
+    };
+    const updates = Array.from({ length: 1200 }, (_, i) => ({
+      id: `id${i}`, fundamental_p: 0.1, fundamental_version: "v2",
+    }));
+    const written = await writeFundamentalUpdates(fakeDb, updates);
+    expect(written).toBe(1200);
+    expect(calls.map((c) => c.rows.length)).toEqual([500, 500, 200]);
+    expect(calls.every((c) => c.onConflict === "id")).toBe(true);
+  });
+  it("kastar vid fel så att adminrouten svarar med fel", async () => {
+    const fakeDb = { from: () => ({ upsert: async () => ({ error: { message: "nej" } }) }) };
+    await expect(
+      writeFundamentalUpdates(fakeDb, [{ id: "a", fundamental_p: null, fundamental_version: null }])
+    ).rejects.toThrow("nej");
   });
 });

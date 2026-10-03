@@ -17,7 +17,7 @@
  */
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { calculateCompositeScore, type RaceContext } from "../lib/formscore";
-import { computeFundamentalUpdates, MODEL, type RecomputeRace } from "../lib/fundamental";
+import { computeFundamentalUpdates, MODEL, writeFundamentalUpdates, type RecomputeRace } from "../lib/fundamental";
 import type { AtgStarter } from "../lib/atg";
 import type { TrackConfig } from "../lib/types";
 
@@ -213,17 +213,8 @@ async function main() {
   );
   console.log(`\nGrundchans (modell ${MODEL.version}): ${fUpdates.length} rader får nytt värde.`);
   if (!dry && fUpdates.length > 0) {
-    for (let i = 0; i < fUpdates.length; i += 20) {
-      const batch = fUpdates.slice(i, i + 20);
-      const res = await Promise.all(
-        batch.map((u) =>
-          db.from("starters").update({ fundamental_p: u.fundamental_p, fundamental_version: u.fundamental_version }).eq("id", u.id)
-        )
-      );
-      res.forEach((r) => r.error && console.error(`  fel: ${r.error.message}`));
-      process.stdout.write(`\r  ${Math.min(i + 20, fUpdates.length)}/${fUpdates.length}`);
-    }
-    console.log("\nGrundchans uppdaterad.");
+    const written = await writeFundamentalUpdates(db, fUpdates);
+    console.log(`Grundchans uppdaterad för ${written} rader.`);
   }
 }
 

@@ -4,7 +4,7 @@ import { getAuthUser, isAdmin } from "@/lib/supabase/guards";
 import { calculateCompositeScore, type RaceContext } from "@/lib/formscore";
 import type { AtgStarter } from "@/lib/atg";
 import type { TrackConfig } from "@/lib/types";
-import { computeFundamentalUpdates, type RecomputeRace } from "@/lib/fundamental";
+import { computeFundamentalUpdates, writeFundamentalUpdates, type RecomputeRace } from "@/lib/fundamental";
 
 // Omräkningen rör alla starters i alla omgångar — kan ta längre tid än standard
 export const maxDuration = 60;
@@ -149,22 +149,14 @@ export async function POST() {
       }
     }
 
-    // Grundchans — float-värden, uppdateras per rad i batchar om 20
+    // Grundchans — float-värden, skrivs i bulk (upsert på id)
     const gameDates = new Map((games ?? []).map((g) => [g.id as string, String(g.date)]));
     const fUpdates = computeFundamentalUpdates(
       (races ?? []) as unknown as RecomputeRace[],
       gameDates,
       allStarters as unknown as Parameters<typeof computeFundamentalUpdates>[2]
     );
-    for (let i = 0; i < fUpdates.length; i += 20) {
-      const res = await Promise.all(
-        fUpdates.slice(i, i + 20).map((u) =>
-          db.from("starters").update({ fundamental_p: u.fundamental_p, fundamental_version: u.fundamental_version }).eq("id", u.id)
-        )
-      );
-      const failed = res.find((r) => r.error);
-      if (failed?.error) throw new Error(`update fundamental: ${failed.error.message}`);
-    }
+    await writeFundamentalUpdates(db, fUpdates);
 
     return NextResponse.json({ updated: changed, races: racesProcessed, fundamental_updated: fUpdates.length });
   } catch (err) {
