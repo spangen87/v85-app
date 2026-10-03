@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { isAdmin, getAuthUser } from "@/lib/supabase/guards";
 import { EvaluationPanel } from "@/components/EvaluationPanel";
+import { computeEvaluation, type EvalStarterRow } from "@/lib/evaluation";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { redirect } from "next/navigation";
 
@@ -10,139 +11,6 @@ interface GameSummary {
   game_type: string;
   track: string;
   has_results: boolean;
-}
-
-interface StarterRow {
-  race_id: string;
-  start_number: number;
-  formscore: number | null;
-  finish_position: number | null;
-  races: {
-    race_number: number;
-    game_id: string;
-    games: {
-      id: string;
-      date: string;
-      game_type: string;
-      track: string;
-    } | null;
-  } | null;
-  horses: { name: string } | null;
-}
-
-interface RaceEval {
-  race_number: number;
-  winner_name: string;
-  top_pick_name: string;
-  top_pick_won: boolean;
-  top_3_covered_winner: boolean;
-}
-
-interface GameEval {
-  game_id: string;
-  date: string;
-  game_type: string;
-  track: string;
-  races_evaluated: number;
-  top_pick_win_rate: number;
-  top_3_coverage_rate: number;
-  races: RaceEval[];
-}
-
-function computeEvaluation(rows: StarterRow[]) {
-  const byRace = new Map<string, StarterRow[]>();
-  for (const row of rows) {
-    const key = row.race_id;
-    if (!byRace.has(key)) byRace.set(key, []);
-    byRace.get(key)!.push(row);
-  }
-
-  const byGame = new Map<string, { game: GameEval["game_id"] extends string ? Pick<GameEval, "game_id" | "date" | "game_type" | "track"> : never; races: Map<string, StarterRow[]> }>();
-  for (const [raceId, starters] of byRace) {
-    const first = starters[0];
-    if (!first?.races?.games) continue;
-    const gameId = first.races.game_id;
-    if (!byGame.has(gameId)) {
-      byGame.set(gameId, {
-        game: {
-          game_id: gameId,
-          date: first.races.games.date,
-          game_type: first.races.games.game_type,
-          track: first.races.games.track,
-        },
-        races: new Map(),
-      });
-    }
-    byGame.get(gameId)!.races.set(raceId, starters);
-  }
-
-  const games: GameEval[] = [];
-  let totalRaces = 0;
-  let totalTopPickWins = 0;
-  let totalTop3Coverage = 0;
-
-  for (const [, { game, races }] of byGame) {
-    const raceEvals: RaceEval[] = [];
-    let gameTopWins = 0;
-    let gameTop3 = 0;
-
-    for (const [, starters] of races) {
-      const winner = starters.find((s) => s.finish_position === 1);
-      if (!winner) continue;
-
-      const ranked = [...starters]
-        .filter((s) => s.formscore != null)
-        .sort((a, b) => (b.formscore ?? 0) - (a.formscore ?? 0));
-
-      if (ranked.length === 0) continue;
-
-      const topPick = ranked[0];
-      const top3 = ranked.slice(0, 3).map((s) => s.start_number);
-
-      const top_pick_won = topPick.start_number === winner.start_number;
-      const top_3_covered_winner = top3.includes(winner.start_number);
-
-      if (top_pick_won) gameTopWins++;
-      if (top_3_covered_winner) gameTop3++;
-
-      const raceInfo = starters[0].races;
-      raceEvals.push({
-        race_number: raceInfo?.race_number ?? 0,
-        winner_name: winner.horses?.name ?? `Nr ${winner.start_number}`,
-        top_pick_name: topPick.horses?.name ?? `Nr ${topPick.start_number}`,
-        top_pick_won,
-        top_3_covered_winner,
-      });
-    }
-
-    raceEvals.sort((a, b) => a.race_number - b.race_number);
-    const n = raceEvals.length;
-    if (n === 0) continue;
-
-    totalRaces += n;
-    totalTopPickWins += gameTopWins;
-    totalTop3Coverage += gameTop3;
-
-    games.push({
-      ...game,
-      races_evaluated: n,
-      top_pick_win_rate: (gameTopWins / n) * 100,
-      top_3_coverage_rate: (gameTop3 / n) * 100,
-      races: raceEvals,
-    });
-  }
-
-  games.sort((a, b) => b.date.localeCompare(a.date));
-
-  return {
-    overall: {
-      games_evaluated: games.length,
-      races_evaluated: totalRaces,
-      top_pick_win_rate: totalRaces > 0 ? (totalTopPickWins / totalRaces) * 100 : 0,
-      top_3_coverage_rate: totalRaces > 0 ? (totalTop3Coverage / totalRaces) * 100 : 0,
-    },
-    games,
-  };
 }
 
 export default async function EvaluationPage() {
@@ -156,26 +24,42 @@ export default async function EvaluationPage() {
     .order("date", { ascending: false })
     .limit(100);
 
-  const { data } = await supabase
-    .from("starters")
-    .select(`
-      race_id, start_number, formscore, finish_position,
-      races ( race_number, game_id, games ( id, date, game_type, track ) ),
-      horses ( name )
-    `)
-    .not("formscore", "is", null)
-    .not("finish_position", "is", null);
+  // Alla startande i lopp med formscore (även de som galopperat) — sidvis,
+  // Supabase returnerar högst 1 000 rader per anrop
+  const rows: EvalStarterRow[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data: page } = await supabase
+      .from("starters")
+      .select(`
+        race_id, start_number, formscore, fundamental_p, finish_position,
+        races ( race_number, game_id, games ( id, date, game_type, track ) ),
+        horses ( name )
+      `)
+      .not("formscore", "is", null)
+      .order("race_id")
+      .order("start_number")
+      .range(from, from + 999);
+    rows.push(...((page ?? []) as unknown as EvalStarterRow[]));
+    if (!page || page.length < 1000) break;
+  }
 
   const { data: allRacesData } = await supabase
     .from("races")
     .select("id, game_id");
 
-  const { data: resultedRacesData } = await supabase
-    .from("starters")
-    .select("race_id, races(game_id)")
-    .not("finish_position", "is", null);
+  const resultedRacesData: { race_id: string; races: { game_id: string } | null }[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data: page } = await supabase
+      .from("starters")
+      .select("race_id, races(game_id)")
+      .not("finish_position", "is", null)
+      .order("race_id")
+      .order("start_number")
+      .range(from, from + 999);
+    resultedRacesData.push(...((page ?? []) as unknown as { race_id: string; races: { game_id: string } | null }[]));
+    if (!page || page.length < 1000) break;
+  }
 
-  const rows = (data ?? []) as unknown as StarterRow[];
   const { overall, games } = computeEvaluation(rows);
 
   const racesWithResultsByGame = new Map<string, Set<string>>();
