@@ -31,3 +31,49 @@ export const TABLES: SpeedTables = {
   par_fallback: { "V|auto|medium": 74.0, "V|volte|medium": 75.0 },
   condition_adj: { light: 0, heavy: 0.7 },
 };
+
+export const ATG_RACE = {
+  id: "2026-09-21_12_7",
+  date: "2026-09-21",
+  distance: 2140,
+  startMethod: "volte",
+  prize: "Pris: 50.000-25.000-12.500 kr (5 prisplacerade).",
+  terms: ["3-åriga och äldre 85.001 - 225.000 kr.", "2140 m. Voltstart."],
+};
+
+export const ATG_START = {
+  number: 4,
+  postPosition: 4,
+  distance: 2160,
+  driver: {
+    firstName: "Ulf", lastName: "Ohlsson",
+    statistics: { years: { "2026": { starts: 100, placement: { "1": 15 } } } },
+  },
+  horse: {
+    age: 6, sex: "gelding",
+    shoes: { reported: true, front: { hasShoe: false, changed: true }, back: { hasShoe: false, changed: false } },
+    sulky: { type: { code: "AM", text: "Amerikansk" } },
+    trainer: { statistics: { years: { "2026": { starts: 50, placement: { "1": 5 } } } } },
+    statistics: {
+      life: {
+        starts: 20, earnings: 40000000, placement: { "1": 4, "2": 3, "3": 2 }, startPoints: 900,
+        records: [{ startMethod: "volte", distance: "medium", place: 1, time: { minutes: 1, seconds: 13, tenths: 0 } }],
+      },
+      years: { "2026": { starts: 8, placement: { "1": 2, "2": 1, "3": 1 } } },
+    },
+    results: {
+      records: [
+        {
+          date: "2026-09-21", place: "1", kmTime: { minutes: 1, seconds: 12, tenths: 0 }, // loppet självt
+          race: { startMethod: "volte", firstPrize: 5000000 }, track: { name: "Bollnäs", condition: "light" },
+          start: { distance: 2140, postPosition: 4 },
+        },
+        {
+          date: "2026-09-01", place: "2", kmTime: { minutes: 1, seconds: 14, tenths: 0 },
+          race: { startMethod: "volte", firstPrize: 5000000 }, track: { name: "Bollnäs", condition: "light" },
+          start: { distance: 2140, postPosition: 2, driver: { firstName: "Ulf", lastName: "Ohlsson" } },
+        },
+      ],
+    },
+  },
+};
