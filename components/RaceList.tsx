@@ -8,6 +8,8 @@ import { TopFiveRanking } from "./TopFiveRanking";
 import { computeSkrallMap } from "@/lib/skrall";
 import { computeEdgeMap } from "@/lib/edge";
 import { computeWinProbabilities, type WinProbability } from "@/lib/probability";
+import { computeFundamentalMapForRows, type FundamentalResult } from "@/lib/fundamental";
+import type { HorseStart } from "@/lib/atg";
 import type { Group, SystemSelection, SystemHorse, TrackConfig } from "@/lib/types";
 
 interface LifeRecord {
@@ -17,7 +19,7 @@ interface LifeRecord {
   time: string;
 }
 
-type SortKey = "number" | "odds" | "bet" | "composite";
+type SortKey = "number" | "odds" | "bet" | "composite" | "grund";
 
 interface Starter {
   id: string;
@@ -56,7 +58,10 @@ interface Starter {
   places_2nd_prev_year: number | null;
   places_3rd_prev_year: number | null;
   best_time: string | null;
-  last_5_results: { place: string; date: string; track: string; time: string }[];
+  last_5_results: HorseStart[];
+  horse_starts_history?: HorseStart[] | null;
+  start_distance?: number | null;
+  start_points?: number | null;
   life_records: LifeRecord[] | null;
   formscore: number | null;
   finish_position: number | null;
@@ -71,6 +76,8 @@ interface Race {
   distance: number;
   start_method: string | null;
   start_time: string | null;
+  breed?: string | null;
+  first_prize?: number | null;
   starters: Starter[];
 }
 
@@ -111,6 +118,7 @@ export function RaceList({
 
   const SORT_OPTIONS: { key: SortKey; label: string }[] = [
     { key: "composite", label: "CS — Composite Score" },
+    { key: "grund", label: "Grundchans (högst)" },
     { key: "number", label: "Startnummer" },
     { key: "odds", label: "Odds (lägst)" },
     { key: "bet", label: "Streck% (högst)" },
@@ -118,7 +126,11 @@ export function RaceList({
 
   const activeRace = races.find((r) => r.race_number === activeRaceNumber) ?? races[0];
 
-  function sortStarters(starters: Starter[], compositeMap: Record<number, number>): Starter[] {
+  function sortStarters(
+    starters: Starter[],
+    compositeMap: Record<number, number>,
+    grundMap: Record<number, FundamentalResult>
+  ): Starter[] {
     return [...starters].sort((a, b) => {
       switch (sortKey) {
         case "number": return a.start_number - b.start_number;
@@ -134,6 +146,8 @@ export function RaceList({
           return b.bet_distribution - a.bet_distribution;
         case "composite":
           return (compositeMap[b.start_number] ?? 0) - (compositeMap[a.start_number] ?? 0);
+        case "grund":
+          return (grundMap[b.start_number]?.p ?? -1) - (grundMap[a.start_number]?.p ?? -1);
         default:
           return (b.formscore ?? 0) - (a.formscore ?? 0);
       }
@@ -162,6 +176,11 @@ export function RaceList({
   const skrallMap = computeSkrallMap(activeRace.starters);
   // Tysta signaler (barfota, toppkusk, formtrend, uppehåll) — relativa fältet
   const edgeMap = computeEdgeMap(activeRace.starters, activeRace.start_time);
+  // Grundchans (odds-fri) — relativ fältet, beräknas före filtrering
+  const raceDate = activeRace.start_time?.slice(0, 10) ?? new Date().toISOString().slice(0, 10);
+  const fundamentalMap: Record<number, FundamentalResult> = computeFundamentalMapForRows(
+    activeRace, raceDate, activeRace.starters
+  );
 
   const q = search.trim().toLowerCase();
   const filtered = activeRace.starters
@@ -174,7 +193,7 @@ export function RaceList({
       return (s.horses?.name ?? "").toLowerCase().includes(q) || s.driver.toLowerCase().includes(q) || s.trainer.toLowerCase().includes(q);
     });
 
-  const sorted = sortStarters(filtered, compositeMap);
+  const sorted = sortStarters(filtered, compositeMap, fundamentalMap);
   const raceSelections = systemSelections?.find((s) => s.race_number === activeRace.race_number);
   const startTimeStr = activeRace.start_time
     ? new Date(activeRace.start_time).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Stockholm" })
@@ -317,6 +336,7 @@ export function RaceList({
           skrallMap={skrallMap}
           probMap={probMap}
           edgeMap={edgeMap}
+          fundamentalMap={fundamentalMap}
         />
       )}
 
