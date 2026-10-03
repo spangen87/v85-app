@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
+import { parseHistoryRecords, resolveAtgRaceId, splitInternalRaceId } from "@/lib/atg";
 
 const ATG_BASE = "https://www.atg.se/services/racinginfo/v1/api";
 const HEADERS = {
@@ -13,27 +14,6 @@ function formatKmTime(timeObj: Record<string, number> | null | undefined): strin
   const s = timeObj["seconds"] ?? 0;
   const t = timeObj["tenths"] ?? 0;
   return `${m}:${String(s).padStart(2, "0")},${t}`;
-}
-
-/**
- * Derive the ATG race ID from our internal race ID.
- * Our format:  "{gameType}_{date}_{trackId}_{firstRaceNum}_{ourRaceNum}"
- * e.g.         "V85_2026-04-05_23_5_1"
- * ATG format:  "{date}_{trackId}_{firstRaceNum + ourRaceNum - 1}"
- * e.g.         "2026-04-05_23_5"
- */
-function deriveAtgRaceId(internalRaceId: string): string | null {
-  // Split on _ — date segment contains hyphens so splitting by _ is safe
-  const parts = internalRaceId.split("_");
-  // Expected: [gameType, date, trackId, firstRaceNum, ourRaceNum]
-  if (parts.length < 5) return null;
-  const date = parts[1];          // "2026-04-05"
-  const trackId = parts[2];       // "23"
-  const firstRaceNum = parseInt(parts[3], 10); // 5
-  const ourRaceNum = parseInt(parts[4], 10);   // 1, 2, 3 …
-  if (isNaN(firstRaceNum) || isNaN(ourRaceNum)) return null;
-  const atgRaceNum = firstRaceNum + ourRaceNum - 1;
-  return `${date}_${trackId}_${atgRaceNum}`;
 }
 
 export async function GET(
@@ -54,10 +34,16 @@ export async function GET(
     return NextResponse.json({ starts: [] });
   }
 
-  const atgRaceId = deriveAtgRaceId(internalRaceId);
-  if (!atgRaceId) {
+  if (!splitInternalRaceId(internalRaceId)) {
     return NextResponse.json({ error: "Ogiltigt raceId-format" }, { status: 400 });
   }
+  // Lopp-id:t kan inte härledas ur vårt id (V86 m.fl. går på två banor) —
+  // slå upp det via spelet hos ATG
+  const atgRaceId = await resolveAtgRaceId(internalRaceId);
+  if (!atgRaceId) {
+    return NextResponse.json({ error: "Kunde inte hitta loppet hos ATG" }, { status: 502 });
+  }
+  const raceDate = atgRaceId.split("_")[0];
 
   try {
     const res = await fetch(
@@ -120,18 +106,14 @@ export async function GET(
 
     // Persistera historiken så att den förbättrar CS-beräkningen vid nästa
     // omhämtning av omgången — annars försvinner datat när vyn stängs.
-    // Skriv bara om raden saknar historik (bulk-hämtningen ger 20 starter,
-    // detta endpoint bara 10) och bara om ATG-svaret gäller rätt häst.
+    // Skriv bara om raden saknar historik (omgångshämtningen fyller den
+    // normalt) och bara om ATG-svaret gäller rätt häst.
+    // Bara starter före loppet — för avgjorda lopp ingår annars loppet
+    // självt, vilket skulle läcka facit in i formberäkningen.
     const atgHorseId = horseData["id"] != null ? String(horseData["id"]) : null;
-    if (starts.length > 0 && atgHorseId === horseId) {
+    const history = parseHistoryRecords(records, raceDate).slice(0, 10);
+    if (history.length > 0 && atgHorseId === horseId) {
       try {
-        const history = starts.map((s) => ({
-          date: s.date,
-          track: s.track,
-          place: s.place,
-          time: s.time,
-          post_position: s.post_position,
-        }));
         const db = createServiceClient();
         const { data: existing } = await db
           .from("starters")

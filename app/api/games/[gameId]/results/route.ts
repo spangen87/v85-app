@@ -1,42 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchGameResults } from "@/lib/atg";
 import { createServiceClient } from "@/lib/supabase/server";
-import { gradeSystemsForGame } from "@/lib/systems";
-import { sendPushToUsers } from "@/lib/push";
-
-/**
- * Skickar resultatnotis till medlemmar i sällskap som fick nyrättade system.
- * Körs bara när minst ett system faktiskt nyrättades, så upprepade
- * resultathämtningar inte ger dubbla notiser. Icke-fatal.
- */
-async function notifyGradedGroups(
-  db: ReturnType<typeof createServiceClient>,
-  gameId: string,
-  groupIds: string[]
-) {
-  if (groupIds.length === 0) return;
-
-  const { data: game } = await db
-    .from("games")
-    .select("game_type, date, track")
-    .eq("id", gameId)
-    .single();
-
-  const { data: members } = await db
-    .from("group_members")
-    .select("user_id")
-    .in("group_id", groupIds);
-  const userIds = [...new Set((members ?? []).map((m) => m.user_id as string))];
-  if (userIds.length === 0) return;
-
-  const label = game ? `${game.game_type} ${game.date}` : "omgången";
-  await sendPushToUsers(userIds, {
-    title: "Resultaten är rättade 🏆",
-    body: `${label} är avgjord — se hur ditt sällskap gick.`,
-    url: "/",
-    tag: `results-${gameId}`,
-  });
-}
+import { fetchAndStoreResults } from "@/lib/results";
 
 export async function POST(
   _request: NextRequest,
@@ -49,81 +13,19 @@ export async function POST(
   }
 
   try {
-    const gameResults = await fetchGameResults(gameId);
+    const outcome = await fetchAndStoreResults(createServiceClient(), gameId);
 
-    if (!gameResults.is_complete) {
+    if (outcome.status === "not_ready") {
       return NextResponse.json(
         { error: "Inga resultat tillgängliga ännu för detta spel" },
         { status: 422 }
       );
     }
-
-    const supabase = createServiceClient();
-
-    // Kontrollera att spelet finns i databasen
-    const { data: game } = await supabase
-      .from("games")
-      .select("id")
-      .eq("id", gameId)
-      .single();
-
-    if (!game) {
-      return NextResponse.json(
-        { error: "Spelet finns inte i databasen. Hämta det först." },
-        { status: 404 }
-      );
+    if (outcome.status === "not_found") {
+      return NextResponse.json({ error: outcome.error }, { status: 404 });
     }
 
-    // Hämta avdelningar för att bygga race_id-mappning
-    const { data: races } = await supabase
-      .from("races")
-      .select("id, race_number")
-      .eq("game_id", gameId)
-      .order("race_number");
-
-    if (!races || races.length === 0) {
-      return NextResponse.json({ error: "Inga avdelningar hittades" }, { status: 404 });
-    }
-
-    // race_number är 1-baserat, race_index från ATG är 0-baserat
-    const raceIdByIndex: Record<number, string> = Object.fromEntries(
-      races.map((r) => [r.race_number - 1, r.id])
-    );
-
-    let updatedCount = 0;
-    const racesSeen = new Set<number>();
-
-    for (const result of gameResults.results) {
-      const raceId = raceIdByIndex[result.race_index];
-      if (!raceId) continue;
-
-      const { error } = await supabase
-        .from("starters")
-        .update({
-          finish_position: result.finish_position,
-          finish_time: result.finish_time,
-        })
-        .eq("race_id", raceId)
-        .eq("start_number", result.start_number);
-
-      if (!error && result.finish_position !== null) {
-        updatedCount++;
-        racesSeen.add(result.race_index);
-      }
-    }
-
-    // Rätta sparade system (isolerat — fel här ska inte påverka svaret)
-    try {
-      const newlyGradedGroups = await gradeSystemsForGame(supabase, gameId)
-      await notifyGradedGroups(supabase, gameId, newlyGradedGroups)
-    } catch (err) {
-      console.warn('[results] gradeSystemsForGame/notify failed (non-fatal):', err)
-    }
-
-    return NextResponse.json({
-      updated: updatedCount,
-      races: racesSeen.size,
-    });
+    return NextResponse.json({ updated: outcome.updated, races: outcome.races });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Okänt fel";
     return NextResponse.json({ error: message }, { status: 500 });

@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "backtest": "tsx scripts/backtest-weights.ts",
-    "recompute-formscore": "tsx scripts/recompute-formscore.ts"
+    "recompute-formscore": "tsx scripts/recompute-formscore.ts",
+    "backfill-history": "tsx scripts/backfill-history.ts"
   },
   "dependencies": {
     "@serwist/next": "^9.5.6",

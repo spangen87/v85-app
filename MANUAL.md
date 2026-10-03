@@ -128,7 +128,7 @@ När en avdelning är expanderad visas ett kort per häst. Den kompakta raden in
 | **Odds** | Aktuellt vinnarodds |
 | **CS-ring** | Composite Score 0–100 som färgad ring — klicka för förklaring av poängen |
 | **Spårjustering (↑/↓)** | Visas vid banor med banspecifik konfiguration (se 6.2) |
-| **Senaste starter** | Placeringar som färgade rutor: guldgul = 1:a, silver = 2:a, orange = 3:a, grå = övriga |
+| **Senaste starter** | De 5 senaste starterna före loppet (hämtas automatiskt med omgången) som färgade rutor: guldgul = 1:a, silver = 2:a, orange = 3:a, grå = övriga. **0** = oplacerad, **g** efter siffran = galopp (t.ex. 5g), **d** = diskvalificerad. Håll muspekaren över en ruta för datum, bana och km-tid |
 | **Tysta signaler** | Rad med gröna/röda märken under senaste starterna: barfota-byte, toppkusk, formtrend och uppehåll (se 6.1). Hästar med kantpoäng ≥ +2 får dessutom märket **SIGNAL +N** |
 
 Hästar markerade som **Värde** får en grönaktig kantlinje på kortet.
@@ -401,9 +401,9 @@ Sidan visar:
 - **Vinnare i topp 3** – hur ofta vinnaren återfanns bland de tre högst rankade hästarna.
 - **Per omgång** – detaljerad genomgång per sparad omgång: vinnare, toppval och träff per avdelning.
 
-> Utvärderingen kräver att loppresultat har hämtats.
+> Utvärderingen kräver att loppresultat har hämtats. Resultaten hämtas **automatiskt varje kväll** (runt midnatt) för sparade omgångar från den senaste veckan – systemen rättas och notiser skickas utan att någon behöver trycka på något.
 
-> **Tips:** Knappen **Hämta alla resultat** på utvärderingssidan hämtar resultat för alla omgångar som saknar dem i ett svep – praktiskt efter en speldag.
+> **Tips:** Vill du se resultaten direkt efter sista loppet hämtar knappen **Hämta alla resultat** på utvärderingssidan resultat för alla omgångar som saknar dem i ett svep.
 
 ---
 

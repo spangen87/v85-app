@@ -27,11 +27,13 @@ export async function proxy(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  // Skydda alla sidor utom /login och /join (inbjudningslänkar)
+  // Skydda alla sidor utom /login, /join (inbjudningslänkar) och
+  // /api/cron (schemalagda jobb — skyddas med CRON_SECRET i routen)
   if (
     !user &&
     !request.nextUrl.pathname.startsWith("/login") &&
-    !request.nextUrl.pathname.startsWith("/join")
+    !request.nextUrl.pathname.startsWith("/join") &&
+    !request.nextUrl.pathname.startsWith("/api/cron")
   ) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";

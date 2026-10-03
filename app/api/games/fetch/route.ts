@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchGame, fetchHorseStarts, HorseStart } from "@/lib/atg";
+import { fetchGame, fetchRaceHistories, HorseStart } from "@/lib/atg";
 import { calculateCompositeScore } from "@/lib/formscore";
 import { getTrackConfig } from "@/lib/actions/tracks";
 import { createServiceClient } from "@/lib/supabase/server";
 
-// Historikhämtningen körs i batchar med retry — en hel omgång kan ta längre
-// tid än standardgränsen
+// Historikhämtningen (ett anrop per avdelning, med retry) kan ta längre tid
+// än standardgränsen
 export const maxDuration = 60;
 
 type ExistingStarter = {
@@ -106,26 +106,17 @@ export async function POST(request: NextRequest) {
 
       console.log(`[fetch] Avd ${race.race_number}: ATG=${race.starters.length}, giltiga=${validStarters.length}, unika=${uniqueStarters.length}`);
 
-      // Hämta starterhistorik (last_5_results + spårdata) per häst.
-      // Små batchar i stället för full parallellism — ATG rate-limitar och
-      // svarar med fel vid för många samtidiga anrop
-      const HISTORY_BATCH_SIZE = 3;
-      for (let b = 0; b < uniqueStarters.length; b += HISTORY_BATCH_SIZE) {
-        // Paus mellan batcharna — ATG rate-limitar vid för tät anropstakt
-        if (b > 0) await new Promise((r) => setTimeout(r, 300));
-        await Promise.all(
-          uniqueStarters.slice(b, b + HISTORY_BATCH_SIZE).map(async (starter) => {
-            try {
-              const starts = await fetchHorseStarts(starter.horse_id);
-              if (starts.length > 0) {
-                starter.last_5_results = starts.slice(0, 5);
-                starter.horse_starts_history = starts;
-              }
-            } catch (err) {
-              console.warn(`[fetch] Kunde inte hämta starterhistorik för häst ${starter.horse_id}:`, err instanceof Error ? err.message : String(err));
-            }
-          })
-        );
+      // Hämta starterhistorik för hela avdelningen med ett anrop
+      // (/races/{id}/extended ger de 5 senaste starterna per häst)
+      if (race.atg_race_id) {
+        const histories = await fetchRaceHistories(race.atg_race_id, game.date || undefined);
+        for (const starter of uniqueStarters) {
+          const starts = histories.get(starter.start_number);
+          if (starts && starts.length > 0) {
+            starter.last_5_results = starts.slice(0, 5);
+            starter.horse_starts_history = starts;
+          }
+        }
       }
 
       // Fallback: bevara historik från tidigare hämtning om ATG-anropet misslyckades
