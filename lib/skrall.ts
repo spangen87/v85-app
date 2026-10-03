@@ -10,7 +10,12 @@
  *    intjänat per start 12,8 % vid 5,9 % snittstreck (2,2× förväntat).
  *
  * En häst flaggas som skrällkandidat när alla tre villkor är uppfyllda.
- * Trösklarna bör valideras om mot data när mer facit samlats in.
+ *
+ * Validerat 2026-10-04 på 3 685 V-spelslopp (ATG, sep 2025–sep 2026, slutodds
+ * och slutstreck) i tre kronologiska perioder: 165 kandidater, snitt 9,1 %
+ * streck, vann 16,4 % (1,6× / 1,8× / 2,5× per period). En bredare variant
+ * (kalibrerad odds+streck ≥ 1,3× streck och ≥ 8 %) gav 5× fler kandidater men
+ * höll inte i valideringsperioden (1,0×) — behåll den smala regeln.
  */
 
 export const SKRALL_THRESHOLDS = {

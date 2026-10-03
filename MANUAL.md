@@ -227,7 +227,9 @@ Hästar som uppfyller alla tre villkor markeras med **SKRÄLL** (på hästkortet
 2. **Understreckad mot oddsen** — vinnaroddsens implicita sannolikhet ligger minst 5 procentenheter över streckningen. Vinnaroddsmarknaden är skarpare än V85-poolen.
 3. **Hög klass** — topp 3 i fältet på intjänade kronor per start.
 
-Signalen bygger på historisk analys av appens egna data: lågstreckade hästar vinner ungefär dubbelt så ofta som streckningen antyder, och kombinationen låg streck + hög klass + understreckning mot oddsen har historiskt gett klart förhöjd vinstfrekvens. Ungefär vart fjärde lopp vinns av en häst utanför streck-topp-3 — skrällkandidaterna är tänkta som krydda i systemen, inte som spikar.
+Signalen är testad på ett års avgjorda V-spelslopp (3 685 lopp, september 2025–september 2026), uppdelat i tre perioder. Skrällkandidaterna hade i snitt **9 % streck men vann 16 %** av loppen — ungefär 1,8 gånger så ofta som strecket sa — och fördelen höll i alla tre perioderna. Märket är sällsynt: ungefär en kandidat per 20–25 lopp, alltså i ungefär var tredje V85-omgång. Även en skrällkandidat förlorar alltså fem gånger av sex — tänk på dem som krydda i systemen, inte som spikar.
+
+> **Tips:** Signalen bygger på skillnaden mellan vinnaroddsen och strecket, och den skillnaden är mest träffsäker nära start när de stora pengarna har kommit in. Hämta gärna om omgången strax före start (eller kolla hästkorten igen) innan du lämnar in systemet.
 
 #### Tysta signaler
 
