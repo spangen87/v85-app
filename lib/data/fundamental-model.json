@@ -1,0 +1,10 @@
+{
+  "version": "untrained",
+  "trained_races": 0,
+  "test_metrics": null,
+  "temperature": 1,
+  "beta": {},
+  "par": {},
+  "par_fallback": {},
+  "condition_adj": {}
+}
