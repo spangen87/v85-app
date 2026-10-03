@@ -306,8 +306,8 @@ export function AnalysisPanel({ starters, raceMeters, raceStartMethod, trackConf
                     {r.disagree && (
                       <span
                         className="ml-2 tn-mono text-[9px] font-bold px-1.5 py-0.5 rounded"
-                        style={{ background: "var(--tn-accent-faint)", color: "var(--tn-accent)", letterSpacing: "0.08em" }}
-                        title="Grundchans (utan odds/streck) och spelarna bedömer hästen olika — inte ett bevisat spelvärde."
+                        style={{ background: "var(--tn-bg-chip)", color: "var(--tn-text-faint)", letterSpacing: "0.08em" }}
+                        title="Grundchans (utan odds/streck) avviker kraftigt från strecket. När de är oense har strecket oftast haft rätt — ingen spelsignal."
                       >
                         OENSE
                       </span>
