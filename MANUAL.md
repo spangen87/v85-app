@@ -103,7 +103,7 @@ Ovanför hästlistan finns en verktygsrad med kontroller:
 
 | Knapp | Beskrivning |
 |-------|-------------|
-| **Värde** | Visar bara hästar som systemet bedömer som undervärderade (CS > 55 och CS-andel över streckningen) |
+| **Värde** | Visar bara hästar som systemet bedömer som undervärderade (CS > 55 och kalibrerad chans över streckningen, se 6.1) |
 | **Skräll** | Visar bara skrällkandidater — lågstreckade hästar med hög klass där vinnaroddsen säger mer än strecken (se 6.1) |
 | **Signal** | Visar bara hästar med flera positiva tysta signaler (kantpoäng ≥ +2) — faktorer som inte syns i odds och streck (se 6.1) |
 | **Dölj >50x** | Döljer hästar med odds över 50 |
@@ -171,7 +171,7 @@ Färgkod för ringen: **grön** (≥70) = stark häst, **blå** (50–69) = mede
 
 ## 6. Analysverktyget
 
-Klicka på knappen **Visa analys** inuti en avdelning för att öppna analyspanelen — **Matematisk analys**. Panelen rankar hela fältet efter CS och visar spelvärde, distanssignal, tysta signaler och eventuella skrällkandidater.
+Klicka på knappen **Visa analys** inuti en avdelning för att öppna analyspanelen — **Matematisk analys**. Panelen rankar hela fältet efter CS (eller efter Grundchans — klicka på kolumnrubriken) och visar kalibrerad chans, Grundchans, spelvärde, distanssignal, tysta signaler och eventuella skrällkandidater.
 
 ### 6.1 Analystabellen
 
@@ -179,7 +179,7 @@ Klicka på knappen **Visa analys** inuti en avdelning för att öppna analyspane
 |--------|-----------|
 | **#** | Rank i loppet enligt CS |
 | **Häst** | Startnummer och namn, med **VÄRDE**-, **SKRÄLL**- och/eller **OENSE**-märke |
-| **CS** | Composite Score 0–100 (se 5.2) — tabellen rankas på denna |
+| **CS** | Composite Score 0–100 (se 5.2) — tabellen sorteras på denna som standard |
 | **Odds** | Aktuellt vinnarodds |
 | **Chans** | Kalibrerad vinstsannolikhet (se nedan) |
 | **Grund** | Grundchans — vinstchans utan odds och streck (se 6.2). Klicka på rubriken **Grund** eller **CS** för att sortera |
@@ -424,11 +424,11 @@ Navigera till **Utvärdering** i menyn (fliken heter **Analys** i mobilnavigerin
 Sidan visar:
 
 - **Topprankad (CS) vinner** – andel lopp där hästen med högst CS verkligen vann.
-- **Vinnare i topp 3** – hur ofta vinnaren återfanns bland de tre högst rankade hästarna.
-- **Grundchans toppval vinner** – samma mått för Grundchans (räknas på avdelningar där Grundchans finns).
-
-Alla startande räknas, även hästar som galopperat eller diskvalificerats.
+- **Vinnare bland topp 3 (CS)** – hur ofta vinnaren återfanns bland de tre hästarna med högst CS.
+- **Grundchans toppval vinner** och **Vinnare bland topp 3 (Grundchans)** – samma mått för Grundchans (räknas på avdelningar där Grundchans finns; strukna hästar räknas inte).
 - **Per omgång** – detaljerad genomgång per sparad omgång: vinnare, toppval och träff per avdelning.
+
+Alla startande räknas, även hästar som galopperat eller diskvalificerats — en favorit som galopperar räknas alltså som en miss.
 
 > Utvärderingen kräver att loppresultat har hämtats. Resultaten hämtas **automatiskt varje kväll** (runt midnatt) för sparade omgångar från den senaste veckan – systemen rättas och notiser skickas utan att någon behöver trycka på något.
 
