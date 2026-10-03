@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchGame, fetchRaceHistories, HorseStart } from "@/lib/atg";
 import { calculateCompositeScore } from "@/lib/formscore";
+import { computeFundamentalForRows, MODEL, type FundamentalResult } from "@/lib/fundamental";
 import { getTrackConfig } from "@/lib/actions/tracks";
 import { createServiceClient } from "@/lib/supabase/server";
 
@@ -161,6 +162,18 @@ export async function POST(request: NextRequest) {
         console.error(`[fetch] Formscore-längd matchar inte starters (${scores.length} vs ${uniqueStarters.length}) avd ${race.race_number}`);
       }
 
+      // Grundchans (odds-fri) — fel här får inte stoppa hämtningen
+      let fundamental: (FundamentalResult | null)[] = uniqueStarters.map(() => null);
+      try {
+        fundamental = computeFundamentalForRows(
+          { distance: race.distance, start_method: race.start_method, breed: race.breed, first_prize: race.first_prize },
+          game.date || new Date().toISOString().slice(0, 10),
+          uniqueStarters
+        );
+      } catch (err) {
+        console.error(`[fetch] Grundchans fel avd ${race.race_number}:`, err instanceof Error ? err.message : String(err));
+      }
+
       await supabase.from("starters").delete().eq("race_id", raceId);
       const starterRows = uniqueStarters.map((s, i) => {
         const existing = existingMap.get(s.horse_id);
@@ -210,6 +223,8 @@ export async function POST(request: NextRequest) {
           last_5_results: s.last_5_results,
           horse_starts_history: s.horse_starts_history ?? null,
           formscore: scores[i],
+          fundamental_p: fundamental[i]?.p ?? null,
+          fundamental_version: fundamental[i]?.p != null ? MODEL.version : null,
           // Bevara resultat från tidigare hämtning
           finish_position: existing?.finish_position ?? null,
           finish_time: existing?.finish_time ?? null,
