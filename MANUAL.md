@@ -14,8 +14,9 @@
    - [Composite Score (CS)](#52-composite-score-cs)
 6. [Analysverktyget](#6-analysverktyget)
    - [Analystabellen](#61-analystabellen)
-   - [Spårfaktor och banjusteringar](#62-spårfaktor-och-banjusteringar)
-   - [Systembyggaren](#63-systembyggaren)
+   - [Grundchans](#62-grundchans)
+   - [Spårfaktor och banjusteringar](#63-spårfaktor-och-banjusteringar)
+   - [Systembyggaren](#64-systembyggaren)
 7. [Sällskap och samarbete](#7-sällskap-och-samarbete)
    - [Skapa ett sällskap](#71-skapa-ett-sällskap)
    - [Gå med i ett sällskap](#72-gå-med-i-ett-sällskap)
@@ -93,6 +94,7 @@ Ovanför hästlistan finns en verktygsrad med kontroller:
 | Val | Beskrivning |
 |-----|-------------|
 | **CS — Composite Score** | Högst sammansatt poäng först (standardval) |
+| **Grundchans (högst)** | Högst Grundchans först — vinstchans utan odds och streck (se 6.2) |
 | **Startnummer** | Standard ATG-ordning |
 | **Odds (lägst)** | Lägst vinnarodds först |
 | **Streck% (högst)** | Högst streckprocent i poolen först |
@@ -126,8 +128,9 @@ När en avdelning är expanderad visas ett kort per häst. Den kompakta raden in
 | **Kusk** | Kuskens namn |
 | **Streck%** | Hästens andel av spelpoolen (om tillgängligt) |
 | **Odds** | Aktuellt vinnarodds |
+| **Grund** | Grundchans — vinstchans utan odds och streck (se 6.2). Under **Detaljer** visas en **Varför**-rad med de tre faktorer som påverkar mest |
 | **CS-ring** | Composite Score 0–100 som färgad ring — klicka för förklaring av poängen |
-| **Spårjustering (↑/↓)** | Visas vid banor med banspecifik konfiguration (se 6.2) |
+| **Spårjustering (↑/↓)** | Visas vid banor med banspecifik konfiguration (se 6.3) |
 | **Senaste starter** | De 5 senaste starterna före loppet (hämtas automatiskt med omgången) som färgade rutor: guldgul = 1:a, silver = 2:a, orange = 3:a, grå = övriga. **0** = oplacerad, **g** efter siffran = galopp (t.ex. 5g), **d** = diskvalificerad. Håll muspekaren över en ruta för datum, bana och km-tid |
 | **Tysta signaler** | Rad med gröna/röda märken under senaste starterna: barfota-byte, toppkusk, formtrend och uppehåll (se 6.1). Hästar med kantpoäng ≥ +2 får dessutom märket **SIGNAL +N** |
 
@@ -175,13 +178,14 @@ Klicka på knappen **Visa analys** inuti en avdelning för att öppna analyspane
 | Kolumn | Förklaring |
 |--------|-----------|
 | **#** | Rank i loppet enligt CS |
-| **Häst** | Startnummer och namn, med **VÄRDE**- och/eller **SKRÄLL**-märke |
+| **Häst** | Startnummer och namn, med **VÄRDE**-, **SKRÄLL**- och/eller **OENSE**-märke |
 | **CS** | Composite Score 0–100 (se 5.2) — tabellen rankas på denna |
 | **Odds** | Aktuellt vinnarodds |
 | **Chans** | Kalibrerad vinstsannolikhet (se nedan) |
+| **Grund** | Grundchans — vinstchans utan odds och streck (se 6.2). Klicka på rubriken **Grund** eller **CS** för att sortera |
 | **Strk.** | Hästens faktiska andel av spelpoolen (marknadens röst) |
 | **Distans** | Distanssignal baserat på hästens historik på aktuell distans och startmetod |
-| **Spår** | Spårfaktor med banspecifik justering — visas bara för banor med konfiguration (se 6.2) |
+| **Spår** | Spårfaktor med banspecifik justering — visas bara för banor med konfiguration (se 6.3) |
 | **Värde** | Spelvärde: chans minus streckning, i procentenheter |
 | **Signaler** | Tysta signaler — faktorer utanför odds och streck (se nedan) |
 | **Res.** | Slutplacering om loppet är avslutat |
@@ -243,7 +247,29 @@ Poängen summeras till en **kantpoäng** per häst. En häst med kantpoäng **�
 
 Kantpoängen påverkar **inte** CS eller den kalibrerade chansen — den är ett kvalitativt lager ovanpå, tänkt att peka ut var det kan finnas spelvärde som marknaden ännu inte upptäckt. Störst intresse har hästar som kombinerar positiv kantpoäng med lågt streck.
 
-### 6.2 Spårfaktor och banjusteringar
+### 6.2 Grundchans
+
+**Grundchans** är en egen vinstchans som räknas fram **helt utan odds och streck** — alltså utan att titta på vad andra spelare tror. Den bygger bara på hästens egna förutsättningar:
+
+- **Meriter:** pengar per start, vinst- och platsprocent (karriär och i år), rekordtid på distansen
+- **Form:** placeringar och km-tider de senaste starterna (justerade för bana och underlag), formtrend, galopprisk, vila sedan senaste start
+- **Dagens lopp:** spår och startled, tillägg, klassbyte (om hästen möter lättare eller svårare motstånd än senast)
+- **Utrustning och folk:** barfota/skobyte, sulky, kuskens och tränarens form i år, kuskbyte
+- **Ålder och kön**
+
+Vikterna är kalibrerade mot ett års avgjorda travlopp (cirka 3 700). Grundchans för hela fältet summerar till 100 %.
+
+**Var syns den?**
+- **Analysverktyget:** kolumnen **Grund** bredvid Chans — klicka på rubriken för att sortera.
+- **Hästkortet:** "Grund X %", och under **Detaljer** en **Varför**-rad med de tre faktorer som påverkar mest (t.ex. "+ pengar/start · + barfota · − tillägg").
+- **Sorteringen** i loppvyn: "Grundchans (högst)".
+- **Utvärderingssidan:** hur ofta Grundchans toppval vinner.
+
+**OENSE** markeras när Grundchans och strecket skiljer sig kraftigt (minst 1,5 gånger eller högst hälften, och minst 3 procentenheter). Det betyder bara att modellen och spelarna bedömer hästen olika — **inte** att det är ett bevisat spelvärde. I tester var Grundchans ungefär 70 % så träffsäker som marknaden och gav ingen säker fördel mot den.
+
+Grundchans finns även **innan spelet öppnat**, när odds och streck saknas.
+
+### 6.3 Spårfaktor och banjusteringar
 
 **Spårfaktor** väger in hästens startspår. Inre spår (1–3) ger fördel i voltstart, yttre spår (8+) ger nackdel; vid autostart är effekten lägre. Om hästen har ≥5 historiska starter från samma eller angränsande spår (±1) används dessutom en dynamisk faktor baserad på hästens egna resultat från det läget.
 
@@ -256,7 +282,7 @@ Justeringen syns som ↑/↓-märke på hästkortet och i analystabellens **Spå
 
 ---
 
-### 6.3 Systembyggaren
+### 6.4 Systembyggaren
 
 Klicka på **Bygg system** på startsidan för att öppna systemläget. I systemläget markerar du hästar per avdelning och bygger ett spelkupong-system. Antal **rader** och **kostnad i kronor** (beroende på speltyp) visas löpande medan du bygger.
 
@@ -399,6 +425,9 @@ Sidan visar:
 
 - **Topprankad (CS) vinner** – andel lopp där hästen med högst CS verkligen vann.
 - **Vinnare i topp 3** – hur ofta vinnaren återfanns bland de tre högst rankade hästarna.
+- **Grundchans toppval vinner** – samma mått för Grundchans (räknas på avdelningar där Grundchans finns).
+
+Alla startande räknas, även hästar som galopperat eller diskvalificerats.
 - **Per omgång** – detaljerad genomgång per sparad omgång: vinnare, toppval och träff per avdelning.
 
 > Utvärderingen kräver att loppresultat har hämtats. Resultaten hämtas **automatiskt varje kväll** (runt midnatt) för sparade omgångar från den senaste veckan – systemen rättas och notiser skickas utan att någon behöver trycka på något.
@@ -412,6 +441,7 @@ Sidan visar:
 | Term | Förklaring |
 |------|-----------|
 | **V85** | Spelform på ATG där du ska pricka vinnaren i 8 lopp |
+| **Grundchans** | Vinstchans enbart från hästens egna meriter, form och förutsättningar — utan odds och streck |
 | **ATG** | AB Trav och Galopp – den svenska speloperatören för travsport |
 | **Odds** | ATG:s vinnarodds på hästen |
 | **Streckning / Streck%** | Hästens procentuella andel av V85-poolens insatser |
