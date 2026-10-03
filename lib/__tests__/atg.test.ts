@@ -1,4 +1,7 @@
 import {
+  detectBreed,
+  normalizeLifeRecords,
+  parseFirstPrize,
   parseGameResults,
   parseHistoryRecord,
   parseHistoryRecords,
@@ -32,6 +35,7 @@ describe("parseHistoryRecord", () => {
       start_method: "volte",
       track_condition: "light",
       first_prize: 50000,
+      driver: null,
     });
   });
 
@@ -106,5 +110,46 @@ describe("splitInternalRaceId", () => {
   it("returnerar null för ogiltiga id", () => {
     expect(splitInternalRaceId("V86")).toBeNull();
     expect(splitInternalRaceId("V86_x")).toBeNull();
+  });
+});
+
+describe("parseFirstPrize", () => {
+  it("tolkar förstapriset ur ATG:s pristext", () => {
+    expect(parseFirstPrize("Pris: 80.000-40.000-22.500 kr (7 prisplacerade).")).toBe(80000);
+    expect(parseFirstPrize("Pris: 1.000.000-500.000 kr")).toBe(1000000);
+  });
+  it("ger null när pris saknas", () => {
+    expect(parseFirstPrize(undefined)).toBeNull();
+    expect(parseFirstPrize("Inga pengar")).toBeNull();
+  });
+});
+
+describe("detectBreed", () => {
+  it("känner igen kallblod i loppvillkoren", () => {
+    expect(detectBreed(["3-åriga och äldre svenska och norska kallblodiga ston", "1640 m."])).toBe("K");
+  });
+  it("är varmblod annars", () => {
+    expect(detectBreed(["3-åriga och äldre 85.001 - 225.000 kr."])).toBe("V");
+    expect(detectBreed(undefined)).toBe("V");
+  });
+});
+
+describe("normalizeLifeRecords", () => {
+  it("översätter ATG:s rekordposter", () => {
+    expect(
+      normalizeLifeRecords([
+        { startMethod: "auto", distance: "short", place: 1, time: { minutes: 1, seconds: 12, tenths: 5 } },
+        { distance: "medium" }, // saknar startmetod → bort
+      ])
+    ).toEqual([{ start_method: "auto", distance: "short", place: 1, time: "1:12,5" }]);
+  });
+});
+
+describe("parseHistoryRecord – kusk", () => {
+  it("tar med kuskens namn", () => {
+    const h = parseHistoryRecord(
+      record({ start: { distance: 2140, postPosition: 4, driver: { firstName: "Ulf", lastName: "Ohlsson" } } })
+    );
+    expect(h?.driver).toBe("Ulf Ohlsson");
   });
 });

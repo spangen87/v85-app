@@ -84,6 +84,8 @@ export async function POST(request: NextRequest) {
         race_name: race.race_name,
         distance: race.distance,
         start_method: race.start_method,
+        first_prize: race.first_prize,
+        breed: race.breed,
         start_time: race.start_time || null,
         track_surface: null,
       });
@@ -173,6 +175,8 @@ export async function POST(request: NextRequest) {
           trainer_win_pct: s.trainer_win_pct,
           odds: s.odds,
           bet_distribution: s.bet_distribution,
+          start_distance: s.start_distance ?? null,
+          start_points: s.start_points ?? null,
           // Skoinfo
           shoes_reported: s.shoes_reported,
           shoes_front: s.shoes_front,

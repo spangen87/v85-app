@@ -48,6 +48,8 @@ export interface HorseStart {
   track_condition?: string | null;
   /** Förstapris i kr — mått på loppets klass */
   first_prize?: number | null;
+  /** Kuskens namn i starten (för "kuskbyte") */
+  driver?: string | null;
 }
 
 export interface AtgStarter {
@@ -67,6 +69,10 @@ export interface AtgStarter {
   odds: number | null;
   p_odds: number | null;           // Platsodds
   bet_distribution: number;
+  /** Hästens faktiska distans inkl. tillägg (m) */
+  start_distance?: number | null;
+  /** ATG:s startpoäng (form senaste starterna) */
+  start_points?: number | null;
   // Skoinfo
   shoes_reported: boolean;
   shoes_front: boolean;
@@ -105,6 +111,10 @@ export interface AtgRace {
   race_name: string;
   distance: number;
   start_method: string;
+  /** Förstapris i kr, tolkat ur pristexten — mått på klass */
+  first_prize: number | null;
+  /** "K" = kallblod, "V" = varmblod */
+  breed: "V" | "K";
   start_time: string;
   track: string;
   starters: AtgStarter[];
@@ -241,6 +251,32 @@ function formatTime(timeObj: Record<string, number> | null | undefined): string 
   return `${m}:${String(s).padStart(2, "0")},${t}`;
 }
 
+/** "Pris: 80.000-40.000-…" → 80000 (kr). Null om texten saknar pris. */
+export function parseFirstPrize(prizeText: unknown): number | null {
+  const m = /Pris:\s*([\d.]+)/.exec(String(prizeText ?? ""));
+  if (!m) return null;
+  const n = Number(m[1].replace(/\./g, ""));
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+/** Kallblod om loppvillkoren nämner det, annars varmblod */
+export function detectBreed(terms: unknown): "V" | "K" {
+  const text = Array.isArray(terms) ? terms.join(" ") : String(terms ?? "");
+  return text.toLowerCase().includes("kallblod") ? "K" : "V";
+}
+
+/** ATG:s statistics.life.records → LifeRecord[] (poster utan startmetod/distans hoppas över) */
+export function normalizeLifeRecords(records: Record<string, unknown>[]): LifeRecord[] {
+  return (records ?? [])
+    .filter((r) => r["startMethod"] && r["distance"])
+    .map((r) => ({
+      start_method: String(r["startMethod"]),
+      distance: String(r["distance"]),
+      place: Number(r["place"] ?? 99),
+      time: formatTime(r["time"] as Record<string, number>),
+    }));
+}
+
 // Backoff-fördröjningar vid 429/5xx från ATG — utan retry tappas historiken
 // tyst när många anrop görs i följd
 const HISTORY_RETRY_DELAYS_MS = [500, 1500, 4000];
@@ -272,6 +308,8 @@ export function parseHistoryRecord(r: Record<string, unknown>): HorseStart | nul
   const postPos = start["postPosition"];
   const distance = start["distance"];
   const firstPrize = race["firstPrize"];
+  const driverRaw = (start["driver"] as Record<string, unknown>) ?? {};
+  const driverName = `${driverRaw["firstName"] ?? ""} ${driverRaw["lastName"] ?? ""}`.trim();
   return {
     date: String(r["date"] ?? ""),
     track: String(track["name"] ?? ""),
@@ -285,6 +323,7 @@ export function parseHistoryRecord(r: Record<string, unknown>): HorseStart | nul
     track_condition: track["condition"] != null ? String(track["condition"]) : null,
     // ATG anger pris i ören
     first_prize: firstPrize != null ? Math.round(Number(firstPrize) / 100) : null,
+    driver: driverName || null,
   };
 }
 
@@ -392,7 +431,7 @@ function bestRecord(records: Record<string, unknown>[]): string {
 }
 
 /** Beräknar vinstprocent från statistik-objekt för ett år */
-function winPct(
+export function winPct(
   personStats: Record<string, unknown>,
   year: string
 ): number | null {
@@ -522,14 +561,7 @@ function parseGame(raw: Record<string, unknown>, gameType: string): AtgGame {
       );
 
       // Normaliserade distansrekord
-      const normalizedRecords: LifeRecord[] = lifeRecords
-        .filter((r) => r["startMethod"] && r["distance"])
-        .map((r) => ({
-          start_method: String(r["startMethod"]),
-          distance: String(r["distance"]),
-          place: Number(r["place"] ?? 99),
-          time: formatTime(r["time"] as Record<string, number>),
-        }));
+      const normalizedRecords = normalizeLifeRecords(lifeRecords);
 
       return {
         start_number: Number(s["number"] ?? 0),
@@ -550,6 +582,8 @@ function parseGame(raw: Record<string, unknown>, gameType: string): AtgGame {
         odds: oddsFloat,
         p_odds: pOdds,
         bet_distribution: betDistribution,
+        start_distance: s["distance"] != null ? Number(s["distance"]) : null,
+        start_points: life["startPoints"] != null ? Number(life["startPoints"]) : null,
         shoes_reported: Boolean(shoes["reported"]),
         shoes_front: Boolean(shoesFront["hasShoe"]),
         shoes_back: Boolean(shoesBack["hasShoe"]),
@@ -581,6 +615,8 @@ function parseGame(raw: Record<string, unknown>, gameType: string): AtgGame {
       race_name: String(race["name"] ?? ""),
       distance: Number(race["distance"] ?? 0),
       start_method: startMethod,
+      first_prize: parseFirstPrize(race["prize"]),
+      breed: detectBreed(race["terms"]),
       start_time: String(race["startTime"] ?? ""),
       track: String((race["track"] as Record<string, unknown>)?.["name"] ?? ""),
       starters,
