@@ -265,7 +265,7 @@ Vikterna är kalibrerade mot ett års avgjorda travlopp (cirka 3 700). Grundchan
 - **Sorteringen** i loppvyn: "Grundchans (högst)".
 - **Utvärderingssidan:** hur ofta Grundchans toppval vinner.
 
-**OENSE** markeras när Grundchans och strecket skiljer sig kraftigt (minst 1,5 gånger eller högst hälften, och minst 3 procentenheter). Det betyder bara att modellen och spelarna bedömer hästen olika — **inte** att det är ett bevisat spelvärde. I tester var Grundchans ungefär 70 % så träffsäker som marknaden och gav ingen säker fördel mot den.
+**OENSE** (grått märke) visas när Grundchans och strecket skiljer sig kraftigt (minst 1,5 gånger eller högst hälften, och minst 3 procentenheter). Det är **ingen spelsignal**: i tester på lopp modellen inte sett vann sådana hästar ungefär så ofta som *strecket* sa, inte som Grundchans sa. Exempel: hästar där Grundchans låg minst 10 procentenheter över strecket hade i snitt 14 % streck och 30 % Grundchans — och vann 13 %. Använd märket som en påminnelse om att titta närmare på hästen, inte som ett tecken på övervärde. Grundchans är totalt sett ungefär 70 % så träffsäker som marknaden.
 
 Grundchans finns även **innan spelet öppnat**, när odds och streck saknas.
 
