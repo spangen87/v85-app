@@ -30,10 +30,11 @@ npm run build    # Produktionsbygge
 npm run lint     # ESLint
 npx jest         # Kör tester (lib/__tests__/)
 npm run backtest # Kalibrera CS-vikter mot faktiska resultat (train/test, log-loss; kräver Supabase-env)
-npm run recompute-formscore  # Räkna om lagrad CS för alla omgångar med aktuella vikter (kräver Supabase-env)
+npm run recompute-formscore  # Räkna om lagrad CS och Grundchans för alla omgångar med aktuella vikter/modell (kräver Supabase-env)
                              # (kan även köras från /admin → "Räkna om alla CS-poäng")
 npm run backfill-history     # Fyll i hästhistorik + resultat (km-tid) i efterhand för alla omgångar (kräver Supabase-env)
                              # --dry = torrkörning, --game <id> = en omgång. Kör recompute-formscore efteråt.
+npm run fit-fundamental      # Tränar Grundchans på ett års ATG-data (cache i .cache/atg/). --write skriver lib/data/fundamental-model.json
 ```
 
 ---
@@ -121,6 +122,7 @@ components/
 scripts/
   backtest-weights.ts       # Grid-söker CS-vikter mot lopp med facit, train/test + log-loss (npm run backtest)
   backfill-history.ts       # Efterkonstruerar historik + resultat för sparade omgångar (npm run backfill-history)
+  fit-fundamental.ts        # Tränar Grundchans-modellen (npm run fit-fundamental)
   recompute-formscore.ts    # Räknar om lagrad CS med aktuella vikter (npm run recompute-formscore)
 
 lib/
@@ -132,6 +134,15 @@ lib/
   push.ts                   # Web push-utskick (sendPushToUsers, no-op utan VAPID-env)
   systems.ts                # gradeSystemsForGame (rättar system, returnerar notifierbara sällskap)
   results.ts                # fetchAndStoreResults (resultat → starters, rättning, notis) — knapp + cron
+  evaluation.ts             # computeEvaluation: utvärderingsmått (CS + Grundchans)
+  fundamental/              # Grundchans (odds-fri conditional logit)
+    features.ts             # 33 faktorer, hastighetssiffra (banpar)
+    model.ts                # standardisering, softmax, förklaringar (topReasons), Oense
+    fit.ts                  # skattning (L-BFGS), mått, banpar-skattning
+    atgAdapter.ts           # ATG-JSON → indata (träning)
+    dbAdapter.ts            # DB-rader → indata, strukna hästar, computeFundamentalForRows
+    recompute.ts            # vilka rader behöver nytt fundamental_p
+  data/fundamental-model.json  # tränad modell (genereras av fit-fundamental)
   atg.ts                    # Typer för ATG-data (AvailableGame m.m.)
   types.ts                  # Delade TS-typer (Group, GroupMember, HorseNote, m.m.)
   supabase/                 # Supabase-klienter (server/browser)
@@ -158,8 +169,8 @@ supabase/
 ## Datamodell (kortfattad)
 
 **games** – hämtade omgångar (id, game_type, date, track)
-**races** – avdelningar kopplade till game (race_number, distance, start_method)
-**starters** – hästar per avdelning (odds, formscore, finish_position, m.m.)
+**races** – avdelningar kopplade till game (race_number, distance, start_method, first_prize, breed)
+**starters** – hästar per avdelning (odds, formscore, fundamental_p, start_distance, start_points, finish_position, m.m.)
 **horses** – hästar (id = ATG horse_id, name)
 **profiles** – användarprofiler (id = auth.uid, display_name)
 **groups** – sällskap (name, invite_code, created_by, atg_team_url)
@@ -189,6 +200,15 @@ Vinstprocent, tid, spårfaktor, kuskform och galopprisk har för närvarande vik
 men beräknas och visas fortfarande i UI.
 Häst markeras som "Värde" om CS > 55 och kalibrerad chans > streckning.
 CS rankar fältet; den kalibrerade sannolikheten (se nedan) är värdemåttet.
+
+### Grundchans (odds-fri) – `lib/fundamental/`
+Conditional logit (Bolton & Chapman 1986, Benter 1994) på 33 faktorer som
+z-poängsätts inom fältet: `p_i = softmax(Σ β_k·z_ik)`. Använder **aldrig**
+odds/streck (bara för att känna igen strukna hästar). Hastighetssiffra =
+−(km-tid − banpar[ras, bana, startmetod, distans] − underlag). Vikter och banpar i
+`lib/data/fundamental-model.json`, tränas med `npm run fit-fundamental` (vägrar
+skriva om test-pseudo-R² < 0,19). Loppvyn räknar live; `starters.fundamental_p`
+sparas vid hämtning/omräkning för utvärderingssidan. Bakgrund: issue #93.
 
 ### Kalibrerad vinstsannolikhet – `lib/probability.ts → computeWinProbabilities()`
 Blandning `p = α·streck_norm + (1−α)·odds_norm` med `BLEND_ALPHA = 0.5`,

@@ -6,6 +6,7 @@ import { computeTrackFactor } from "@/lib/analysis";
 import type { SkrallSignal } from "@/lib/skrall";
 import type { EdgeResult } from "@/lib/edge";
 import type { TrackConfig } from "@/lib/types";
+import { topReasons, type FundamentalResult } from "@/lib/fundamental";
 
 interface LastResult {
   place: string;
@@ -292,6 +293,7 @@ export function HorseCard({
   isValue,
   skrall,
   edge,
+  fundamental,
   noteCount = 0,
   sortRank,
   isSelected,
@@ -306,6 +308,7 @@ export function HorseCard({
   isValue?: boolean;
   skrall?: SkrallSignal;
   edge?: EdgeResult;
+  fundamental?: FundamentalResult;
   noteCount?: number;
   sortRank?: number;
   isSelected?: boolean;
@@ -478,6 +481,15 @@ export function HorseCard({
         {/* Right: streck% · odds · badges */}
         <div className="flex flex-col items-end gap-1 shrink-0">
           <div className="flex items-center gap-2">
+            {fundamental?.p != null && (
+              <span
+                className="tn-mono text-xs"
+                style={{ color: "var(--tn-text)" }}
+                title="Grundchans: vinstchans utan odds och streck"
+              >
+                Grund {(fundamental.p * 100).toFixed(1)}%
+              </span>
+            )}
             {starter.bet_distribution != null && starter.bet_distribution > 0 && (
               <span className="tn-mono text-xs font-semibold" style={{ color: "var(--tn-accent)" }} title="Streckprocent">
                 {starter.bet_distribution.toFixed(1)}%
@@ -584,6 +596,14 @@ export function HorseCard({
               <p>Hemmaplan: <span style={{ color: "var(--tn-text)" }}>{starter.home_track}</span></p>
             )}
           </div>
+
+          {/* Grundchans — varför */}
+          {fundamental?.p != null && fundamental.contributions.length > 0 && (
+            <div className="text-xs" style={{ color: "var(--tn-text-dim)" }}>
+              <span className="tn-eyebrow mr-2">Grundchans {(fundamental.p * 100).toFixed(1)}%</span>
+              <span>Varför: {topReasons(fundamental).join(" · ")}</span>
+            </div>
+          )}
 
           {/* Shoe info */}
           {starter.shoes_reported && (

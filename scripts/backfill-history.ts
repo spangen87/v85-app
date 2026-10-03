@@ -7,7 +7,10 @@
  * som den såg ut vid loppet — även för avgjorda lopp — så den kan
  * efterkonstrueras utan läckage.
  *
- * Skriptet rör bara historik- och resultatkolumnerna. Odds, streck och övrig
+ * Fyller även i races.first_prize/breed och starters.start_distance/start_points
+ * (migration v14, Grundchans) ur spel-JSON:en.
+ *
+ * Skriptet rör bara historik-, resultat- och ovan nämnda kolumner. Odds, streck och övrig
  * startlistedata lämnas orörda (en omhämtning av omgången skulle skriva över
  * dem med slutodds). Sparade system rättas för omgångar som fått facit, men
  * inga resultatnotiser skickas för gamla omgångar.
@@ -23,7 +26,7 @@
  * (.env.local läses automatiskt om den finns).
  */
 import { createClient } from "@supabase/supabase-js";
-import { fetchRaceHistories, parseGameResults } from "../lib/atg";
+import { detectBreed, fetchRaceHistories, parseFirstPrize, parseGameResults } from "../lib/atg";
 import { gradeSystemsForGame } from "../lib/systems";
 
 const ATG_BASE = "https://www.atg.se/services/racinginfo/v1/api";
@@ -82,6 +85,15 @@ async function main() {
     for (const race of races ?? []) {
       const atgRaceId = atgRaces[race.race_number - 1]?.["id"];
       if (!atgRaceId) continue;
+      const atgRace = atgRaces[race.race_number - 1] ?? {};
+      const atgStarts = (atgRace["starts"] as Record<string, unknown>[] | undefined) ?? [];
+      const startByNumber = new Map(atgStarts.map((s) => [Number(s["number"]), s]));
+      if (!dry) {
+        await db
+          .from("races")
+          .update({ first_prize: parseFirstPrize(atgRace["prize"]), breed: detectBreed(atgRace["terms"]) })
+          .eq("id", race.id);
+      }
       const histories = await fetchRaceHistories(String(atgRaceId), game.date);
       const { data: starters } = await db
         .from("starters")
@@ -89,14 +101,20 @@ async function main() {
         .eq("race_id", race.id);
       for (const s of starters ?? []) {
         starterRows++;
+        const atgStart = startByNumber.get(s.start_number) ?? {};
+        const life = ((atgStart["horse"] as Record<string, unknown> | undefined)?.["statistics"] as Record<string, unknown> | undefined)?.["life"] as Record<string, unknown> | undefined;
+        const patch: Record<string, unknown> = {
+          start_distance: atgStart["distance"] != null ? Number(atgStart["distance"]) : null,
+          start_points: life?.["startPoints"] != null ? Number(life["startPoints"]) : null,
+        };
         const history = histories.get(s.start_number);
-        if (!history || history.length === 0) continue;
-        historyRows++;
+        if (history && history.length > 0) {
+          historyRows++;
+          patch.last_5_results = history.slice(0, 5);
+          patch.horse_starts_history = history;
+        }
         if (!dry) {
-          const { error: upErr } = await db
-            .from("starters")
-            .update({ last_5_results: history.slice(0, 5), horse_starts_history: history })
-            .eq("id", s.id);
+          const { error: upErr } = await db.from("starters").update(patch).eq("id", s.id);
           if (upErr) console.warn(`  ${race.id} nr ${s.start_number}: ${upErr.message}`);
         }
       }

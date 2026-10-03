@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { BulkResultsButton } from "@/components/BulkResultsButton";
 import { deleteGame } from "@/lib/actions/games";
+import type { Overall } from "@/lib/evaluation";
 
 interface RaceEval {
   race_number: number;
@@ -22,13 +23,6 @@ interface GameEval {
   top_pick_win_rate: number;
   top_3_coverage_rate: number;
   races: RaceEval[];
-}
-
-interface Overall {
-  games_evaluated: number;
-  races_evaluated: number;
-  top_pick_win_rate: number;
-  top_3_coverage_rate: number;
 }
 
 export interface GameSummary {
@@ -159,11 +153,12 @@ export function EvaluationPanel({ overall, games, allGames, isAdmin }: Props) {
       {overall.races_evaluated > 0 && (
         <>
           <p className="text-sm" style={{ color: "var(--tn-text-faint)" }}>
-            Utvärderar hur ofta hästarna med högst Composite Score (CS) vinner loppet.
+            Utvärderar hur ofta hästarna med högst Composite Score (CS) — och högst Grundchans — vinner loppet.
+            Alla startande räknas, även hästar som galopperat.
             Topp-3 = de tre hästar med högst CS i varje avdelning.
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4">
             <StatCard
               label="Topprankad (CS) vinner"
               value={`${overall.top_pick_win_rate.toFixed(0)}%`}
@@ -174,6 +169,20 @@ export function EvaluationPanel({ overall, games, allGames, isAdmin }: Props) {
               value={`${overall.top_3_coverage_rate.toFixed(0)}%`}
               sub="av avdelningarna"
             />
+            {overall.fundamental_races_evaluated > 0 && (
+              <>
+                <StatCard
+                  label="Grundchans toppval vinner"
+                  value={`${overall.fundamental_top_pick_win_rate.toFixed(0)}%`}
+                  sub={`av ${overall.fundamental_races_evaluated} avdelningar`}
+                />
+                <StatCard
+                  label="Vinnare bland topp 3 (Grundchans)"
+                  value={`${overall.fundamental_top_3_coverage_rate.toFixed(0)}%`}
+                  sub="utan odds och streck"
+                />
+              </>
+            )}
             <StatCard
               label="Spel utvärderade"
               value={String(overall.games_evaluated)}

@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { computeDistanceSignal, computeTrackFactor, type LifeRecord, type DistanceSignal } from "@/lib/analysis";
 import type { SkrallSignal } from "@/lib/skrall";
 import type { EdgeResult } from "@/lib/edge";
 import type { WinProbability } from "@/lib/probability";
 import type { TrackConfig } from "@/lib/types";
+import { isDisagreement, type FundamentalResult } from "@/lib/fundamental";
 
 interface AnalysisStarter {
   start_number: number;
@@ -28,6 +30,8 @@ interface AnalysisPanelProps {
   probMap?: Record<number, WinProbability>;
   /** Tysta signaler (barfota, toppkusk, formtrend, uppehåll), nycklade på startnummer */
   edgeMap?: Record<number, EdgeResult>;
+  /** Grundchans (odds-fri), nycklad på startnummer */
+  fundamentalMap?: Record<number, FundamentalResult>;
 }
 
 function EdgeChips({ edge }: { edge?: EdgeResult }) {
@@ -113,6 +117,10 @@ interface RankedStarter {
   trackFactorBase: number;
   trackFactorAdjusted: number;
   trackFactorDelta: number;
+  /** Grundchans i procent (en decimal), null om den saknas */
+  grundPct: number | null;
+  /** Grundchans och streck skiljer sig kraftigt */
+  disagree: boolean;
 }
 
 function rankStarters(
@@ -120,7 +128,8 @@ function rankStarters(
   raceMeters: number,
   raceStartMethod: string,
   trackConfig?: TrackConfig,
-  probMap?: Record<number, WinProbability>
+  probMap?: Record<number, WinProbability>,
+  fundamentalMap?: Record<number, FundamentalResult>
 ): RankedStarter[] {
   const withDist = starters.map((s) => {
     const records: LifeRecord[] = Array.isArray(s.life_records) ? s.life_records : [];
@@ -140,15 +149,23 @@ function rankStarters(
       ? computeTrackFactor(postPos, raceStartMethod, horseHistory as never[], trackConfig, raceMeters)
       : trackFactorBase;
     const trackFactorDelta = Math.round((trackFactorAdjusted - trackFactorBase) * 100) / 100;
-    return { starter: s, cs, distSignal, chansPct, streckPct, hasChans, value, rank: 0, isValue, trackFactorBase, trackFactorAdjusted, trackFactorDelta };
+    const grundP = fundamentalMap?.[s.start_number]?.p ?? null;
+    const grundPct = grundP != null ? Math.round(grundP * 1000) / 10 : null;
+    const disagree = isDisagreement(grundP, streckPct > 0 ? streckPct : null);
+    return { starter: s, cs, distSignal, chansPct, streckPct, hasChans, value, rank: 0, isValue, trackFactorBase, trackFactorAdjusted, trackFactorDelta, grundPct, disagree };
   });
   withDist.sort((a, b) => b.cs - a.cs);
   withDist.forEach((r, i) => (r.rank = i + 1));
   return withDist;
 }
 
-export function AnalysisPanel({ starters, raceMeters, raceStartMethod, trackConfig, skrallMap, probMap, edgeMap }: AnalysisPanelProps) {
-  const ranked = rankStarters(starters, raceMeters, raceStartMethod, trackConfig, probMap);
+export function AnalysisPanel({ starters, raceMeters, raceStartMethod, trackConfig, skrallMap, probMap, edgeMap, fundamentalMap }: AnalysisPanelProps) {
+  const [sortBy, setSortBy] = useState<"cs" | "grund">("cs");
+  const ranked = rankStarters(starters, raceMeters, raceStartMethod, trackConfig, probMap, fundamentalMap);
+  const rows = sortBy === "grund"
+    ? [...ranked].sort((a, b) => (b.grundPct ?? -1) - (a.grundPct ?? -1))
+    : ranked;
+  const hasGrund = ranked.some((r) => r.grundPct != null);
   const hasStreckning = ranked.some((r) => r.streckPct > 0);
   const distLabel = raceMeters <= 1800 ? "kort" : raceMeters <= 2400 ? "medel" : "lång";
   const skrallCandidates = ranked.filter((r) => skrallMap?.[r.starter.start_number]?.isCandidate);
@@ -173,6 +190,7 @@ export function AnalysisPanel({ starters, raceMeters, raceStartMethod, trackConf
         <p className="text-xs mt-1" style={{ color: "var(--tn-text-dim)", lineHeight: 1.5 }}>
           CS (0–100) rankar fältet: streckning (55%) + distans (20%) + odds (10%) + konsistens (10%) + form (5%).
           {" "}<strong>Chans</strong> = kalibrerad vinstsannolikhet (50% streckning + 50% oddsmarknad).
+          {" "}<strong>Grund</strong> = Grundchans: vinstchans enbart från hästens egna meriter, form och förutsättningar (utan odds och streck).
           {" "}Distans: {distLabel} ({raceMeters} m, {raceStartMethod}start).
           {" "}Spelvärde = chans − streckning.
           {" "}<strong>Signaler</strong> = faktorer utanför odds/streck: barfota-byte, toppkusk, formtrend och uppehåll.
@@ -219,19 +237,32 @@ export function AnalysisPanel({ starters, raceMeters, raceStartMethod, trackConf
         <table className="w-full text-sm">
           <thead>
             <tr style={{ borderBottom: "1px solid var(--tn-border)" }}>
-              {["#", "Häst", "CS", "Odds", "Chans", "Strk.", "Distans", ...(trackConfig ? ["Spår"] : []), "Värde", "Signaler", "Res."].map((h) => (
-                <th
-                  key={h}
-                  className="tn-eyebrow py-2.5 px-2 first:pl-4 last:pr-4 font-normal"
-                  style={{ textAlign: h === "Häst" || h === "Distans" ? "left" : h === "#" ? "left" : "right" }}
-                >
-                  {h}
-                </th>
-              ))}
+              {["#", "Häst", "CS", "Odds", "Chans", ...(hasGrund ? ["Grund"] : []), "Strk.", "Distans", ...(trackConfig ? ["Spår"] : []), "Värde", "Signaler", "Res."].map((h) => {
+                const sortable = h === "CS" || h === "Grund";
+                const active = (h === "CS" && sortBy === "cs") || (h === "Grund" && sortBy === "grund");
+                return (
+                  <th
+                    key={h}
+                    className="tn-eyebrow py-2.5 px-2 first:pl-4 last:pr-4 font-normal"
+                    style={{ textAlign: h === "Häst" || h === "Distans" || h === "#" ? "left" : "right" }}
+                    title={h === "Grund" ? "Grundchans: vinstchans utan odds och streck — bygger på hästens meriter, form, km-tider, spår, tillägg, skor och kusk/tränare" : undefined}
+                  >
+                    {sortable ? (
+                      <button
+                        type="button"
+                        onClick={() => setSortBy(h === "CS" ? "cs" : "grund")}
+                        style={{ background: "none", border: "none", cursor: "pointer", color: active ? "var(--tn-accent)" : "inherit", font: "inherit", letterSpacing: "inherit" }}
+                      >
+                        {h}{active ? " ↓" : ""}
+                      </button>
+                    ) : h}
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>
-            {ranked.map((r) => {
+            {rows.map((r) => {
               const finishStyle: React.CSSProperties =
                 r.starter.finish_position === 1 ? { background: "var(--tn-p1)", color: "#0a0e14" }
                 : r.starter.finish_position === 2 ? { background: "var(--tn-p2)", color: "#0a0e14" }
@@ -272,6 +303,15 @@ export function AnalysisPanel({ starters, raceMeters, raceStartMethod, trackConf
                         SKRÄLL
                       </span>
                     )}
+                    {r.disagree && (
+                      <span
+                        className="ml-2 tn-mono text-[9px] font-bold px-1.5 py-0.5 rounded"
+                        style={{ background: "var(--tn-accent-faint)", color: "var(--tn-accent)", letterSpacing: "0.08em" }}
+                        title="Grundchans (utan odds/streck) och spelarna bedömer hästen olika — inte ett bevisat spelvärde."
+                      >
+                        OENSE
+                      </span>
+                    )}
                   </td>
                   {/* CS */}
                   <td className="py-2.5 pr-2 text-right">
@@ -293,6 +333,12 @@ export function AnalysisPanel({ starters, raceMeters, raceStartMethod, trackConf
                   <td className="py-2.5 pr-2 text-right tn-mono text-xs font-semibold" style={{ color: "var(--tn-accent)" }}>
                     {r.hasChans ? `${r.chansPct}%` : "–"}
                   </td>
+                  {/* Grundchans (odds-fri) */}
+                  {hasGrund && (
+                    <td className="py-2.5 pr-2 text-right tn-mono text-xs font-semibold" style={{ color: "var(--tn-text)" }}>
+                      {r.grundPct != null ? `${r.grundPct}%` : "–"}
+                    </td>
+                  )}
                   {/* Streck % */}
                   <td className="py-2.5 pr-2 text-right tn-mono text-xs" style={{ color: "var(--tn-text-dim)" }}>
                     {r.streckPct > 0 ? `${r.streckPct}%` : "–"}

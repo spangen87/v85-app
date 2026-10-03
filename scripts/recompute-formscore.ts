@@ -1,6 +1,7 @@
 /**
- * Räknar om lagrad Composite Score (starters.formscore) för alla omgångar med
- * de aktuella vikterna i lib/formscore.ts → CS_WEIGHTS.
+ * Räknar om lagrad Composite Score (starters.formscore) och Grundchans
+ * (starters.fundamental_p) för alla omgångar med de aktuella vikterna i
+ * lib/formscore.ts → CS_WEIGHTS respektive lib/data/fundamental-model.json.
  *
  * Bakgrund: formscore beräknas vid omgångshämtning. Omgångar som hämtades innan
  * vikterna kalibrerades om bär därför poäng från gamla vikter, vilket gör att
@@ -16,6 +17,7 @@
  */
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { calculateCompositeScore, type RaceContext } from "../lib/formscore";
+import { computeFundamentalUpdates, MODEL, writeFundamentalUpdates, type RecomputeRace } from "../lib/fundamental";
 import type { AtgStarter } from "../lib/atg";
 import type { TrackConfig } from "../lib/types";
 
@@ -110,9 +112,9 @@ async function main() {
 
   console.log("Läser games, track_configs, races och starters …");
   const [{ data: games }, { data: configs }, { data: races }] = await Promise.all([
-    db.from("games").select("id, track"),
+    db.from("games").select("id, track, date"),
     db.from("track_configs").select("*"),
-    db.from("races").select("id, game_id, distance, start_method"),
+    db.from("races").select("id, game_id, distance, start_method, breed, first_prize"),
   ]);
 
   const trackByGame = new Map((games ?? []).map((g) => [g.id, g.track as string | null]));
@@ -181,29 +183,39 @@ async function main() {
   }
 
   if (dry) {
-    console.log("\n--dry: inget skrevs.");
-    return;
-  }
-  if (changed === 0) {
-    console.log("\nInget att uppdatera — alla poäng är redan aktuella.");
-    return;
+    console.log("\n--dry: inget skrevs (CS).");
+  } else if (changed === 0) {
+    console.log("\nInget att uppdatera — alla CS-poäng är redan aktuella.");
+  } else {
+    console.log("\nSkriver uppdateringar …");
+    const CONCURRENCY = 20;
+    let written = 0;
+    for (let i = 0; i < updates.length; i += CONCURRENCY) {
+      const batch = updates.slice(i, i + CONCURRENCY);
+      const results = await Promise.all(
+        batch.map((u) => db.from("starters").update({ formscore: u.to }).eq("id", u.id))
+      );
+      for (const res of results) {
+        if (res.error) console.error(`  fel: ${res.error.message}`);
+        else written++;
+      }
+      process.stdout.write(`\r  ${Math.min(i + CONCURRENCY, updates.length)}/${updates.length}`);
+    }
+    console.log(`\nKlart — ${written} rader uppdaterade.`);
   }
 
-  console.log("\nSkriver uppdateringar …");
-  const CONCURRENCY = 20;
-  let written = 0;
-  for (let i = 0; i < updates.length; i += CONCURRENCY) {
-    const batch = updates.slice(i, i + CONCURRENCY);
-    const results = await Promise.all(
-      batch.map((u) => db.from("starters").update({ formscore: u.to }).eq("id", u.id))
-    );
-    for (const res of results) {
-      if (res.error) console.error(`  fel: ${res.error.message}`);
-      else written++;
-    }
-    process.stdout.write(`\r  ${Math.min(i + CONCURRENCY, updates.length)}/${updates.length}`);
+  // --- Grundchans ---
+  const gameDates = new Map((games ?? []).map((g) => [g.id as string, String(g.date)]));
+  const fUpdates = computeFundamentalUpdates(
+    (races ?? []) as unknown as RecomputeRace[],
+    gameDates,
+    allStarters as unknown as Parameters<typeof computeFundamentalUpdates>[2]
+  );
+  console.log(`\nGrundchans (modell ${MODEL.version}): ${fUpdates.length} rader får nytt värde.`);
+  if (!dry && fUpdates.length > 0) {
+    const written = await writeFundamentalUpdates(db, fUpdates);
+    console.log(`Grundchans uppdaterad för ${written} rader.`);
   }
-  console.log(`\nKlart — ${written} rader uppdaterade.`);
 }
 
 main().catch((err) => {

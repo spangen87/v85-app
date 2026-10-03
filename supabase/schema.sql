@@ -108,3 +108,11 @@ create policy "Service kan skriva starters" on starters for all using (auth.role
 -- alter table starters add column if not exists places_2nd_prev_year integer;
 -- alter table starters add column if not exists places_3rd_prev_year integer;
 -- alter table starters add column if not exists p_odds float;
+
+-- Migration v14 (Grundchans) — se migration_v14_fundamental.sql
+-- alter table races add column if not exists first_prize integer;
+-- alter table races add column if not exists breed text;
+-- alter table starters add column if not exists start_distance integer;
+-- alter table starters add column if not exists start_points integer;
+-- alter table starters add column if not exists fundamental_p double precision;
+-- alter table starters add column if not exists fundamental_version text;
