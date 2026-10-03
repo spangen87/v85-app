@@ -74,6 +74,15 @@ describe("scratchedMask", () => {
   it("struken = fältet har marknadsdata men hästen saknar odds och streck", () => {
     expect(scratchedMask([row(), row({ odds: null, bet_distribution: 0 })])).toEqual([false, true]);
   });
+  it("ATG:s riktiga form: struken häst har odds 0 men behåller strecket", () => {
+    // V85_2026-09-26_6_5_4 nr 9: odds 0, streck 0,49 — strukens enligt result.scratchings
+    expect(scratchedMask([row(), row({ start_number: 9, odds: 0, bet_distribution: 0.49 })])).toEqual([false, true]);
+    expect(scratchedMask([row(), row({ start_number: 9, odds: null, bet_distribution: 0.49 })])).toEqual([false, true]);
+  });
+  it("V-poolen öppen men vinnarpoolen inte: ingen struken", () => {
+    expect(scratchedMask([row({ odds: null, bet_distribution: 30 }), row({ odds: null, bet_distribution: 0.4 })]))
+      .toEqual([false, false]);
+  });
   it("innan poolen öppnat är ingen struken", () => {
     expect(scratchedMask([row({ odds: null, bet_distribution: 0 }), row({ odds: 0, bet_distribution: null })]))
       .toEqual([false, false]);

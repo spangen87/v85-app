@@ -1,6 +1,6 @@
 /**
  * Databasrader (starters/races) → Grundchans. Används av loppvyn, fetch-routen
- * och omräkningen. Odds/streck används bara för att känna igen strukna hästar.
+ * och omräkningen. Odds används bara för att känna igen strukna hästar.
  */
 import type { HorseStart, LifeRecord } from "@/lib/atg";
 import { isAmericanSulky, type FundamentalRace, type FundamentalStarter } from "./features";
@@ -98,12 +98,16 @@ export function fromDbStarter(row: DbStarterLike): FundamentalStarter {
   };
 }
 
-const hasMarket = (r: DbStarterLike) => (r.odds ?? 0) > 0 || (r.bet_distribution ?? 0) > 0;
+const hasOdds = (r: DbStarterLike) => (r.odds ?? 0) > 0;
 
-/** Struken = fältet har marknadsdata men hästen saknar både odds och streck */
+/**
+ * Struken = vinnarpoolen har odds för fältet men inte för den här hästen.
+ * ATG behåller strecket för strukna hästar (odds sätts till 0), så strecket
+ * kan inte användas. Innan vinnarpoolen öppnat räknas ingen som struken.
+ */
 export function scratchedMask(rows: DbStarterLike[]): boolean[] {
-  const marketOpen = rows.some(hasMarket);
-  return rows.map((r) => marketOpen && !hasMarket(r));
+  const oddsOpen = rows.some(hasOdds);
+  return rows.map((r) => oddsOpen && !hasOdds(r));
 }
 
 export function computeFundamentalForRows(

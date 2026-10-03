@@ -155,7 +155,7 @@ computeFundamentalMap(...) → Record<number, FundamentalResult>   // för UI
 FACTOR_LABELS: Record<FactorName, string>   // svenska etiketter till "Varför"
 ```
 
-- Strukna hästar, alltså de där både odds och streck saknas eller är 0, tas bort i adaptern i UI och omräkning före anropet. När inget fält har marknadsdata ännu (innan poolen öppnat) behålls alla hästar.
+- Strukna hästar tas bort i adaptern i UI och omräkning före anropet. En häst räknas som struken när vinnarpoolen har odds för fältet men hästen saknar odds (odds 0 eller null). Strecket kan inte användas, eftersom ATG behåller strecket för strukna hästar. Innan vinnarpoolen öppnat behålls alla hästar. *(Rättat efter slutgranskningen; den ursprungliga regeln "både odds och streck saknas" slog aldrig till på riktig data.)*
 - Fält med färre än 2 hästar ger `p = null` och visas som "–".
 
 ### 3.5 Modellfil `lib/data/fundamental-model.json`
