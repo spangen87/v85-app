@@ -29,3 +29,18 @@ describe("computeEvaluation", () => {
     expect(overall.fundamental_top_3_coverage_rate).toBeCloseTo(100);
   });
 });
+
+describe("computeEvaluation – strukna hästar", () => {
+  it("lopp med en struken häst (p saknas) räknas, rangordnat bland övriga", () => {
+    const { overall } = computeEvaluation([
+      // Lopp 4: nr 3 är struken (ingen Grundchans) — loppet ska ändå räknas
+      r("G_4", 1, 80, 0.7, 1), r("G_4", 2, 50, 0.3, 2), r("G_4", 3, 10, null, null),
+    ]);
+    expect(overall.fundamental_races_evaluated).toBe(1);
+    expect(overall.fundamental_top_pick_win_rate).toBeCloseTo(100);
+  });
+  it("lopp där vinnaren saknar Grundchans räknas inte", () => {
+    const { overall } = computeEvaluation([r("G_5", 1, 80, null, 1), r("G_5", 2, 50, 0.6, 2), r("G_5", 3, 40, 0.4, 3)]);
+    expect(overall.fundamental_races_evaluated).toBe(0);
+  });
+});

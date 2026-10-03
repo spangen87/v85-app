@@ -107,9 +107,11 @@ export function computeEvaluation(rows: EvalStarterRow[]): { overall: Overall; g
       const top_pick_won = topPick.start_number === winner.start_number;
       const top_3_covered_winner = top3.includes(winner.start_number);
 
-      // Grundchans: bara lopp där alla startande har ett sparat värde
-      if (starters.every((s) => s.fundamental_p != null)) {
-        const byGrund = [...starters].sort((a, b) => (b.fundamental_p ?? 0) - (a.fundamental_p ?? 0));
+      // Grundchans: rangordna bland hästar med sparat värde (strukna saknar
+      // värde); kräver att vinnaren har ett värde och minst två hästar har det
+      const withGrund = starters.filter((s) => s.fundamental_p != null);
+      if (winner.fundamental_p != null && withGrund.length >= 2) {
+        const byGrund = [...withGrund].sort((a, b) => (b.fundamental_p ?? 0) - (a.fundamental_p ?? 0));
         fundamentalRaces++;
         if (byGrund[0].start_number === winner.start_number) fundamentalTopWins++;
         if (byGrund.slice(0, 3).some((s) => s.start_number === winner.start_number)) fundamentalTop3++;
