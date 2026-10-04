@@ -1,13 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button, HorseList, HorseRow, RaceTabs } from "@/components/ui";
 import { RaceToolbar, type RaceView } from "./RaceToolbar";
 import { StartCountdown } from "./StartCountdown";
+import { HorseDetail } from "./HorseDetail";
+import { topReasons } from "@/lib/fundamental";
 import { fmtClock, fmtStartMethod } from "@/lib/format";
 import { usePref } from "@/lib/usePref";
 import {
-  buildRowModels, computeRaceMaps, EMPTY_FILTERS, filterRows, raceLacksMarket, raceTabsInfo, SORT_KEYS, SORT_LABELS,
+  buildRowModels, computeRaceMaps, EMPTY_FILTERS, filterRows, parseHastParam, raceLacksMarket, raceTabsInfo, SORT_KEYS, SORT_LABELS,
   sortRows, type Filters, type RowModel,
 } from "@/lib/raceView";
 import type { Race } from "@/lib/raceTypes";
@@ -16,7 +18,8 @@ import type { Group, SystemHorse, SystemSelection, TrackConfig } from "@/lib/typ
 const VIEWS = ["lista", "tabell"] as const;
 
 export function RaceList({
-  races, activeRaceNumber, onSelectRace, systemSelections, canSelect, onToggleHorse, noteCounts = {},
+  races, activeRaceNumber, onSelectRace, userGroups, currentUserId, systemSelections, canSelect, onToggleHorse,
+  trackConfig = null, noteCounts = {}, initialDetail = null,
 }: {
   races: Race[];
   activeRaceNumber: number;
@@ -28,10 +31,32 @@ export function RaceList({
   onToggleHorse: (raceNumber: number, horse: SystemHorse) => void;
   trackConfig?: TrackConfig | null;
   noteCounts?: Record<string, number>;
+  /** Startnummer att öppna direkt (från ?hast= i länken) */
+  initialDetail?: number | null;
 }) {
   const [view, setView] = usePref<RaceView>("travappen.view", VIEWS, "lista");
   const [sort, setSort] = usePref("travappen.sort", SORT_KEYS, "chans");
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
+  const [detail, setDetail] = useState<number | null>(initialDetail);
+
+  // Bakåtknappen: ?hast= styr om detaljvyn är öppen
+  useEffect(() => {
+    const onPop = () => {
+      const hit = parseHastParam(new URLSearchParams(window.location.search).get("hast"), races);
+      if (hit) onSelectRace(hit.race);
+      setDetail(hit ? hit.start : null);
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [races, onSelectRace]);
+
+  const closeDetail = useCallback(() => {
+    if (window.history.state?.hast) { window.history.back(); return; }
+    const url = new URL(window.location.href);
+    url.searchParams.delete("hast");
+    window.history.replaceState(window.history.state, "", url);
+    setDetail(null);
+  }, []);
 
   const race = races.find((r) => r.race_number === activeRaceNumber) ?? races[0];
   const selected = useMemo(() => new Set(
@@ -46,6 +71,13 @@ export function RaceList({
   const toggle = (r: RowModel) =>
     onToggleHorse(race.race_number, { horse_id: r.starter.horse_id, start_number: r.n, horse_name: r.name });
   const onToggle = (r: RowModel) => (canSelect && r.selectable ? () => toggle(r) : undefined);
+  const openDetail = (n: number) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("hast", `${race.race_number}-${n}`);
+    window.history.pushState({ ...window.history.state, hast: true }, "", url);
+    setDetail(n);
+  };
+  const detailRow = detail != null ? allRows.find((r) => r.n === detail) ?? null : null;
 
   return (
     <div className="flex flex-col gap-3">
@@ -94,12 +126,29 @@ export function RaceList({
               state={r.numberState}
               dimmed={r.scratched}
               onToggleSystem={onToggle(r)}
+              onOpen={() => openDetail(r.n)}
               noteCount={noteCounts[r.starter.horse_id] ?? 0}
             />
           ))}
         </HorseList>
       ) : (
         <p className="ta-banner" style={{ margin: 0 }}>Tabellen kommer i nästa steg.</p>
+      )}
+
+      {detailRow && (
+        <HorseDetail
+          key={`${race.race_number}-${detailRow.n}`}
+          race={race}
+          row={detailRow}
+          reasons={maps.fundamental[detailRow.n] ? topReasons(maps.fundamental[detailRow.n]) : []}
+          signals={maps.edge[detailRow.n]?.signals ?? []}
+          trackConfig={trackConfig}
+          userGroups={userGroups}
+          currentUserId={currentUserId}
+          canSelect={canSelect}
+          onToggle={() => toggle(detailRow)}
+          onClose={closeDetail}
+        />
       )}
     </div>
   );

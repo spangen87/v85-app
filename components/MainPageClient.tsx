@@ -32,6 +32,8 @@ interface MainPageClientProps {
   trackConfig?: TrackConfig | null
   /** Antal anteckningar per häst-id — pratbubbla på hästkortet */
   noteCounts?: Record<string, number>
+  /** Startnummer att öppna direkt (från ?hast= i länken) */
+  initialDetail?: number | null
 }
 
 export function MainPageClient({
@@ -46,6 +48,7 @@ export function MainPageClient({
   initialSelections = [],
   trackConfig = null,
   noteCounts = {},
+  initialDetail = null,
 }: MainPageClientProps) {
   const [systemMode, setSystemMode] = useState(initialSystemMode)
   const { activeRaceNumber: activeRace, setActiveRaceNumber: setActiveRace } = useRaceTab()
@@ -201,6 +204,7 @@ export function MainPageClient({
             onToggleHorse={handleToggleHorse}
             trackConfig={trackConfig}
             noteCounts={noteCounts}
+            initialDetail={initialDetail}
           />
         )}
       </div>

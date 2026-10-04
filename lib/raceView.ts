@@ -186,7 +186,7 @@ export function raceTabsInfo(races: Race[], selections: SystemSelection[]): { n:
 /** "?hast=3-2" → avdelning 3, startnummer 2. Allt annat → null. */
 export function parseHastParam(
   v: string | null,
-  races: Pick<Race, "race_number" | "starters">[]
+  races: { race_number: number; starters: { start_number: number }[] }[]
 ): { race: number; start: number } | null {
   const m = (v ?? "").match(/^(\d+)-(\d+)$/);
   if (!m) return null;

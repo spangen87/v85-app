@@ -15,6 +15,7 @@ import { getGamePostSummary } from "@/lib/actions/posts";
 import { getTrackConfig } from "@/lib/actions/tracks";
 import { getAuthUser } from "@/lib/supabase/guards";
 import { redirect } from "next/navigation";
+import { parseHastParam } from "@/lib/raceView";
 import Link from "next/link";
 import type { SystemSelection, TrackConfig } from "@/lib/types";
 
@@ -54,7 +55,7 @@ async function getRaces(supabase: Awaited<ReturnType<typeof createClient>>, game
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ game?: string; systemMode?: string; groupId?: string; avd?: string; draft?: string }>;
+  searchParams: Promise<{ game?: string; systemMode?: string; groupId?: string; avd?: string; draft?: string; hast?: string }>;
 }) {
   const supabase = await createClient();
   const user = await getAuthUser();
@@ -105,9 +106,13 @@ export default async function HomePage({
   const initialSelections: SystemSelection[] = existingDraft?.selections ?? []
 
   const avdParam = params.avd ? parseInt(params.avd, 10) : NaN;
-  const activeRaceNumber = (!isNaN(avdParam) && races.some((r) => r.race_number === avdParam))
-    ? avdParam
-    : (races[0]?.race_number ?? 1);
+  // ?hast=<avd>-<nr> öppnar en häst direkt och vinner över ?avd=
+  const hast = parseHastParam(params.hast ?? null, races);
+  const activeRaceNumber = hast
+    ? hast.race
+    : (!isNaN(avdParam) && races.some((r) => r.race_number === avdParam))
+      ? avdParam
+      : (races[0]?.race_number ?? 1);
 
   return (
     <RaceTabProvider initialRaceNumber={activeRaceNumber}>
@@ -156,6 +161,7 @@ export default async function HomePage({
           initialSelections={initialSelections}
           trackConfig={trackConfig}
           noteCounts={noteCounts}
+          initialDetail={hast?.start ?? null}
         />
       </div>
     </main>
