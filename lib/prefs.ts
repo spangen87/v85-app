@@ -24,3 +24,22 @@ export function writePref(
     // privat läge eller full lagring — inställningen gäller bara nu
   }
 }
+
+/** Val gjorda i den här sidvisningen — gäller även när localStorage inte fungerar. */
+const memory = new Map<string, string>();
+
+export function rememberPref(key: string, value: string): void {
+  memory.set(key, value);
+}
+
+/** Aktuellt värde: minnet först, sedan lagringen, sist standardvärdet. */
+export function prefSnapshot<T extends string>(
+  key: string,
+  allowed: readonly T[],
+  fallback: T,
+  storage?: Pick<Storage, "getItem">
+): T {
+  const remembered = memory.get(key);
+  if (remembered !== undefined) return (allowed as readonly string[]).includes(remembered) ? (remembered as T) : fallback;
+  return storage ? readPref(key, allowed, fallback, storage) : readPref(key, allowed, fallback);
+}

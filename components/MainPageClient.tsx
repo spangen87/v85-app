@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect, useRef, type ComponentProps } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { RaceList } from '@/components/RaceList'
 import { SaveSystemDialog } from '@/components/SaveSystemDialog'
 import { SystemSidebar } from '@/components/SystemSidebar'
@@ -11,8 +11,8 @@ import { formatRowCost } from '@/lib/atg'
 import { createSystem, updateDraft, getUserDraftsForGame } from '@/lib/actions/systems'
 import { useRaceTab } from '@/components/RaceTabContext'
 import { openGamePicker } from '@/lib/uiEvents'
+import type { Race } from '@/lib/raceTypes'
 
-type RaceListRaces = ComponentProps<typeof RaceList>['races']
 
 function computeTotalRows(selections: SystemSelection[]): number {
   if (selections.length === 0) return 0
@@ -20,7 +20,7 @@ function computeTotalRows(selections: SystemSelection[]): number {
 }
 
 interface MainPageClientProps {
-  races: RaceListRaces
+  races: Race[]
   userGroups: Group[]
   currentUserId: string
   initialSystemMode?: boolean
@@ -122,13 +122,6 @@ export function MainPageClient({
     setSavedDrafts(prev => prev.filter(d => d.id !== draft.id))
   }, [])
 
-  const handleHorseClick = useCallback((raceNumber: number, startNumber: number) => {
-    setActiveRace(raceNumber)
-    requestAnimationFrame(() => {
-      const el = document.querySelector(`[data-race="${raceNumber}"][data-start="${startNumber}"]`)
-      el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    })
-  }, [setActiveRace])
 
   const exitSystemMode = useCallback(() => {
     setSystemMode(false)
@@ -200,12 +193,12 @@ export function MainPageClient({
           <RaceList
             races={races}
             activeRaceNumber={activeRace}
+            onSelectRace={setActiveRace}
             userGroups={userGroups}
             currentUserId={currentUserId}
-            systemMode={systemMode}
             systemSelections={systemSelections}
+            canSelect={systemMode}
             onToggleHorse={handleToggleHorse}
-            onHorseClick={handleHorseClick}
             trackConfig={trackConfig}
             noteCounts={noteCounts}
           />

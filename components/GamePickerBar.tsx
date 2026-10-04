@@ -4,6 +4,9 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import type { AvailableGame } from "@/lib/atg";
 import { OPEN_GAME_PICKER_EVENT } from "@/lib/uiEvents";
+import { Button, Sheet } from "@/components/ui";
+import { fmtClock, fmtGameDate } from "@/lib/format";
+import { ResultsButton } from "./ResultsButton";
 
 interface SavedGame {
   id: string;
@@ -15,6 +18,8 @@ interface SavedGame {
 interface GamePickerBarProps {
   savedGames: SavedGame[];
   selectedId: string | null;
+  /** Första avdelningens starttid — visas under omgångens namn */
+  firstStartTime?: string | null;
 }
 
 function todayLocal(): string { return new Date().toLocaleDateString("sv-SE"); }
@@ -22,7 +27,7 @@ function tomorrowLocal(): string { const d = new Date(); d.setDate(d.getDate() +
 function minDate(): string { const d = new Date(); d.setDate(d.getDate() - 14); return d.toLocaleDateString("sv-SE"); }
 function maxDate(): string { const d = new Date(); d.setDate(d.getDate() + 14); return d.toLocaleDateString("sv-SE"); }
 
-export function GamePickerBar({ savedGames, selectedId }: GamePickerBarProps) {
+export function GamePickerBar({ savedGames, selectedId, firstStartTime = null }: GamePickerBarProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [date, setDate] = useState(todayLocal());
@@ -60,13 +65,6 @@ export function GamePickerBar({ savedGames, selectedId }: GamePickerBarProps) {
     return () => window.removeEventListener(OPEN_GAME_PICKER_EVENT, onOpen);
   }, []);
 
-  // Stäng dropdown med Escape
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
 
   const handleFetch = useCallback(async (game: AvailableGame) => {
     setFetchingId(game.id);
@@ -93,176 +91,75 @@ export function GamePickerBar({ savedGames, selectedId }: GamePickerBarProps) {
   const prevGame = currentIndex > 0 ? savedGames[currentIndex - 1] : null;
   const nextGame = currentIndex < savedGames.length - 1 ? savedGames[currentIndex + 1] : null;
 
-  const iconBtn: React.CSSProperties = {
-    padding: 6,
-    borderRadius: 8,
-    background: "none",
-    border: "none",
-    color: "var(--tn-text-faint)",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-  };
 
   return (
-    <div className="relative">
-      <div className="flex items-center gap-1">
-        {/* Prev */}
-        <button
-          onClick={() => prevGame && router.push(`/?game=${prevGame.id}`)}
-          disabled={!prevGame}
-          aria-label="Föregående spel"
-          style={{ ...iconBtn, opacity: prevGame ? 1 : 0.3 }}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
+    <>
+      <button type="button" onClick={() => setOpen(true)} aria-label="Byt omgång"
+        className="flex flex-col items-start min-w-0 text-left" style={{ background: "none", border: 0, padding: 0, cursor: "pointer", color: "var(--ink)" }}>
+        <span className="flex items-center gap-1.5" style={{ font: "600 17px/22px var(--font-sans)" }}>
+          {selectedGame ? `${selectedGame.game_type} · ${selectedGame.track ?? ""}` : "Välj omgång"}
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+        </span>
+        {selectedGame && (
+          <span style={{ font: "400 13px/18px var(--font-sans)", color: "var(--ink-muted)" }}>
+            {fmtGameDate(selectedGame.date)}{firstStartTime ? ` · första start ${fmtClock(firstStartTime)}` : ""}
+          </span>
+        )}
+      </button>
 
-        {/* Current game / open picker */}
-        <button
-          onClick={() => setOpen((v) => !v)}
-          className="flex items-center gap-2 rounded-lg text-sm transition-colors"
-          style={{
-            background: "var(--tn-bg-chip)",
-            border: "1px solid var(--tn-border)",
-            color: "var(--tn-text)",
-            padding: "5px 10px",
-            fontFamily: "var(--font-geist-sans)",
-            minWidth: 0,
-          }}
-        >
-          {selectedGame ? (
-            <>
-              <span className="tn-mono font-bold text-xs shrink-0" style={{ color: "var(--tn-accent)" }}>{selectedGame.game_type}</span>
-              <span style={{ color: "var(--tn-border-strong)" }}>·</span>
-              <span className="truncate max-w-[120px]" style={{ color: "var(--tn-text)" }}>{selectedGame.track ?? selectedGame.date}</span>
-              <span className="tn-mono text-xs shrink-0" style={{ color: "var(--tn-text-faint)" }}>{selectedGame.date}</span>
-            </>
-          ) : (
-            <span style={{ color: "var(--tn-text-faint)" }}>Välj spel</span>
-          )}
-          <svg
-            width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-            className={`shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
-            style={{ color: "var(--tn-text-faint)" }}
-          >
-            <path d="M6 9l6 6 6-6" />
-          </svg>
-        </button>
-
-        {/* Next */}
-        <button
-          onClick={() => nextGame && router.push(`/?game=${nextGame.id}`)}
-          disabled={!nextGame}
-          aria-label="Nästa spel"
-          style={{ ...iconBtn, opacity: nextGame ? 1 : 0.3 }}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-      </div>
-
-      {/* Dropdown */}
-      {open && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div
-            className="absolute top-full left-0 mt-1 z-50 w-80 rounded-xl p-4 shadow-2xl"
-            style={{ background: "var(--tn-bg-raised)", border: "1px solid var(--tn-border)" }}
-          >
-            <p className="tn-eyebrow mb-3">Hämta nytt spel</p>
-
-            {/* Date picker */}
-            <div className="flex items-center gap-2 mb-3">
-              <button
-                onClick={() => { const d = new Date(date); d.setDate(d.getDate() - 1); const s = d.toLocaleDateString("sv-SE"); if (s >= minDate()) setDate(s); }}
-                style={iconBtn} aria-label="Föregående dag"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 19l-7-7 7-7" /></svg>
-              </button>
-              <input
-                type="date" value={date} min={minDate()} max={maxDate()}
-                onChange={(e) => setDate(e.target.value)}
-                className="flex-1 rounded-lg text-sm outline-none"
-                style={{ background: "var(--tn-bg-chip)", border: "1px solid var(--tn-border)", color: "var(--tn-text)", padding: "6px 10px" }}
-              />
-              <button
-                onClick={() => { const d = new Date(date); d.setDate(d.getDate() + 1); const s = d.toLocaleDateString("sv-SE"); if (s <= maxDate()) setDate(s); }}
-                style={iconBtn} aria-label="Nästa dag"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 5l7 7-7 7" /></svg>
-              </button>
-            </div>
-
-            {/* Available games */}
-            {loadingGames ? (
-              <div className="text-sm text-center py-3" style={{ color: "var(--tn-text-faint)" }}>Letar spel...</div>
-            ) : listError ? (
-              <div className="text-sm text-center py-3" style={{ color: "var(--tn-value-low)" }}>{listError}</div>
-            ) : availableGames.length === 0 ? (
-              <div className="text-sm text-center py-3" style={{ color: "var(--tn-text-faint)" }}>
-                Inga spel {date === todayLocal() ? "idag" : date === tomorrowLocal() ? "imorgon" : date}
-              </div>
-            ) : (
-              <div className="flex flex-col gap-2">
-                {availableGames.map((game) => (
-                  <button
-                    key={game.id}
-                    onClick={() => handleFetch(game)}
-                    disabled={fetchingId !== null}
-                    className="w-full flex items-center justify-between rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
-                    style={{ padding: "10px 12px", background: "var(--tn-accent-faint)", border: "1px solid transparent", color: "var(--tn-accent)" }}
-                  >
-                    <span>{game.label}</span>
-                    {fetchingId === game.id ? (
-                      <span className="tn-mono text-xs" style={{ color: "var(--tn-accent)", opacity: 0.6 }}>Hämtar...</span>
-                    ) : (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.6 }}>
-                        <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                      </svg>
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {message && (
-              <p className="text-xs mt-2" style={{ color: "var(--tn-value-low)" }}>{message}</p>
-            )}
-
-            {/* Saved games */}
-            {savedGames.length > 0 && (
-              <>
-                <div className="my-3" style={{ borderTop: "1px solid var(--tn-border)" }} />
-                <p className="tn-eyebrow mb-2">Sparade omgångar</p>
-                <div className="flex flex-col gap-1 max-h-48 overflow-y-auto">
-                  {savedGames.map((g) => (
-                    <button
-                      key={g.id}
-                      onClick={() => { setOpen(false); router.push(`/?game=${encodeURIComponent(g.id)}`); }}
-                      className="w-full text-left rounded-lg text-sm transition-colors"
-                      style={{
-                        padding: "8px 10px",
-                        background: g.id === selectedId ? "var(--tn-accent-faint)" : "transparent",
-                        color: g.id === selectedId ? "var(--tn-accent)" : "var(--tn-text-dim)",
-                        border: "none",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <span className="font-semibold tn-mono text-xs" style={{ color: g.id === selectedId ? "var(--tn-accent)" : "var(--tn-text)" }}>{g.game_type}</span>
-                      <span className="mx-1.5" style={{ color: "var(--tn-text-faint)" }}>·</span>
-                      {g.track && <span>{g.track} · </span>}
-                      <span style={{ color: "var(--tn-text-faint)" }}>{g.date}</span>
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
+      <Sheet open={open} onClose={() => setOpen(false)} title="Omgång">
+        {selectedGame && (
+          <div className="flex items-center justify-between gap-2 mb-4">
+            <Button size="sm" disabled={!prevGame} onClick={() => prevGame && router.push(`/?game=${prevGame.id}`)}>Föregående</Button>
+            <ResultsButton gameId={selectedId} />
+            <Button size="sm" disabled={!nextGame} onClick={() => nextGame && router.push(`/?game=${nextGame.id}`)}>Nästa</Button>
           </div>
-        </>
-      )}
-    </div>
+        )}
+
+        <h3 className="ta-sheet-sub">Hämta nytt spel</h3>
+        <div className="flex items-center gap-2 mb-3">
+          <Button size="sm" aria-label="Föregående dag" onClick={() => { const d = new Date(date); d.setDate(d.getDate() - 1); const s = d.toLocaleDateString("sv-SE"); if (s >= minDate()) setDate(s); }}>‹</Button>
+          <input type="date" className="ta-field" style={{ height: 36 }} value={date} min={minDate()} max={maxDate()} onChange={(e) => setDate(e.target.value)} aria-label="Datum" />
+          <Button size="sm" aria-label="Nästa dag" onClick={() => { const d = new Date(date); d.setDate(d.getDate() + 1); const s = d.toLocaleDateString("sv-SE"); if (s <= maxDate()) setDate(s); }}>›</Button>
+        </div>
+
+        {loadingGames ? (
+          <p className="ta-sheet-text" style={{ color: "var(--ink-muted)" }}>Letar spel …</p>
+        ) : listError ? (
+          <p className="ta-error">{listError}</p>
+        ) : availableGames.length === 0 ? (
+          <p className="ta-sheet-text" style={{ color: "var(--ink-muted)" }}>
+            Inga spel {date === todayLocal() ? "i dag" : date === tomorrowLocal() ? "i morgon" : date}
+          </p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {availableGames.map((game) => (
+              <Button key={game.id} variant="secondary" onClick={() => handleFetch(game)} disabled={fetchingId !== null}
+                style={{ justifyContent: "space-between", width: "100%" }}>
+                <span>{game.label}</span>
+                <span style={{ color: "var(--ink-muted)" }}>{fetchingId === game.id ? "Hämtar …" : "Hämta"}</span>
+              </Button>
+            ))}
+          </div>
+        )}
+        {message && <p className="ta-error" style={{ marginTop: "var(--space-2)" }}>{message}</p>}
+
+        {savedGames.length > 0 && (
+          <>
+            <h3 className="ta-sheet-sub">Sparade omgångar</h3>
+            <div className="flex flex-col" style={{ maxHeight: 240, overflowY: "auto" }}>
+              {savedGames.map((g) => (
+                <button key={g.id} type="button" onClick={() => { setOpen(false); router.push(`/?game=${encodeURIComponent(g.id)}`); }}
+                  aria-current={g.id === selectedId ? "true" : undefined}
+                  className="text-left py-2" style={{ background: "none", border: 0, borderTop: "1px solid var(--line)", cursor: "pointer",
+                    font: "400 15px/22px var(--font-sans)", color: g.id === selectedId ? "var(--accent)" : "var(--ink)" }}>
+                  {`${g.game_type} · ${g.track ?? ""} · ${fmtGameDate(g.date)}`}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+      </Sheet>
+    </>
   );
 }
