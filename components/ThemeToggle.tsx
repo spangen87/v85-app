@@ -7,13 +7,9 @@ export function ThemeToggle() {
   return (
     <button
       onClick={toggle}
-      title={theme === "dark" ? "Byt till ljust läge" : "Byt till mörkt läge"}
-      className="w-9 h-9 rounded-full flex items-center justify-center transition-colors"
-      style={{
-        background: "var(--tn-bg-chip)",
-        border: "1px solid var(--tn-border)",
-        color: "var(--tn-text-dim)",
-      }}
+      aria-label={theme === "dark" ? "Byt till ljust tema" : "Byt till mörkt tema"}
+      className="w-10 h-10 rounded-md flex items-center justify-center"
+      style={{ background: "var(--surface-sunken)", color: "var(--ink)", border: 0, cursor: "pointer" }}
     >
       {theme === "dark" ? (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">

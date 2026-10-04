@@ -1,379 +1,156 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { HorseCard } from "./HorseCard";
-import { AnalysisPanel } from "./AnalysisPanel";
-import { HorseNotes } from "./notes/HorseNotes";
-import { TopFiveRanking } from "./TopFiveRanking";
-import { computeSkrallMap } from "@/lib/skrall";
-import { computeEdgeMap } from "@/lib/edge";
-import { computeWinProbabilities, type WinProbability } from "@/lib/probability";
-import { computeFundamentalMapForRows, type FundamentalResult } from "@/lib/fundamental";
-import type { HorseStart } from "@/lib/atg";
-import type { Group, SystemSelection, SystemHorse, TrackConfig } from "@/lib/types";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Button, HorseList, HorseRow, RaceTabs } from "@/components/ui";
+import { RaceToolbar, type RaceView } from "./RaceToolbar";
+import { StartCountdown } from "./StartCountdown";
+import { HorseDetail } from "./HorseDetail";
+import { RaceTable } from "./RaceTable";
+import { topReasons } from "@/lib/fundamental";
+import { fmtClock, fmtStartMethod } from "@/lib/format";
+import { usePref } from "@/lib/usePref";
+import {
+  buildRowModels, computeRaceMaps, EMPTY_FILTERS, filterRows, parseHastParam, raceLacksMarket, raceTabsInfo, SORT_KEYS, SORT_LABELS,
+  sortRows, type Filters, type RowModel,
+} from "@/lib/raceView";
+import type { Race } from "@/lib/raceTypes";
+import type { Group, SystemHorse, SystemSelection, TrackConfig } from "@/lib/types";
 
-interface LifeRecord {
-  start_method: string;
-  distance: string;
-  place: number;
-  time: string;
-}
-
-type SortKey = "number" | "odds" | "bet" | "composite" | "grund";
-
-interface Starter {
-  id: string;
-  start_number: number;
-  post_position: number | null;
-  horse_id: string;
-  driver: string;
-  driver_win_pct: number | null;
-  trainer: string;
-  trainer_win_pct: number | null;
-  odds: number | null;
-  p_odds: number | null;
-  bet_distribution: number | null;
-  shoes_reported: boolean | null;
-  shoes_front: boolean | null;
-  shoes_back: boolean | null;
-  shoes_front_changed: boolean | null;
-  shoes_back_changed: boolean | null;
-  sulky_type: string | null;
-  horse_age: number | null;
-  horse_sex: string | null;
-  horse_color: string | null;
-  pedigree_father: string | null;
-  home_track: string | null;
-  starts_total: number | null;
-  wins_total: number | null;
-  places_2nd: number | null;
-  places_3rd: number | null;
-  earnings_total: number | null;
-  starts_current_year: number | null;
-  wins_current_year: number | null;
-  places_2nd_current_year: number | null;
-  places_3rd_current_year: number | null;
-  starts_prev_year: number | null;
-  wins_prev_year: number | null;
-  places_2nd_prev_year: number | null;
-  places_3rd_prev_year: number | null;
-  best_time: string | null;
-  last_5_results: HorseStart[];
-  horse_starts_history?: HorseStart[] | null;
-  start_distance?: number | null;
-  start_points?: number | null;
-  life_records: LifeRecord[] | null;
-  formscore: number | null;
-  finish_position: number | null;
-  finish_time: string | null;
-  horses: { name: string } | null;
-}
-
-interface Race {
-  id: string;
-  race_number: number;
-  race_name: string | null;
-  distance: number;
-  start_method: string | null;
-  start_time: string | null;
-  breed?: string | null;
-  first_prize?: number | null;
-  starters: Starter[];
-}
+const VIEWS = ["lista", "tabell"] as const;
 
 export function RaceList({
-  races,
-  activeRaceNumber,
-  userGroups,
-  currentUserId,
-  systemMode,
-  systemSelections,
-  onToggleHorse,
-  onHorseClick,
-  trackConfig,
-  noteCounts = {},
+  races, activeRaceNumber, onSelectRace, userGroups, currentUserId, systemSelections, canSelect, onToggleHorse,
+  trackConfig = null, noteCounts = {}, initialDetail = null,
 }: {
   races: Race[];
   activeRaceNumber: number;
+  onSelectRace: (n: number) => void;
   userGroups: Group[];
   currentUserId: string;
-  systemMode?: boolean;
-  systemSelections?: SystemSelection[];
-  onToggleHorse?: (raceNumber: number, horse: SystemHorse) => void;
-  onHorseClick?: (raceNumber: number, startNumber: number) => void;
+  systemSelections: SystemSelection[];
+  canSelect: boolean;
+  onToggleHorse: (raceNumber: number, horse: SystemHorse) => void;
   trackConfig?: TrackConfig | null;
   noteCounts?: Record<string, number>;
+  /** Startnummer att öppna direkt (från ?hast= i länken) */
+  initialDetail?: number | null;
 }) {
-  const [showAnalysis, setShowAnalysis] = useState(false);
-  const [sortKey, setSortKey] = useState<SortKey>("composite");
-  const [filterValue, setFilterValue] = useState(false);
-  const [filterSkrall, setFilterSkrall] = useState(false);
-  const [filterEdge, setFilterEdge] = useState(false);
-  const [hideOutsiders, setHideOutsiders] = useState(false);
-  const [search, setSearch] = useState("");
+  const [view, setView] = usePref<RaceView>("travappen.view", VIEWS, "lista");
+  const [sort, setSort] = usePref("travappen.sort", SORT_KEYS, "chans");
+  const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
+  const [detail, setDetail] = useState<number | null>(initialDetail);
 
+  // Bakåtknappen: ?hast= styr om detaljvyn är öppen
   useEffect(() => {
-    setShowAnalysis(false);
-  }, [activeRaceNumber]);
+    const onPop = () => {
+      const hit = parseHastParam(new URLSearchParams(window.location.search).get("hast"), races);
+      if (hit) onSelectRace(hit.race);
+      setDetail(hit ? hit.start : null);
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [races, onSelectRace]);
 
-  const SORT_OPTIONS: { key: SortKey; label: string }[] = [
-    { key: "composite", label: "CS — Composite Score" },
-    { key: "grund", label: "Grundchans (högst)" },
-    { key: "number", label: "Startnummer" },
-    { key: "odds", label: "Odds (lägst)" },
-    { key: "bet", label: "Streck% (högst)" },
-  ];
+  const closeDetail = useCallback(() => {
+    if (window.history.state?.hast) { window.history.back(); return; }
+    const url = new URL(window.location.href);
+    url.searchParams.delete("hast");
+    window.history.replaceState(window.history.state, "", url);
+    setDetail(null);
+  }, []);
 
-  const activeRace = races.find((r) => r.race_number === activeRaceNumber) ?? races[0];
+  const race = races.find((r) => r.race_number === activeRaceNumber) ?? races[0];
+  const selected = useMemo(() => new Set(
+    (systemSelections.find((s) => s.race_number === race?.race_number)?.horses ?? []).map((h) => h.start_number)
+  ), [systemSelections, race?.race_number]);
+  const maps = useMemo(() => (race ? computeRaceMaps(race) : null), [race]);
+  const allRows = useMemo(() => (race && maps ? buildRowModels(race, maps, selected) : []), [race, maps, selected]);
+  const rows = sortRows(filterRows(allRows, filters), sort);
 
-  function sortStarters(
-    starters: Starter[],
-    compositeMap: Record<number, number>,
-    grundMap: Record<number, FundamentalResult>
-  ): Starter[] {
-    return [...starters].sort((a, b) => {
-      switch (sortKey) {
-        case "number": return a.start_number - b.start_number;
-        case "odds":
-          if (a.odds == null && b.odds == null) return 0;
-          if (a.odds == null) return 1;
-          if (b.odds == null) return -1;
-          return a.odds - b.odds;
-        case "bet":
-          if (a.bet_distribution == null && b.bet_distribution == null) return 0;
-          if (a.bet_distribution == null) return 1;
-          if (b.bet_distribution == null) return -1;
-          return b.bet_distribution - a.bet_distribution;
-        case "composite":
-          return (compositeMap[b.start_number] ?? 0) - (compositeMap[a.start_number] ?? 0);
-        case "grund":
-          return (grundMap[b.start_number]?.p ?? -1) - (grundMap[a.start_number]?.p ?? -1);
-        default:
-          return (b.formscore ?? 0) - (a.formscore ?? 0);
-      }
-    });
-  }
+  if (!race || !maps) return null;
 
-  if (!activeRace) return null;
-
-  const hasActiveFilter = filterValue || filterSkrall || filterEdge || hideOutsiders || search.trim().length > 0;
-  const compositeMap = Object.fromEntries(activeRace.starters.map((s) => [s.start_number, s.formscore ?? 0]));
-  // Kalibrerad vinstsannolikhet och skrällsignal är relativa hela fältet —
-  // beräknas före filtrering
-  const probList = computeWinProbabilities(activeRace.starters);
-  const probMap: Record<number, WinProbability> = Object.fromEntries(
-    activeRace.starters.map((s, i) => [s.start_number, probList[i]])
-  );
-  // "Värde": kalibrerad chans överstiger streckningen för en reell kandidat
-  const valueMap = Object.fromEntries(
-    activeRace.starters.map((s) => {
-      const cs = s.formscore ?? 0;
-      const pPct = (probMap[s.start_number]?.p ?? 0) * 100;
-      const streckPct = s.bet_distribution ?? 0;
-      return [s.start_number, cs > 55 && streckPct > 0 && pPct > streckPct];
-    })
-  );
-  const skrallMap = computeSkrallMap(activeRace.starters);
-  // Tysta signaler (barfota, toppkusk, formtrend, uppehåll) — relativa fältet
-  const edgeMap = computeEdgeMap(activeRace.starters, activeRace.start_time);
-  // Grundchans (odds-fri) — relativ fältet, beräknas före filtrering
-  const raceDate = activeRace.start_time?.slice(0, 10) ?? new Date().toISOString().slice(0, 10);
-  const fundamentalMap: Record<number, FundamentalResult> = computeFundamentalMapForRows(
-    activeRace, raceDate, activeRace.starters
-  );
-
-  const q = search.trim().toLowerCase();
-  const filtered = activeRace.starters
-    .filter((s) => !filterValue || valueMap[s.start_number])
-    .filter((s) => !filterSkrall || skrallMap[s.start_number]?.isCandidate)
-    .filter((s) => !filterEdge || edgeMap[s.start_number]?.isEdge)
-    .filter((s) => !hideOutsiders || s.odds == null || s.odds <= 50)
-    .filter((s) => {
-      if (!q) return true;
-      return (s.horses?.name ?? "").toLowerCase().includes(q) || s.driver.toLowerCase().includes(q) || s.trainer.toLowerCase().includes(q);
-    });
-
-  const sorted = sortStarters(filtered, compositeMap, fundamentalMap);
-  const raceSelections = systemSelections?.find((s) => s.race_number === activeRace.race_number);
-  const startTimeStr = activeRace.start_time
-    ? new Date(activeRace.start_time).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Stockholm" })
-    : null;
-
-  const chipBase: React.CSSProperties = {
-    background: "var(--tn-bg-chip)",
-    border: "1px solid var(--tn-border)",
-    color: "var(--tn-text-dim)",
-    borderRadius: 8,
-    fontSize: 12,
-    padding: "5px 10px",
-    cursor: "pointer",
-    transition: "background 0.15s",
-    fontFamily: "var(--font-geist-sans)",
+  const toggle = (r: RowModel) =>
+    onToggleHorse(race.race_number, { horse_id: r.starter.horse_id, start_number: r.n, horse_name: r.name });
+  const onToggle = (r: RowModel) => (canSelect && r.selectable ? () => toggle(r) : undefined);
+  const openDetail = (n: number) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("hast", `${race.race_number}-${n}`);
+    window.history.pushState({ ...window.history.state, hast: true }, "", url);
+    setDetail(n);
   };
+  const detailRow = detail != null ? allRows.find((r) => r.n === detail) ?? null : null;
 
   return (
-    <div className="space-y-3">
-      <TopFiveRanking races={races} onHorseClick={onHorseClick} />
+    <div className="flex flex-col gap-3">
+      <RaceTabs races={raceTabsInfo(races, systemSelections)} active={race.race_number} onSelect={onSelectRace} />
 
-      {/* Toolbar */}
-      <div className="flex items-center gap-2 flex-wrap px-1">
-        <select
-          value={sortKey}
-          onChange={(e) => setSortKey(e.target.value as SortKey)}
-          className="text-xs rounded-lg outline-none cursor-pointer"
-          style={{ ...chipBase, minWidth: 0 }}
-        >
-          {SORT_OPTIONS.map((opt) => (
-            <option key={opt.key} value={opt.key}>{opt.label}</option>
-          ))}
-        </select>
-
-        <button
-          onClick={() => setFilterValue((v) => !v)}
-          className="text-xs font-medium transition-colors"
-          style={{
-            ...chipBase,
-            background: filterValue ? "var(--tn-value-high-bg)" : "var(--tn-bg-chip)",
-            color: filterValue ? "var(--tn-value-high)" : "var(--tn-text-dim)",
-            border: filterValue ? "1px solid transparent" : "1px solid var(--tn-border)",
-          }}
-        >
-          Värde
-        </button>
-
-        <button
-          onClick={() => setFilterSkrall((v) => !v)}
-          className="text-xs font-medium transition-colors"
-          style={{
-            ...chipBase,
-            background: filterSkrall ? "var(--tn-warn-bg)" : "var(--tn-bg-chip)",
-            color: filterSkrall ? "var(--tn-warn)" : "var(--tn-text-dim)",
-            border: filterSkrall ? "1px solid transparent" : "1px solid var(--tn-border)",
-          }}
-          title="Lågstreckade hästar med hög klass där oddsen säger mer än strecken"
-        >
-          Skräll
-        </button>
-
-        <button
-          onClick={() => setFilterEdge((v) => !v)}
-          className="text-xs font-medium transition-colors"
-          style={{
-            ...chipBase,
-            background: filterEdge ? "var(--tn-accent-faint)" : "var(--tn-bg-chip)",
-            color: filterEdge ? "var(--tn-accent)" : "var(--tn-text-dim)",
-            border: filterEdge ? "1px solid transparent" : "1px solid var(--tn-border)",
-          }}
-          title="Hästar med flera positiva tysta signaler (barfota-byte, toppkusk, stigande form) som inte syns i odds och streck"
-        >
-          Signal
-        </button>
-
-        <button
-          onClick={() => setHideOutsiders((v) => !v)}
-          className="text-xs font-medium transition-colors"
-          style={{
-            ...chipBase,
-            background: hideOutsiders ? "var(--tn-accent-faint)" : "var(--tn-bg-chip)",
-            color: hideOutsiders ? "var(--tn-accent)" : "var(--tn-text-dim)",
-            border: hideOutsiders ? "1px solid transparent" : "1px solid var(--tn-border)",
-          }}
-        >
-          Dölj &gt;50x
-        </button>
-
-        {hasActiveFilter && (
-          <button
-            onClick={() => { setFilterValue(false); setFilterSkrall(false); setFilterEdge(false); setHideOutsiders(false); setSearch(""); }}
-            className="text-xs transition-colors"
-            style={{ color: "var(--tn-text-faint)", background: "none", border: "none", cursor: "pointer" }}
-          >
-            Rensa ✕
-          </button>
-        )}
-
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Sök häst, kusk…"
-          className="text-xs rounded-lg outline-none w-full sm:w-44 ml-auto"
-          style={{
-            ...chipBase,
-            color: "var(--tn-text)",
-          }}
-        />
+      <div className="flex items-end justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="ta-section-title">{`Avdelning ${race.race_number}`}</h2>
+          <p style={{ margin: "2px 0 0", font: "400 13px/18px var(--font-sans)", color: "var(--ink-muted)" }}>
+            {[`${race.distance} m`, fmtStartMethod(race.start_method), `${race.starters.length} hästar`].filter(Boolean).join(" · ")}
+          </p>
+        </div>
+        <div className="flex flex-col items-end" style={{ font: "500 12px/16px var(--font-sans)", color: "var(--ink-muted)" }}>
+          {race.start_time && <span>{`Start ${fmtClock(race.start_time)}`}</span>}
+          <StartCountdown startTime={race.start_time} />
+        </div>
       </div>
 
-      {/* Race info + analysis toggle */}
-      <div className="flex items-center justify-between px-1">
-        <span className="text-xs truncate" style={{ color: "var(--tn-text-faint)" }}>
-          {activeRace.race_name ?? `Avdelning ${activeRace.race_number}`}
-          {startTimeStr && <span className="ml-2">{startTimeStr}</span>}
-          <span className="ml-2">{activeRace.distance} m</span>
-          {activeRace.start_method && <span className="ml-2 capitalize">{activeRace.start_method}</span>}
-        </span>
-        <button
-          onClick={() => setShowAnalysis((v) => !v)}
-          className="ml-3 shrink-0 text-xs font-medium transition-colors"
-          style={{
-            ...chipBase,
-            background: showAnalysis ? "var(--tn-accent-faint)" : "transparent",
-            color: showAnalysis ? "var(--tn-accent)" : "var(--tn-accent)",
-            border: "1px solid var(--tn-accent-soft)",
-          }}
-        >
-          {showAnalysis ? "Dölj analys" : "Visa analys"}
-        </button>
-      </div>
+      <RaceToolbar view={view} onView={setView} sort={sort} onSort={setSort} filters={filters} onFilters={setFilters} />
 
-      {showAnalysis && (
-        <AnalysisPanel
-          starters={sorted}
-          raceMeters={activeRace.distance}
-          raceStartMethod={activeRace.start_method ?? "auto"}
-          trackConfig={trackConfig ?? undefined}
-          skrallMap={skrallMap}
-          probMap={probMap}
-          edgeMap={edgeMap}
-          fundamentalMap={fundamentalMap}
-        />
+      {raceLacksMarket(allRows) && (
+        <p className="ta-banner" style={{ margin: 0 }}>Streck och odds saknas än. Hämta om omgången när spelet har öppnat.</p>
       )}
 
-      {sorted.length === 0 && (
-        <p className="text-sm text-center py-8" style={{ color: "var(--tn-text-faint)" }}>
-          Inga hästar matchar filtret.
-        </p>
-      )}
-
-      <div className="flex flex-col gap-2">
-        {sorted.map((s, idx) => (
-          <div key={s.id} data-race={activeRace.race_number} data-start={s.start_number}>
-            <HorseCard
-              starter={s}
-              internalRaceId={activeRace.id}
-              raceDistance={activeRace.distance}
-              raceStartMethod={activeRace.start_method ?? "auto"}
-              isValue={valueMap[s.start_number] ?? false}
-              skrall={skrallMap[s.start_number]}
-              edge={edgeMap[s.start_number]}
-              fundamental={fundamentalMap[s.start_number]}
-              noteCount={noteCounts[s.horse_id] ?? 0}
-              sortRank={sortKey !== "number" ? idx + 1 : undefined}
-              trackConfig={trackConfig ?? undefined}
-              isSelected={systemMode ? (raceSelections?.horses.some((h) => h.horse_id === s.horse_id) ?? false) : undefined}
-              onSelect={
-                systemMode && onToggleHorse
-                  ? () => onToggleHorse(activeRace.race_number, { horse_id: s.horse_id, start_number: s.start_number, horse_name: s.horses?.name ?? "" })
-                  : undefined
-              }
-              notesSection={
-                <HorseNotes horseId={s.horse_id} userGroups={userGroups} currentUserId={currentUserId} />
-              }
+      {rows.length === 0 ? (
+        <div className="ta-card flex flex-col items-center gap-3 py-8">
+          <p style={{ margin: 0, color: "var(--ink-muted)" }}>Inga hästar matchar filtret.</p>
+          <Button onClick={() => setFilters(EMPTY_FILTERS)}>Rensa filter</Button>
+        </div>
+      ) : view === "lista" ? (
+        <HorseList sortLabel={SORT_LABELS[sort]}>
+          {rows.map((r) => (
+            <HorseRow
+              key={r.n}
+              number={r.n}
+              name={r.name}
+              driver={r.driver}
+              chans={r.chansPct}
+              streck={r.streckPct}
+              odds={r.odds}
+              form={r.form}
+              badge={r.badge}
+              signalScore={r.edgeScore}
+              valueDelta={r.valueDelta}
+              isValue={r.isValue}
+              state={r.numberState}
+              dimmed={r.scratched}
+              onToggleSystem={onToggle(r)}
+              onOpen={() => openDetail(r.n)}
+              noteCount={noteCounts[r.starter.horse_id] ?? 0}
             />
-          </div>
-        ))}
-      </div>
+          ))}
+        </HorseList>
+      ) : (
+        <RaceTable race={race} rows={rows} trackConfig={trackConfig} canSelect={canSelect} onToggle={toggle} onOpen={openDetail} />
+      )}
+
+      {detailRow && (
+        <HorseDetail
+          key={`${race.race_number}-${detailRow.n}`}
+          race={race}
+          row={detailRow}
+          reasons={maps.fundamental[detailRow.n] ? topReasons(maps.fundamental[detailRow.n]) : []}
+          signals={maps.edge[detailRow.n]?.signals ?? []}
+          trackConfig={trackConfig}
+          userGroups={userGroups}
+          currentUserId={currentUserId}
+          canSelect={canSelect}
+          onToggle={() => toggle(detailRow)}
+          onClose={closeDetail}
+        />
+      )}
     </div>
   );
 }

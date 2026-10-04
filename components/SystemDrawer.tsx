@@ -1,158 +1,91 @@
 "use client";
 
-import { useEffect } from "react";
-import type { SystemSelection, SystemHorse } from "@/lib/types";
-import { formatRowCost } from "@/lib/atg";
+import { Badge, Button, Sheet, StartNumber } from "@/components/ui";
+import type { GameSystem, SystemHorse, SystemSelection } from "@/lib/types";
+import { lockedStarts, type SystemSummary } from "@/lib/systemSummary";
 
 interface RaceInfo {
   id: string;
   race_number: number;
   distance: number;
   start_method: string | null;
-  starters: {
-    horse_id: string;
-    start_number: number;
-    horses: { name: string } | null;
-  }[];
+  starters: { horse_id: string; start_number: number; horses: { name: string } | null; odds?: number | null; finish_position?: number | null }[];
 }
 
-interface SystemDrawerProps {
-  open: boolean;
-  onClose: () => void;
-  races: RaceInfo[];
-  selections: SystemSelection[];
-  onToggleHorse: (raceNumber: number, horse: SystemHorse) => void;
-  onSave: () => void;
-  onCancel: () => void;
-  totalRows: number;
-  gameType: string | null;
-}
+const STATUS = { idle: "", saving: "Sparar utkast …", saved: "Utkastet sparas automatiskt", error: "Kunde inte spara utkastet" } as const;
 
+/** Kupongen på mobil: alla avdelningar med nummer att trycka på. */
 export function SystemDrawer({
-  open,
-  onClose,
-  races,
-  selections,
-  onToggleHorse,
-  onSave,
-  onCancel,
-  totalRows,
-  gameType,
-}: SystemDrawerProps) {
-  // Stäng med Escape
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
-
-  if (!open) return null;
-
-  function isSelected(raceNumber: number, horseId: string): boolean {
-    return selections.find((s) => s.race_number === raceNumber)?.horses.some((h) => h.horse_id === horseId) ?? false;
-  }
-
-  const completedRaces = selections.length;
-
+  open, onClose, races, selections, onToggleHorse, onSave, onClear, summary, draftName, onDraftNameChange, draftStatus, savedDrafts, onLoadDraft,
+}: {
+  open: boolean; onClose: () => void; races: RaceInfo[]; selections: SystemSelection[];
+  onToggleHorse: (raceNumber: number, horse: SystemHorse) => void; onSave: () => void; onClear: () => void;
+  summary: SystemSummary; draftName: string; onDraftNameChange: (s: string) => void; draftStatus: keyof typeof STATUS;
+  savedDrafts: GameSystem[]; onLoadDraft: (d: GameSystem) => void;
+}) {
   return (
-    <>
-      <div className="fixed inset-0 z-[55] md:hidden" style={{ background: "rgba(0,0,0,0.6)" }} onClick={onClose} />
-      <div
-        role="dialog"
-        aria-modal="true"
-        className="fixed bottom-0 left-0 right-0 z-[60] md:hidden rounded-t-2xl max-h-[80vh] flex flex-col"
-        style={{ background: "var(--tn-bg-raised)", border: "1px solid var(--tn-border)" }}
-      >
-        <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
-          <div className="w-8 h-1 rounded-full" style={{ background: "var(--tn-border-strong)" }} />
-        </div>
-
-        <div
-          className="flex items-center justify-between px-4 py-2 flex-shrink-0"
-          style={{ borderBottom: "1px solid var(--tn-border)" }}
-        >
-          <span className="tn-eyebrow">Din kupong</span>
-          <button
-            onClick={onClose}
-            aria-label="Stäng"
-            className="text-lg leading-none transition"
-            style={{ color: "var(--tn-text-faint)", background: "none", border: "none", cursor: "pointer" }}
-          >
-            ✕
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
-          {races.map((race) => {
-            const sorted = [...race.starters].sort((a, b) => a.start_number - b.start_number);
-            return (
-              <div key={race.id}>
-                <div className="tn-eyebrow mb-1.5">Avd {race.race_number} · {race.distance}m</div>
-                <div className="flex flex-wrap gap-1.5">
-                  {sorted.map((starter) => {
-                    const selected = isSelected(race.race_number, starter.horse_id);
-                    return (
-                      <button
-                        key={starter.horse_id}
-                        onClick={() => onToggleHorse(race.race_number, {
-                          horse_id: starter.horse_id,
-                          start_number: starter.start_number,
-                          horse_name: starter.horses?.name ?? "",
-                        })}
-                        title={starter.horses?.name ?? `Nr ${starter.start_number}`}
-                        className="w-[30px] h-[30px] rounded-full flex items-center justify-center text-sm font-bold transition-colors"
-                        style={selected
-                          ? { background: "var(--tn-accent)", color: "#fff", outline: "2px solid var(--tn-accent-soft)", outlineOffset: 1 }
-                          : { background: "var(--tn-bg-chip)", color: "var(--tn-text-faint)" }
-                        }
-                      >
-                        {starter.start_number}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        <div
-          className="px-4 pt-3 flex-shrink-0"
-          style={{
-            borderTop: "2px solid var(--tn-accent)",
-            // Plats för home-indikatorn så Spara-/Avbryt-knapparna inte döljs
-            paddingBottom: "calc(12px + env(safe-area-inset-bottom))",
-          }}
-        >
-          <div className="flex items-baseline justify-between mb-1">
-            <span className="text-lg font-extrabold" style={{ color: "var(--tn-accent)" }}>
-              {totalRows} {totalRows === 1 ? "rad" : "rader"}
-            </span>
-            <span className="text-xs" style={{ color: "var(--tn-text-faint)" }}>
-              {totalRows > 0 ? formatRowCost(totalRows, gameType ?? "") : "–"}
-            </span>
+    <Sheet open={open} onClose={onClose} title="Ditt system" wide
+      footer={
+        <div className="flex flex-col gap-3 w-full">
+          <div className="flex justify-between items-baseline">
+            <span style={{ font: "600 20px/24px var(--font-sans)", fontVariantNumeric: "tabular-nums" }}>{summary.complete ? `${summary.rows} ${summary.rows === 1 ? "rad" : "rader"}` : summary.headline}</span>
+            <span style={{ font: "600 20px/24px var(--font-sans)", fontVariantNumeric: "tabular-nums" }}>{summary.costText ?? "–"}</span>
           </div>
-          <div className="text-xs mb-2" style={{ color: "var(--tn-text-faint)" }}>
-            {completedRaces} av {races.length} avd. klara
+          <span style={{ font: "400 13px/18px var(--font-sans)", color: draftStatus === "error" ? "var(--danger)" : "var(--ink-muted)" }}>
+            {[summary.hint, STATUS[draftStatus]].filter(Boolean).join(" · ")}
+          </span>
+          <div className="flex gap-2">
+            <Button onClick={onClear} disabled={selections.length === 0} style={{ flex: 1 }}>Rensa</Button>
+            <Button variant="primary" onClick={onSave} disabled={!summary.complete} style={{ flex: 2 }}>Spara system</Button>
           </div>
-          <button
-            onClick={onSave}
-            disabled={selections.length === 0}
-            className="w-full py-2 text-sm font-bold rounded-lg disabled:opacity-40 transition"
-            style={{ background: "var(--tn-accent)", color: "#fff", border: "none", cursor: "pointer" }}
-          >
-            Spara system →
-          </button>
-          <button
-            onClick={onCancel}
-            className="w-full mt-2 text-xs underline transition"
-            style={{ color: "var(--tn-text-faint)", background: "none", border: "none", cursor: "pointer" }}
-          >
-            Avbryt systemläge
-          </button>
         </div>
+      }>
+      <div className="flex flex-col gap-1.5 mb-4">
+        <label htmlFor="system-name" className="ta-field-label">Namn</label>
+        <input id="system-name" className="ta-field" value={draftName} maxLength={80} onChange={(e) => onDraftNameChange(e.target.value)} />
       </div>
-    </>
+      <div className="ta-card" style={{ overflow: "hidden" }}>
+        {races.map((r, i) => {
+          const picked = selections.find((s) => s.race_number === r.race_number)?.horses ?? [];
+          const isPicked = (id: string) => picked.some((h) => h.horse_id === id);
+          const locked = lockedStarts(r);
+          return (
+            <div key={r.id} className="flex flex-col gap-2.5" style={{ padding: "12px 16px", borderTop: i === 0 ? 0 : "1px solid var(--line)" }}>
+              <div className="flex items-center justify-between gap-2">
+                <span style={{ font: "600 15px/20px var(--font-sans)" }}>{`Avdelning ${r.race_number}`}</span>
+                <span className="flex items-center gap-2">
+                  {picked.length === 1 && <Badge>Spik</Badge>}
+                  <span style={{ font: "500 13px/18px var(--font-sans)", color: "var(--ink-muted)" }}>
+                    {picked.length === 0 ? "Ingen vald" : `${picked.length} ${picked.length === 1 ? "häst" : "hästar"}`}
+                  </span>
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {[...r.starters].sort((a, b) => a.start_number - b.start_number).map((s) => (
+                  <StartNumber key={s.horse_id} number={s.start_number} state={isPicked(s.horse_id) ? "selected" : "idle"}
+                    label={locked.has(s.start_number) && !isPicked(s.horse_id)
+                      ? `Nr ${s.start_number} ${s.horses?.name ?? ""} går inte att välja`
+                      : `${isPicked(s.horse_id) ? "Ta bort" : "Lägg till"} nr ${s.start_number} ${s.horses?.name ?? ""} i avdelning ${r.race_number}`}
+                    onClick={locked.has(s.start_number) && !isPicked(s.horse_id) ? undefined
+                      : () => onToggleHorse(r.race_number, { horse_id: s.horse_id, start_number: s.start_number, horse_name: s.horses?.name ?? "" })} />
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {savedDrafts.length > 0 && (
+        <>
+          <h3 className="ta-sheet-sub">Mina utkast</h3>
+          {savedDrafts.map((d) => (
+            <button key={d.id} type="button" onClick={() => onLoadDraft(d)} className="w-full text-left py-2"
+              style={{ background: "none", border: 0, borderTop: "1px solid var(--line)", cursor: "pointer", font: "400 15px/22px var(--font-sans)", color: "var(--ink)" }}>
+              {d.name}
+              <span style={{ color: "var(--ink-muted)" }}>{` · ${d.total_rows} rader · ${new Date(d.created_at).toLocaleDateString("sv-SE")}`}</span>
+            </button>
+          ))}
+        </>
+      )}
+    </Sheet>
   );
 }

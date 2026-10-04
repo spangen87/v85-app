@@ -1,15 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { MainPageClient } from "@/components/MainPageClient";
-import { ResultsButton } from "@/components/ResultsButton";
 import { GamePickerBar } from "@/components/GamePickerBar";
 import { AutoLoadUpcoming } from "@/components/AutoLoadUpcoming";
-import { UserMenu } from "@/components/groups/UserMenu";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { UsefulLinks } from "@/components/UsefulLinks";
-import { CollapsibleControls } from "@/components/CollapsibleControls";
-import { RaceTabBar } from "@/components/RaceTabBar";
 import { RaceTabProvider } from "@/components/RaceTabContext";
-import { getProfile, getMyGroups } from "@/lib/actions/groups";
+import { getMyGroups } from "@/lib/actions/groups";
 import { getGroupActivity } from "@/lib/actions/activity";
 import { GroupActivitySection } from "@/components/groups/GroupActivitySection";
 import { getLatestGradedOutcome } from "@/lib/actions/outcome";
@@ -20,8 +15,8 @@ import { getGamePostSummary } from "@/lib/actions/posts";
 import { getTrackConfig } from "@/lib/actions/tracks";
 import { getAuthUser } from "@/lib/supabase/guards";
 import { redirect } from "next/navigation";
+import { parseHastParam } from "@/lib/raceView";
 import Link from "next/link";
-import { Suspense } from "react";
 import type { SystemSelection, TrackConfig } from "@/lib/types";
 
 async function getAllGames(supabase: Awaited<ReturnType<typeof createClient>>) {
@@ -60,16 +55,15 @@ async function getRaces(supabase: Awaited<ReturnType<typeof createClient>>, game
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ game?: string; systemMode?: string; groupId?: string; avd?: string; draft?: string }>;
+  searchParams: Promise<{ game?: string; systemMode?: string; groupId?: string; avd?: string; draft?: string; hast?: string }>;
 }) {
   const supabase = await createClient();
   const user = await getAuthUser();
   if (!user) redirect("/login");
 
   const params = await searchParams;
-  const [games, profile, userGroups, activity, gradedOutcome] = await Promise.all([
+  const [games, userGroups, activity, gradedOutcome] = await Promise.all([
     getAllGames(supabase),
-    getProfile(),
     getMyGroups(),
     getGroupActivity(),
     getLatestGradedOutcome(),
@@ -104,7 +98,6 @@ export default async function HomePage({
     ? await getNoteCountsForHorses(horseIds)
     : {};
 
-  const initialSystemMode = params.systemMode === '1'
   const initialGroupId = params.groupId ?? null
 
   // Ladda senaste utkastet för spelet (hämtat ovan)
@@ -112,93 +105,40 @@ export default async function HomePage({
   const initialSelections: SystemSelection[] = existingDraft?.selections ?? []
 
   const avdParam = params.avd ? parseInt(params.avd, 10) : NaN;
-  const activeRaceNumber = (!isNaN(avdParam) && races.some((r) => r.race_number === avdParam))
-    ? avdParam
-    : (races[0]?.race_number ?? 1);
+  // ?hast=<avd>-<nr> öppnar en häst direkt och vinner över ?avd=
+  const hast = parseHastParam(params.hast ?? null, races);
+  const activeRaceNumber = hast
+    ? hast.race
+    : (!isNaN(avdParam) && races.some((r) => r.race_number === avdParam))
+      ? avdParam
+      : (races[0]?.race_number ?? 1);
 
+  // key per omgång: system, utkast och flikar får inte följa med till nästa omgång
   return (
-    <RaceTabProvider initialRaceNumber={activeRaceNumber}>
-    <main className="min-h-screen" style={{ background: "var(--tn-bg)", color: "var(--tn-text)" }}>
-      {/* Sticky header */}
-      <header
-        className="sticky top-0 z-30"
-        style={{
-          background: "color-mix(in oklab, var(--tn-bg) 88%, transparent)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-          borderBottom: "1px solid var(--tn-border)",
-        }}
-      >
-        <div className="px-4 pt-3 pb-2">
-          {/* Brand row (mobile only — desktop has TopNav) */}
-          <div className="flex items-center justify-between md:hidden">
-            <div className="flex items-baseline gap-2">
-              <span className="tn-brand-mark text-xl">Travappen</span>
-              <span
-                className="inline-block w-1.5 h-1.5 rounded-full"
-                style={{ background: "var(--tn-accent)", transform: "translateY(-3px)" }}
-              />
-              {selectedGame && (
-                <span
-                  className="tn-mono text-xs ml-1"
-                  style={{ color: "var(--tn-text-faint)" }}
-                >
-                  {selectedGame.game_type}
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <ThemeToggle />
-              <UserMenu
-                profile={profile}
-                groups={userGroups}
-                userEmail={user.email ?? ""}
-                unseenByGroup={activity.unseenByGroup}
-              />
-            </div>
+    <RaceTabProvider key={selectedId ?? "none"} initialRaceNumber={activeRaceNumber}>
+    <main className="min-h-screen" style={{ background: "var(--bg)", color: "var(--ink)" }}>
+      <header className="sticky top-0 z-30 md:static" style={{ background: "var(--surface)", borderBottom: "1px solid var(--line)" }}>
+        <div className="flex items-center gap-3 px-4 py-3 md:px-8 md:py-5">
+          <div className="flex-1 min-w-0">
+            <GamePickerBar savedGames={games} selectedId={selectedId} firstStartTime={races[0]?.start_time ?? null} />
           </div>
-          {/* Game controls */}
-          <div className="mt-2 md:mt-0">
-            <CollapsibleControls defaultOpen={!selectedGame}>
-              <GamePickerBar savedGames={games} selectedId={selectedId} />
-              <ResultsButton gameId={selectedId} />
-            </CollapsibleControls>
-          </div>
+          <Link href="/manual" aria-label="Hjälp och manual" className="md:hidden w-10 h-10 rounded-md grid place-items-center"
+            style={{ background: "var(--surface-sunken)", color: "var(--ink)" }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" /><path d="M9.5 9.2a2.6 2.6 0 0 1 5 .9c0 1.8-2.5 2.2-2.5 3.9" /><path d="M12 17.2v.1" />
+            </svg>
+          </Link>
         </div>
-
-        {/* Game meta bar */}
-        {selectedGame && (
-          <div
-            className="px-4 py-1.5 tn-mono text-xs flex items-center gap-2"
-            style={{ color: "var(--tn-text-faint)", borderTop: "1px solid var(--tn-border)" }}
-          >
-            <span>{selectedGame.date}</span>
-            <span style={{ color: "var(--tn-border-strong)" }}>·</span>
-            <span style={{ color: "var(--tn-accent)", fontWeight: 600 }}>{selectedGame.game_type}</span>
-            <span style={{ color: "var(--tn-border-strong)" }}>·</span>
-            <span>{selectedGame.track}</span>
-            {postSummary && selectedId && (
-              <Link
-                href={`/sallskap/${postSummary.group_id}?game=${selectedId}`}
-                className="ml-auto flex items-center gap-1 transition"
-                style={{ color: "var(--tn-accent)" }}
-              >
-                💬 {postSummary.count} inlägg om omgången →
-              </Link>
-            )}
+        {postSummary && selectedId && (
+          <div className="px-4 pb-3 md:px-8">
+            <Link href={`/sallskap/${postSummary.group_id}?game=${selectedId}`} className="ta-link">
+              {`${postSummary.count} inlägg om omgången i sällskapet`}
+            </Link>
           </div>
-        )}
-
-        {races.length > 0 && (
-          <Suspense fallback={<div className="h-10" style={{ borderTop: "1px solid var(--tn-border)" }} />}>
-            <RaceTabBar
-              races={races.map((r) => ({ race_number: r.race_number, start_time: r.start_time }))}
-            />
-          </Suspense>
         )}
       </header>
 
-      <div className="px-4 lg:px-[5%] xl:px-[8%] py-6">
+      <div className="px-4 md:px-8 py-4 max-w-[1440px] mx-auto">
         <SystemOutcomeBanner outcome={gradedOutcome} />
         <GroupActivitySection activity={activity} />
 
@@ -213,7 +153,6 @@ export default async function HomePage({
           races={races as any}
           userGroups={userGroups}
           currentUserId={user.id}
-          initialSystemMode={initialSystemMode}
           initialGroupId={initialGroupId}
           gameId={selectedId}
           gameType={selectedGame?.game_type ?? null}
@@ -221,6 +160,7 @@ export default async function HomePage({
           initialSelections={initialSelections}
           trackConfig={trackConfig}
           noteCounts={noteCounts}
+          initialDetail={hast?.start ?? null}
         />
       </div>
     </main>

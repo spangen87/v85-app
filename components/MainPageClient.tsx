@@ -1,44 +1,40 @@
 'use client'
 
-import { useState, useCallback, useEffect, useRef, type ComponentProps } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { RaceList } from '@/components/RaceList'
 import { SaveSystemDialog } from '@/components/SaveSystemDialog'
 import { SystemSidebar } from '@/components/SystemSidebar'
 import { SystemDrawer } from '@/components/SystemDrawer'
+import { SystemBar } from '@/components/SystemBar'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { Button } from '@/components/ui'
 import type { SystemSelection, SystemHorse, Group, GameSystem, TrackConfig } from '@/lib/types'
-import { formatRowCost } from '@/lib/atg'
-import { createSystem, updateDraft, getUserDraftsForGame } from '@/lib/actions/systems'
+import { createSystem, deleteSystem, updateDraft, getUserDraftsForGame } from '@/lib/actions/systems'
 import { useRaceTab } from '@/components/RaceTabContext'
 import { openGamePicker } from '@/lib/uiEvents'
-
-type RaceListRaces = ComponentProps<typeof RaceList>['races']
-
-function computeTotalRows(selections: SystemSelection[]): number {
-  if (selections.length === 0) return 0
-  return selections.reduce((acc, s) => acc * Math.max(s.horses.length, 1), 1)
-}
+import { planDraftSync, summarizeSystem } from '@/lib/systemSummary'
+import type { Race } from '@/lib/raceTypes'
 
 interface MainPageClientProps {
-  races: RaceListRaces
+  races: Race[]
   userGroups: Group[]
   currentUserId: string
-  initialSystemMode?: boolean
   initialGroupId?: string | null
   gameId: string | null
   gameType: string | null
   draftId?: string | null
   initialSelections?: SystemSelection[]
   trackConfig?: TrackConfig | null
-  /** Antal anteckningar per häst-id — pratbubbla på hästkortet */
+  /** Antal anteckningar per häst-id */
   noteCounts?: Record<string, number>
+  /** Startnummer att öppna direkt (från ?hast= i länken) */
+  initialDetail?: number | null
 }
 
 export function MainPageClient({
   races,
   userGroups,
   currentUserId,
-  initialSystemMode = false,
   initialGroupId = null,
   gameId,
   gameType,
@@ -46,13 +42,13 @@ export function MainPageClient({
   initialSelections = [],
   trackConfig = null,
   noteCounts = {},
+  initialDetail = null,
 }: MainPageClientProps) {
-  const [systemMode, setSystemMode] = useState(initialSystemMode)
   const { activeRaceNumber: activeRace, setActiveRaceNumber: setActiveRace } = useRaceTab()
   const [systemSelections, setSystemSelections] = useState<SystemSelection[]>(initialSelections)
   const [showSaveDialog, setShowSaveDialog] = useState(false)
   const [showDrawer, setShowDrawer] = useState(false)
-  const [confirmCancel, setConfirmCancel] = useState(false)
+  const [confirmClear, setConfirmClear] = useState(false)
   const [activeDraftId, setActiveDraftId] = useState<string | null>(draftId)
   const [draftSaveStatus, setDraftSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [draftName, setDraftName] = useState('Utkast')
@@ -61,29 +57,47 @@ export function MainPageClient({
   const draftTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isFirstRender = useRef(true)
 
+  // Gör utkastet likt det som syns: skapa, uppdatera eller ta bort (tom kupong)
+  const syncDraft = useCallback(async (selections: SystemSelection[]) => {
+    if (!gameId) return
+    const action = planDraftSync(selections, activeDraftId)
+    if (action === 'none') return
+    setDraftSaveStatus('saving')
+    try {
+      const totalRows = summarizeSystem(selections, races.length, gameType).rows
+      if (action === 'update') await updateDraft(activeDraftId!, selections, totalRows)
+      if (action === 'create') {
+        const draft = await createSystem(initialGroupId, gameId, draftName, selections, totalRows, true)
+        setActiveDraftId(draft.id)
+      }
+      if (action === 'delete') {
+        await deleteSystem(activeDraftId!)
+        setActiveDraftId(null)
+      }
+      setDraftSaveStatus(action === 'delete' ? 'idle' : 'saved')
+    } catch {
+      setDraftSaveStatus('error')
+    }
+  }, [gameId, activeDraftId, races.length, gameType, initialGroupId, draftName])
+
+  // Sparas automatiskt några sekunder efter senaste ändringen
   useEffect(() => {
     if (isFirstRender.current) { isFirstRender.current = false; return }
-    if (!systemMode || !gameId) return
     if (draftTimerRef.current) clearTimeout(draftTimerRef.current)
-    setDraftSaveStatus('idle')
-    draftTimerRef.current = setTimeout(async () => {
-      setDraftSaveStatus('saving')
-      try {
-        const totalRows = computeTotalRows(systemSelections)
-        if (activeDraftId) {
-          await updateDraft(activeDraftId, systemSelections, totalRows)
-        } else {
-          const draft = await createSystem(initialGroupId, gameId, draftName, systemSelections, totalRows, true)
-          setActiveDraftId(draft.id)
-        }
-        setDraftSaveStatus('saved')
-      } catch {
-        setDraftSaveStatus('error')
-      }
-    }, 3000)
+    draftTimerRef.current = setTimeout(() => { void syncDraft(systemSelections) }, 3000)
     return () => { if (draftTimerRef.current) clearTimeout(draftTimerRef.current) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [systemSelections, systemMode])
+  }, [systemSelections])
+
+  // Tidigare utkast för omgången (utom det som redan är inläst)
+  useEffect(() => {
+    if (!gameId) return
+    let cancelled = false
+    getUserDraftsForGame(gameId)
+      .then((drafts) => { if (!cancelled) setSavedDrafts(drafts.filter((d) => d.id !== draftId)) })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [gameId, draftId])
 
   const handleToggleHorse = useCallback((raceNumber: number, horse: SystemHorse) => {
     setSystemSelections(prev => {
@@ -94,25 +108,10 @@ export function MainPageClient({
         const updatedHorses = existing.horses.filter(h => h.horse_id !== horse.horse_id)
         if (updatedHorses.length === 0) return prev.filter(s => s.race_number !== raceNumber)
         return prev.map(s => s.race_number === raceNumber ? { ...s, horses: updatedHorses } : s)
-      } else {
-        return prev.map(s => s.race_number === raceNumber ? { ...s, horses: [...s.horses, horse] } : s)
       }
+      return prev.map(s => s.race_number === raceNumber ? { ...s, horses: [...s.horses, horse] } : s)
     })
   }, [])
-
-  const handleActivateSystemMode = useCallback(async () => {
-    setSystemMode(true)
-    setSystemSelections([])
-    setActiveDraftId(null)
-    setShowDrawer(false)
-    isFirstRender.current = true
-    if (gameId) {
-      try {
-        const drafts = await getUserDraftsForGame(gameId)
-        setSavedDrafts(drafts)
-      } catch { /* ignorera */ }
-    }
-  }, [gameId])
 
   const handleLoadDraft = useCallback((draft: GameSystem) => {
     setSystemSelections(draft.selections ?? [])
@@ -122,185 +121,107 @@ export function MainPageClient({
     setSavedDrafts(prev => prev.filter(d => d.id !== draft.id))
   }, [])
 
-  const handleHorseClick = useCallback((raceNumber: number, startNumber: number) => {
-    setActiveRace(raceNumber)
-    requestAnimationFrame(() => {
-      const el = document.querySelector(`[data-race="${raceNumber}"][data-start="${startNumber}"]`)
-      el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    })
-  }, [setActiveRace])
-
-  const exitSystemMode = useCallback(() => {
-    setSystemMode(false)
+  // Rensa tar även bort utkastet — annars läses det in igen nästa gång sidan öppnas
+  const clearSystem = useCallback(async () => {
+    const id = activeDraftId
+    if (draftTimerRef.current) clearTimeout(draftTimerRef.current)
+    isFirstRender.current = true
     setSystemSelections([])
     setActiveDraftId(null)
     setShowDrawer(false)
-    setConfirmCancel(false)
+    setConfirmClear(false)
     setDraftSaveStatus('idle')
-  }, [])
+    if (id) {
+      try { await deleteSystem(id) } catch { /* utkastet ligger kvar under Mina utkast */ }
+    }
+  }, [activeDraftId])
 
   // En påbörjad kupong ska inte kunna kastas med ett enda tryck
-  const handleCancelSystemMode = useCallback(() => {
-    if (systemSelections.length > 0) {
-      setShowDrawer(false)
-      setConfirmCancel(true)
-      return
-    }
-    exitSystemMode()
-  }, [systemSelections.length, exitSystemMode])
-
-  const handleOpenSaveDialog = useCallback(() => {
+  const handleClear = useCallback(() => {
+    if (systemSelections.length === 0) return
     setShowDrawer(false)
-    setShowSaveDialog(true)
-  }, [])
+    setConfirmClear(true)
+  }, [systemSelections.length])
 
-  const totalRows = computeTotalRows(systemSelections)
-  const completedRaces = systemSelections.length
+  // Spara det som syns innan systemet publiceras — annars kan de senaste sekundernas ändringar saknas
+  const handleOpenSaveDialog = useCallback(async () => {
+    setShowDrawer(false)
+    if (draftTimerRef.current) clearTimeout(draftTimerRef.current)
+    if (activeDraftId) await syncDraft(systemSelections)
+    setShowSaveDialog(true)
+  }, [activeDraftId, syncDraft, systemSelections])
+
+  const summary = summarizeSystem(systemSelections, races.length, gameType)
+  const hasSystem = systemSelections.length > 0
+
+  if (races.length === 0) {
+    return (
+      <div className="ta-card flex flex-col items-center gap-3 text-center" style={{ padding: 'var(--space-8) var(--space-4)' }}>
+        <p style={{ margin: 0, font: '600 18px/24px var(--font-sans)', color: 'var(--ink)' }}>Ingen omgång inladdad ännu.</p>
+        <p style={{ margin: 0, font: '400 14px/20px var(--font-sans)', color: 'var(--ink-muted)' }}>Välj ett datum och ett spel så hämtas omgången från ATG.</p>
+        <Button variant="primary" onClick={openGamePicker}>Hämta en omgång</Button>
+      </div>
+    )
+  }
 
   return (
     <>
-      {!systemMode && races.length > 0 && (
-        <div className="flex justify-end mb-4">
-          <button
-            onClick={handleActivateSystemMode}
-            className="flex items-center gap-2 text-sm font-semibold rounded-lg transition-colors"
-            style={{
-              padding: "8px 16px",
-              background: "var(--tn-accent-faint)",
-              border: "1px solid var(--tn-accent-soft)",
-              color: "var(--tn-accent)",
-              cursor: "pointer",
-            }}
-          >
-            Bygg system
-          </button>
-        </div>
-      )}
-
-      <div className={systemMode ? "md:pr-[320px]" : ""}>
-        {races.length === 0 ? (
-          <div className="text-center py-20" style={{ color: "var(--tn-text-faint)" }}>
-            <p className="text-lg mb-2" style={{ color: "var(--tn-text)" }}>Ingen omgång inladdad ännu.</p>
-            <p className="text-sm mb-5">Välj ett datum och ett spel så hämtas omgången från ATG.</p>
-            <button
-              onClick={openGamePicker}
-              className="text-sm font-semibold rounded-lg transition-colors"
-              style={{
-                padding: "10px 20px",
-                background: "var(--tn-accent)",
-                border: "none",
-                color: "#fff",
-                cursor: "pointer",
-              }}
-            >
-              Hämta en omgång
-            </button>
-          </div>
-        ) : (
+      <div className="flex flex-wrap gap-6 items-start" style={{ paddingBottom: hasSystem ? 88 : 0 }}>
+        <div style={{ flex: '999 1 560px', minWidth: 0 }}>
           <RaceList
             races={races}
             activeRaceNumber={activeRace}
+            onSelectRace={setActiveRace}
             userGroups={userGroups}
             currentUserId={currentUserId}
-            systemMode={systemMode}
             systemSelections={systemSelections}
+            canSelect
             onToggleHorse={handleToggleHorse}
-            onHorseClick={handleHorseClick}
             trackConfig={trackConfig}
             noteCounts={noteCounts}
+            initialDetail={initialDetail}
           />
-        )}
-      </div>
-
-      {systemMode && (
+        </div>
         <SystemSidebar
           races={races}
           selections={systemSelections}
-          onToggleHorse={handleToggleHorse}
           onSave={handleOpenSaveDialog}
-          onCancel={handleCancelSystemMode}
-          totalRows={totalRows}
-          gameType={gameType}
-          draftSaveStatus={draftSaveStatus}
+          onClear={handleClear}
+          summary={summary}
           draftName={draftName}
-          onDraftNameChange={setDraftName}
-          savedDrafts={savedDrafts}
-          onLoadDraft={handleLoadDraft}
+          draftStatus={draftSaveStatus}
         />
+      </div>
+
+      {hasSystem && (
+        <SystemBar summary={summary} draftStatus={draftSaveStatus} onOpen={() => setShowDrawer(true)} />
       )}
 
-      {systemMode && (
-        <div
-          className="fixed left-0 right-0 z-50 md:hidden shadow-lg"
-          style={{
-            // Sitter precis ovanför BottomNav — höjden följer hemindikatorns
-            // säkra yta så kupongraden inte döljs bakom navigeringen
-            bottom: "calc(66px + max(22px, env(safe-area-inset-bottom)))",
-            background: "var(--tn-bg-raised)",
-            borderTop: "1px solid var(--tn-border)",
-          }}
-        >
-          <button
-            aria-label="Öppna kupong"
-            className="flex-1 w-full text-left px-4 py-3"
-            style={{ background: "none", border: "none", cursor: "pointer" }}
-            onClick={() => setShowDrawer(true)}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs" style={{ color: "var(--tn-text-faint)" }}>
-                  {completedRaces} av {races.length} avd. klara
-                </div>
-                <div className="text-sm font-bold" style={{ color: "var(--tn-text)" }}>
-                  {totalRows} {totalRows === 1 ? 'rad' : 'rader'}
-                  {totalRows > 0 && (
-                    <> · <span style={{ color: "var(--tn-accent)" }}>{formatRowCost(totalRows, gameType ?? '')}</span></>
-                  )}
-                </div>
-                <div className="text-xs mt-0.5" style={{ color: "var(--tn-accent)" }}>↑ Visa kupong</div>
-              </div>
-              {draftSaveStatus === 'saving' && (
-                <span className="text-xs" style={{ color: "var(--tn-text-faint)" }}>Sparar utkast...</span>
-              )}
-              {draftSaveStatus === 'saved' && (
-                <span className="text-xs" style={{ color: "var(--tn-text-faint)" }}>Utkast sparat</span>
-              )}
-              {draftSaveStatus === 'error' && (
-                <span className="text-xs" style={{ color: "var(--tn-value-low)" }}>Kunde inte spara utkast</span>
-              )}
-            </div>
-          </button>
-        </div>
-      )}
-
-      {systemMode && (
-        <SystemDrawer
-          open={showDrawer}
-          onClose={() => setShowDrawer(false)}
-          races={races}
-          selections={systemSelections}
-          onToggleHorse={handleToggleHorse}
-          onSave={handleOpenSaveDialog}
-          onCancel={handleCancelSystemMode}
-          totalRows={totalRows}
-          gameType={gameType}
-        />
-      )}
+      <SystemDrawer
+        open={showDrawer}
+        onClose={() => setShowDrawer(false)}
+        races={races}
+        selections={systemSelections}
+        onToggleHorse={handleToggleHorse}
+        onSave={handleOpenSaveDialog}
+        onClear={handleClear}
+        summary={summary}
+        draftName={draftName}
+        onDraftNameChange={setDraftName}
+        draftStatus={draftSaveStatus}
+        savedDrafts={savedDrafts}
+        onLoadDraft={handleLoadDraft}
+      />
 
       <ConfirmDialog
-        open={confirmCancel}
-        title="Avbryt systembygget?"
-        description={
-          `Du har markerat hästar i ${completedRaces} av ${races.length} avdelningar (${totalRows} ${totalRows === 1 ? 'rad' : 'rader'}). ` +
-          (activeDraftId
-            ? 'Markeringarna töms här, men utkastet finns kvar under "Mina utkast".'
-            : 'Markeringarna töms och kan inte återställas.')
-        }
-        confirmLabel="Avbryt bygget"
-        cancelLabel="Fortsätt bygga"
+        open={confirmClear}
+        title="Rensa systemet?"
+        description={`Du har markerat hästar i ${summary.done} av ${summary.total} avdelningar (${summary.rows} ${summary.rows === 1 ? 'rad' : 'rader'}). Markeringarna och utkastet tas bort.`}
+        confirmLabel="Rensa"
+        cancelLabel="Behåll"
         danger
-        onConfirm={exitSystemMode}
-        onCancel={() => setConfirmCancel(false)}
+        onConfirm={clearSystem}
+        onCancel={() => setConfirmClear(false)}
       />
 
       <SaveSystemDialog
@@ -308,14 +229,15 @@ export function MainPageClient({
         onClose={() => setShowSaveDialog(false)}
         onSaved={() => {
           setShowSaveDialog(false)
-          setSystemMode(false)
+          isFirstRender.current = true
           setSystemSelections([])
           setActiveDraftId(null)
+          setDraftSaveStatus('idle')
         }}
         gameId={gameId}
         gameType={gameType}
         selections={systemSelections}
-        totalRows={totalRows}
+        totalRows={summary.rows}
         userGroups={userGroups}
         defaultGroupId={initialGroupId}
         existingDraftId={activeDraftId}
