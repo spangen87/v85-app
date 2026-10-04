@@ -440,30 +440,66 @@ Alla startande räknas, även hästar som galopperat eller diskvalificerats — 
 
 ## 10. Ordlista
 
-| Term | Förklaring |
-|------|-----------|
+Måtten i appen. Samma texter visas när du trycker på ett understruket ord i appen.
+
+### Chans
+
+Hästens vinstchans enligt spelmarknaden. Alla hästar i loppet blir tillsammans 100 %. Hälften streck och hälften vinnarodds, omräknat till procent. Testat mot 221 lopp med facit: träffar bättre än streck eller odds var för sig.
+
+### Streck
+
+Hur stor del av V85-spelarnas insatser i avdelningen som ligger på hästen. 30 % betyder att nästan var tredje krona är på den.
+
+### Odds
+
+Vinnarodds från ATG:s vinnarspel. Odds 4,2 betyder att 1 kr blir 4,20 kr om hästen vinner. Lägre odds betyder större favorit.
+
+### Värde
+
+Chans minus streck, i procentenheter. Plus betyder att hästen vinner oftare än strecket säger, så en rätt rad delar potten med färre. Grön markering när värdet är plus och CS är över 55. Minus är inget fel, bara en häst som många andra också har spelat.
+
+### Grund
+
+Vinstchans räknad bara på hästens egna meriter: km-tider, form, spår, distans, skor, kusk och tränare. Odds och streck används inte. Statistisk modell tränad på ett år av svenska V-lopp, 33 faktorer. En andra åsikt, ingen spelsignal. När Grund och streck är oense har strecket oftast haft rätt.
+
+### CS
+
+Rankning av fältet från 0 till 100: streck 55 %, distansrekord 20 %, odds 10 %, jämnhet 10 % och form 5 %.
+
+### Skräll
+
+Lågt streckad häst där vinnaroddsen tror mer på hästen än V85-spelarna gör, och som har hög klass: streck under 15 %, oddschansen minst 5 procentenheter över strecket och topp 3 i loppet på pengar per start. På ett års lopp har skrällkandidaterna vunnit 16 % av gångerna, mot 9 % som strecket sa.
+
+### Signal
+
+Tecken som inte syns i odds och streck: barfota-byte, toppkusk och stigande form ger plus. Skor på, sjunkande form och uppehåll över 60 dagar ger minus. Märket visas när summan är +2 eller mer.
+
+### Oense
+
+Grund och streck skiljer sig kraftigt åt för hästen. Historiskt har strecket oftast haft rätt i de fallen. Se det som en anledning att titta närmare, inte som ett tips.
+
+### Senaste 5
+
+Placeringarna i hästens fem senaste starter, nyast till vänster. 0 = oplacerad, g = galopp, d = diskvalificerad. Guld, silver och brons är 1:a, 2:a och 3:e plats.
+
+### Spår
+
+Hästens startspår. På vissa banor ger vissa spår en fördel eller nackdel, och det räknas in i bedömningen.
+
+### Övriga ord
+
+| Ord | Förklaring |
+|-----|-----------|
 | **V85** | Spelform på ATG där du ska pricka vinnaren i 8 lopp |
-| **Grundchans** | Vinstchans enbart från hästens egna meriter, form och förutsättningar — utan odds och streck |
 | **ATG** | AB Trav och Galopp – den svenska speloperatören för travsport |
-| **Odds** | ATG:s vinnarodds på hästen |
-| **Streckning / Streck%** | Hästens procentuella andel av V85-poolens insatser |
-| **Composite Score (CS)** | Systemets samlade bedömning (0–100): streckning 55 %, distansrekord 20 %, odds 10 %, konsistens 10 %, form 5 % — kalibrerad mot historiska resultat |
-| **Kalibrerad chans** | Systemets skattning av verklig vinstsannolikhet — 50 % streckning + 50 % oddsmarknad |
-| **Spelvärde** | Kalibrerad chans minus streckprocent – positivt värde indikerar potentiellt värdebet |
-| **Värdebet** | En häst vars verkliga chanser bedöms vara högre än vad marknaden prissätter |
-| **Skrällkandidat** | Lågstreckad häst (<15 %) med hög klass (topp-3 på intjänat/start) som är understreckad mot vinnaroddsen |
-| **Tysta signaler** | Faktorer utanför odds/streck: barfota-byte, toppkusk-bokning, formtrend och uppehåll |
-| **Kantpoäng** | Summan av de tysta signalernas poäng — ≥ +2 markeras med SIGNAL-märke |
-| **Barfota** | Hästen tävlar utan skor — att skorna dras inför loppet är en klassisk formtoppningssignal |
+| **Spik** | En avdelning där du bara har med en häst |
+| **Autostart** | Hästarna startar bakom startbilen, som kör ifrån dem vid startlinjen |
+| **Voltstart** | Hästarna startar från startbanden, och hästar med tillägg startar längre bak |
+| **Barfota** | Hästen tävlar utan skor — att skorna dras inför loppet är en klassisk formsignal |
 | **Klass** | Intjänade kronor per start – ett mått på vilken nivå hästen tävlat på |
-| **Distansfaktor** | Multiplikator (×0.6–×1.35) baserat på hästens historik på aktuell distans och startmetod |
-| **Voltstart** | Loppet startas bakom ett rörligt startfordon, alla hästar startar på samma gång |
-| **Autostart** | Hästar startar från startbanden med individuella startnummer |
-| **Life records** | Hästens bästa tider per distanskategori och startmetod |
-| **Sällskap** | En grupp spelare som delar anteckningar och diskuterar i ett gemensamt forum |
+| **Sällskap** | En grupp spelare som delar anteckningar, system och diskuterar i ett gemensamt forum |
 | **Inbjudningskod** | Unik kod för att gå med i ett sällskap |
-| **Skapare** | Sällskapets grundare med rätt att ändra namn och ATG-lag-URL |
-| **PWA** | Progressive Web App – appen kan installeras på din enhet som en vanlig app |
+| **PWA** | Appen kan installeras på din telefon som en vanlig app |
 
 ---
 
