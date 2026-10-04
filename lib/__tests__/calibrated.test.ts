@@ -173,3 +173,11 @@ describe("temperatur", () => {
     computeCalibratedChance(field, { ...base, temperature: 0.95 }).p.forEach((x, i) => expect(x).toBeCloseTo(q[i] / s, 10));
   });
 });
+
+describe("modellfilen", () => {
+  it("kalibreringen av täckningen hör till modellens vikter", () => {
+    // Skattas om med `npm run backtest-optimizer -- --write-coverage` efter `fit-calibrated --write`
+    expect(CALIBRATED_MODEL.coverage).toBeDefined();
+    expect(CALIBRATED_MODEL.coverage!.weights_version).toBe(CALIBRATED_MODEL.version);
+  });
+});

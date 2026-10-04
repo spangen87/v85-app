@@ -54,9 +54,8 @@ export interface CalibratedModel {
   /** Mått på testperioden (vikter skattade enbart på träningsperioden) */
   test_metrics?: Record<string, CalibratedModeMetrics>;
   /**
-   * Temperatur τ: chansen blir p^τ normaliserat. Under 1 krymper favoriterna
-   * mot fältet. Saknas = 1. Se docs/superpowers/reports (favoriter och spikar
-   * överskattades med 2–3 procentenheter på valideringen).
+   * Temperatur τ: chansen blir p^τ normaliserat (under 1 krymper favoriterna).
+   * Saknas = 1. Prövades i backtesten men används inte; se rapporten.
    */
   temperature?: number;
   /** Kalibrering av ett systems täckning per avdelning (lib/optimizer.ts → adjustCoverage) */
@@ -72,6 +71,8 @@ export interface CoverageCalibration {
   beta: number;
   /** Antal (avdelning, urval) som skattningen bygger på */
   n?: number;
+  /** Modellens version (vikterna) som kalibreringen skattades mot */
+  weights_version?: string;
 }
 
 // JSON-filen typas av TypeScript utifrån innehållet — omvandla via unknown

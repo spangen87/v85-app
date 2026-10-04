@@ -153,7 +153,7 @@ lib/
   probability.ts            # Kalibrerad vinstsannolikhet (50% streck + 50% odds, BLEND_ALPHA) — Chans i loppvyn
   calibrated.ts             # Kalibrerad chans för optimeraren: softmax(a·log streck + b·log oddsP + c·log grund), läge per lopp
   optimizer.ts              # Systemoptimerare: systemMetrics, optimizeSystem, proposeSystems (rena funktioner)
-                            # adjustCoverage: logit(c′)=α+β·logit(c), rättar överskattade spikar (coverage i modellfilen)
+                            # adjustCoverage: logit(c′)=α+β·logit(c), kalibrerar visad täckning (coverage i modellfilen)
   oddsSnapshots.ts          # Ögonblicksbilder av odds/streck vid hämtning (fel stoppar aldrig hämtningen)
   push.ts                   # Web push-utskick (sendPushToUsers, no-op utan VAPID-env)
   systems.ts                # gradeSystemsForGame (rättar system, returnerar notifierbara sällskap)
@@ -260,9 +260,11 @@ inom budget och spikvillkor (spik kräver `MIN_SPIKE_CHANCE` = 35 %, låst spik 
 Stöder lås (in/ut/spik) och egna bedömningar. `proposeSystems` ger Max chans / Balans / Värde
 (λ = 0 / 0,3 / 0,6); appen visar Max chans först och de andra bakom "Visa fler förslag".
 **Kalibrering av täckningen:** optimerarens spikar och smala avdelningar överskattades (urvalseffekt),
-så täckningen justeras med `adjustCoverage` (logit(c′) = α + β·logit(c), `coverage` i modellfilen,
-skattad med `backtest-optimizer --write-coverage`) i både mål och visade mått. Appen skickar
-`APP_COVERAGE_CALIBRATION`; utan den är funktionerna ren matematik (testerna).
+så de visade måtten justeras med `adjustCoverage` (logit(c′) = α + β·logit(c), `coverage` i
+modellfilen, skattad med `backtest-optimizer --write-coverage`, knuten till vikterna via
+`weights_version` — ett test larmar efter `fit-calibrated --write` tills den skattats om).
+Valet av system påverkas inte (`calibrateObjective` är av; gav ingen förbättring i backtesten).
+Appen skickar `APP_COVERAGE_CALIBRATION`; utan den är funktionerna ren matematik (testerna).
 Backtest: `docs/superpowers/reports/2026-10-04-backtest-optimerare.md`.
 
 ### Tabellvyn – `components/RaceTable.tsx`

@@ -365,6 +365,18 @@ describe("kalibrering av täckning", () => {
     expect(adj.coverage[1].chans).toBeCloseTo(adjustCoverage(raw.coverage[1].chans, cal), 12);
     expect(adj.coverage[1].chansRaw).toBeCloseTo(raw.coverage[1].chans, 12);
   });
+  it("kalibreringen ändrar måtten men inte valet av system (om inte calibrateObjective)", () => {
+    const strong = { alpha: -1, beta: 1 };
+    const input = { spikes: { min: 0, max: 4 }, budgetKr: 385 };
+    const plain = optimizeSystem(base(input));
+    const shown = optimizeSystem(base({ ...input, coverageCalibration: strong }));
+    const steered = optimizeSystem(base({ ...input, coverageCalibration: strong, calibrateObjective: true }));
+    expect(plain.ok && shown.ok && steered.ok).toBe(true);
+    if (!plain.ok || !shown.ok || !steered.ok) return;
+    expect(shown.system.selection).toEqual(plain.system.selection);
+    expect(shown.system.p8).toBeLessThan(plain.system.p8);
+    expect(steered.system.selection).not.toEqual(plain.system.selection);
+  });
   it("optimeraren räknar med justerad täckning: förutsagd P(alla rätt) = produkten av justerade", () => {
     const res = optimizeSystem(base({ coverageCalibration: cal }));
     expect(res.ok).toBe(true);

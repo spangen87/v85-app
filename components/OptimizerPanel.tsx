@@ -56,7 +56,7 @@ export function SystemInsights({ races, metrics }: { races: OptimizerRace[]; met
         <details>
           <summary className="ta-link" style={{ cursor: "pointer" }}>Täckning per avdelning</summary>
           <table className="ta-table" style={{ marginTop: 8 }}>
-            <thead><tr><th className="ta-left">Avd</th><th>Hästar</th><th>Chans</th><th>Streck</th></tr></thead>
+            <thead><tr><th className="ta-left">Avd</th><th>Hästar</th><th>Går in</th><th>Streck</th></tr></thead>
             <tbody>
               {metrics.coverage.filter((c) => c.horses > 0).map((c) => (
                 <tr key={c.race_number}>

@@ -149,8 +149,13 @@ export interface OptimizeInput {
   lambda: number;
   locks?: OptimizerLock[];
   overrides?: ChanceOverride[];
-  /** Kalibrering av täckningen i mål och mått; utelämnad = ingen */
+  /** Kalibrering av täckningen i de förutsagda måtten; utelämnad = ingen */
   coverageCalibration?: CoverageCalibration | null;
+  /**
+   * Använd kalibreringen även i målet (påverkar vilka hästar som väljs).
+   * Av som standard: i backtesten gav det ingen förbättring (rapporten).
+   */
+  calibrateObjective?: boolean;
 }
 
 export interface OptimizedSystem {
@@ -403,7 +408,7 @@ export function optimizeSystem(input: OptimizeInput): OptimizeResult {
     if (race.streckMissing) notes.push(`Avd ${race.race_number} saknar streck – chansen används som streck (värde 1).`);
 
     const scoreOf = (horses: PreparedHorse[]) =>
-      Math.log(Math.max(adjustCoverage(horses.reduce((a, h) => a + h.p, 0), input.coverageCalibration), 1e-12)) +
+      Math.log(Math.max(adjustCoverage(horses.reduce((a, h) => a + h.p, 0), input.calibrateObjective ? input.coverageCalibration : null), 1e-12)) +
       lambda * Math.log(Math.max(mean(horses.map((h) => h.r)), 1e-12));
 
     if (spikeLocks.length === 1) {

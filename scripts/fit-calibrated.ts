@@ -119,7 +119,8 @@ function main() {
     console.log(`  [${lo.toFixed(2)}, ${hi.toFixed(2)})  n=${String(bin.length).padStart(5)}  förutsagt=${pct(pred)}  faktiskt=${pct(act)}`);
   }
 
-  const final = fitAllModes([...train, ...test], new Date().toISOString().slice(0, 10));
+  // Version med klockslag, så att kalibreringen av täckningen kan knytas till just dessa vikter
+  const final = fitAllModes([...train, ...test], new Date().toISOString().slice(0, 16));
   console.log("\n=== Vikter (tränings- + testperioden, skrivs till modellfilen) ===");
   for (const m of CALIBRATED_MODES) console.log(`  ${m.padEnd(11)} ${fmtW(final.modes[m])}`);
 
@@ -142,10 +143,14 @@ function main() {
       Object.entries(testMetrics).map(([k, m]) => [k, { logloss: round(m.logloss), pseudo_r2: round(m.pseudo_r2), n: m.n }])
     ),
   };
+  // Behåll kalibreringen av täckningen tills den skattats om; testet i
+  // lib/__tests__/calibrated.test.ts larmar när den hör till gamla vikter
+  const previous = JSON.parse(fs.readFileSync(MODEL_PATH, "utf8")) as CalibratedModel;
+  if (previous.coverage) model.coverage = previous.coverage;
   fs.writeFileSync(MODEL_PATH, JSON.stringify(model, null, 2) + "\n");
   console.log(`\nSkrev ${MODEL_PATH} (version ${model.version}, ${model.trained_races} lopp).`);
   // Täckningskalibreringen hör till vikterna: skattas om för de nya
-  console.log("Kör nu npm run backtest-optimizer -- --write-coverage för att skatta om kalibreringen av täckningen.");
+  console.log("Kör nu npm run backtest-optimizer -- --write-coverage: kalibreringen av täckningen hör till de gamla vikterna (jest larmar tills dess).");
 }
 
 main();
