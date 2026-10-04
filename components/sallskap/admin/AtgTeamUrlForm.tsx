@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { updateGroup } from "@/lib/actions/groups";
+import { Button } from "@/components/ui";
 
 interface AtgTeamUrlFormProps {
   groupId: string;
@@ -28,66 +29,33 @@ export function AtgTeamUrlForm({ groupId, initialUrl, isCreator, onUpdated }: At
     else { setSavedUrl(trimmed); onUpdated(trimmed); setEditing(false); }
   }
 
-  if (!isCreator) {
-    if (!savedUrl) return <p className="text-sm italic" style={{ color: "var(--tn-text-faint)" }}>Ingen ATG-lagslänk inlagd ännu.</p>;
-    return (
-      <a href={savedUrl} target="_blank" rel="noopener noreferrer" className="text-sm hover:underline break-all" style={{ color: "var(--tn-accent)" }}>
-        {savedUrl}
-      </a>
-    );
-  }
+  const link = savedUrl
+    ? <a href={savedUrl} target="_blank" rel="noopener noreferrer" className="ta-link" style={{ wordBreak: "break-all" }}>{savedUrl}</a>
+    : <p className="ta-text">Ingen länk inlagd ännu.</p>;
+
+  if (!isCreator) return link;
 
   if (!editing) {
     return (
       <div className="flex items-start gap-3 flex-wrap">
-        {savedUrl ? (
-          <a href={savedUrl} target="_blank" rel="noopener noreferrer" className="text-sm hover:underline break-all flex-1" style={{ color: "var(--tn-accent)" }}>
-            {savedUrl}
-          </a>
-        ) : (
-          <p className="text-sm italic flex-1" style={{ color: "var(--tn-text-faint)" }}>Ingen länk inlagd ännu.</p>
-        )}
-        <button
-          onClick={() => { setUrl(savedUrl ?? ""); setEditing(true); setError(null); }}
-          className="text-xs transition shrink-0"
-          style={{ color: "var(--tn-accent)", background: "none", border: "none", cursor: "pointer" }}
-        >
-          {savedUrl ? "Redigera" : "Lägg till"}
-        </button>
+        <div className="flex-1 min-w-0">{link}</div>
+        <Button size="sm" onClick={() => { setUrl(savedUrl ?? ""); setEditing(true); setError(null); }}>
+          {savedUrl ? "Ändra" : "Lägg till"}
+        </Button>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-2">
-      <div className="flex gap-2 items-center flex-wrap">
-        <input
-          type="url"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          placeholder="https://www.atg.se/lag/..."
-          autoFocus
-          className="flex-1 min-w-0 rounded-lg px-3 py-2 text-sm outline-none"
-          style={{ background: "var(--tn-bg-chip)", border: "1px solid var(--tn-border)", color: "var(--tn-text)" }}
-        />
-        <button
-          type="button"
-          onClick={() => { setEditing(false); setError(null); }}
-          className="text-xs px-3 py-2 rounded-lg transition"
-          style={{ color: "var(--tn-text-faint)", background: "none", border: "none", cursor: "pointer" }}
-        >
-          Avbryt
-        </button>
-        <button
-          type="submit"
-          disabled={loading}
-          className="text-sm px-4 py-2 rounded-lg transition disabled:opacity-50"
-          style={{ background: "var(--tn-accent)", color: "#fff", border: "none", cursor: "pointer" }}
-        >
-          {loading ? "Sparar…" : "Spara"}
-        </button>
+    <form onSubmit={handleSubmit} className="ta-stack">
+      <label className="ta-field-label" htmlFor="atg-lag">Länk till laget</label>
+      <input id="atg-lag" type="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://www.atg.se/lag/…"
+        autoFocus className="ta-field" style={{ height: 44 }} />
+      {error && <p className="ta-error" style={{ margin: 0 }}>{error}</p>}
+      <div className="flex gap-2 justify-end">
+        <Button variant="quiet" onClick={() => { setEditing(false); setError(null); }}>Avbryt</Button>
+        <Button type="submit" disabled={loading}>{loading ? "Sparar …" : "Spara"}</Button>
       </div>
-      {error && <p className="text-xs" style={{ color: "var(--tn-value-low)" }}>{error}</p>}
     </form>
   );
 }

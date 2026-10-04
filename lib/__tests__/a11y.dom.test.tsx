@@ -81,3 +81,18 @@ describe("avdelningsflikar med tangentbordet", () => {
     expect(activeTab()).toBe("1");
   });
 });
+
+describe("ConfirmDialog", () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { ConfirmDialog } = require("@/components/ConfirmDialog") as typeof import("@/components/ConfirmDialog");
+  it("Esc avbryter, men inte medan åtgärden pågår", () => {
+    const cancel = jest.fn();
+    act(() => root.render(<ConfirmDialog open title="Ta bort?" description="Går inte att ångra." onConfirm={() => {}} onCancel={cancel} />));
+    expect(document.body.textContent).toContain("Går inte att ångra.");
+    act(() => { window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })); });
+    expect(cancel).toHaveBeenCalledTimes(1);
+    act(() => root.render(<ConfirmDialog open busy title="Ta bort?" onConfirm={() => {}} onCancel={cancel} />));
+    act(() => { window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })); });
+    expect(cancel).toHaveBeenCalledTimes(1);
+  });
+});

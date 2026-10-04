@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/ui";
 import { PostItem } from "./PostItem";
 import type { GroupPost } from "@/lib/types";
 
@@ -13,16 +14,12 @@ interface PostListProps {
 export function PostList({ posts, groupId, gameId, currentUserId, onDeleted, onReplied }: PostListProps) {
   if (posts.length === 0) {
     return (
-      <p className="text-sm py-4 text-center leading-relaxed" style={{ color: "var(--tn-text-faint)" }}>
-        Inga inlägg ännu för den här omgången.
-        <br />
-        Dela dina spikar och skrällbud — vem öppnar diskussionen inför lördagen?
-      </p>
+      <EmptyState title="Inga inlägg ännu" text="Dela dina spikar och skrällbud för omgången, så kan de andra svara." />
     );
   }
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-3">
       {posts.map((post) => (
         <PostItem
           key={post.id}

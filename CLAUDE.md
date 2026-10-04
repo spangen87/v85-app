@@ -66,7 +66,8 @@ app/
   login/                    # Inloggning/registrering
 
 components/
-  ui/                       # Grundkomponenter från designsystemet (Button, Badge, StartNumber, Term, Sheet …)
+  ui/                       # Grundkomponenter från designsystemet (Button, Badge, StartNumber, Term, Sheet,
+                            # PageHeader, GameSelect, EmptyState …)
   ManualContent.tsx         # Renderar MANUAL.md på /manual
   HorseDetail.tsx           # Hästens detaljvy (bedömning, signaler, starter, statistik); ?hast=<avd>-<nr>
   RaceTable.tsx             # Tabellvyn (f.d. analysverktyget)
@@ -102,7 +103,7 @@ components/
     NoteItem.tsx            # Enskild anteckning med svar
     NoteLabel.tsx           # Etiketter: red|orange|yellow|green|blue|purple
   sallskap/
-    TabBar.tsx              # Flikar: Forum | Anteckn. | Spel | Sällskap
+    TabBar.tsx              # Flikar: Forum | Anteckningar | Spel | Sällskapet (gemensam omgångsväljare)
     admin/AdminTab.tsx      # Inställningar (namn, ATG-lag, inbjudan, medlemmar)
     forum/ForumTab.tsx      # Omgångsbundet diskussionsforum
     notes/NotesTab.tsx      # Anteckningar per omgång i sällskapet
@@ -134,6 +135,8 @@ lib/
   raceTypes.ts              # Starter/Race-typer för loppvyn
   horseDetail.ts            # Texter i detaljvyn (rang, varför, spår)
   prefs.ts / usePref.ts     # Sparade val per enhet (vy, sortering) med minne som reserv
+  draftAutosave.ts          # Autosparning av kupongen som utkast (ordning, generation, flush när sidan lämnas)
+  relativeTime.ts           # "12 min sedan" för forum och anteckningar
   analysis.ts               # Hjälpformler (distanssignal, spårfaktor, tidsparsning)
   formscore.ts              # Composite Score: computeComponents + CS_WEIGHTS
   skrall.ts                 # Skrällkandidat-signal (låg streck + odds/streck-diskrepans + klass)
@@ -271,7 +274,9 @@ påverkar inte CS eller kalibrerad sannolikhet — ett kvalitativt lager ovanpå
 - Supabase-klienten skiljer på `createClient` (browser) och `createServerClient` (server/actions).
 - All text i UI är på **svenska**.
 - Teman: följer systemet; eget val (ljust/mörkt) sparas i localStorage via `ThemeToggle` under Sällskap → Utseende och i TopNav.
-- **Designsystem:** tokens och komponenter kommer från designsystemet i Claude Design (https://claude.ai/artifact/5KsW2p1tV4vxod4bNTg1Mz). Nya komponenter använder tokens som `--ink`, `--surface`, `--accent` — aldrig `--tn-*` (alias för gamla sidor).
+- **Designsystem:** tokens och komponenter kommer från designsystemet i Claude Design (https://claude.ai/artifact/5KsW2p1tV4vxod4bNTg1Mz).
+  Ritytor: nyckelvyer https://claude.ai/artifact/UVCKQANpMwDrUqfWhFFFXn, övriga vyer (Utvärdering, Sällskap, Mina system) https://claude.ai/artifact/UsTtteTSw4VWXyWjo2W53i.
+  Sidor byggs av `PageHeader`, `ta-page`, `ta-section`, `ta-card` och `EmptyState`; inga emojis och inga trafikljusfärger. Nya komponenter använder tokens som `--ink`, `--surface`, `--accent` — aldrig `--tn-*` (alias för gamla sidor).
 - **Förklaringar:** alla mått förklaras med `<Term term="…">` från `lib/glossary.ts`. Ändra texten där och under "Ordlista" i MANUAL.md samtidigt. Inga `title=`-tooltips.
 - Mobil-navigation via `BottomNav` (fast, döljs på md+).
 - Sortering och filter ligger i blad (`Sheet`) bakom knapparna Sortera och Filter (`RaceToolbar`).

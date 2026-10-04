@@ -1,16 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { TabBar, type SallskapTab } from "@/components/sallskap/TabBar";
+import { GameSelect, PageHeader } from "@/components/ui";
+import { TabBar, panelId, tabId, type SallskapTab } from "@/components/sallskap/TabBar";
 import { ForumTab } from "@/components/sallskap/forum/ForumTab";
 import { NotesTab } from "@/components/sallskap/notes/NotesTab";
 import { AdminTab } from "@/components/sallskap/admin/AdminTab";
+import { SpelTab } from "@/components/sallskap/spel/SpelTab";
 import type { Group, GroupMember, GroupPost, GameSystem } from "@/lib/types";
 import type { RaceWithNotes } from "@/lib/actions/notes";
 import type { GroupLeague } from "@/lib/actions/systems";
-import { SpelTab } from "@/components/sallskap/spel/SpelTab";
 
 type Game = { id: string; date: string; track: string | null; game_type?: string };
 
@@ -27,74 +26,57 @@ interface SallskapPageClientProps {
 }
 
 export function SallskapPageClient({
-  group,
-  members,
-  games,
-  initialPosts,
-  initialNotes,
-  initialSystems,
-  league,
-  defaultGameId,
-  currentUserId,
+  group, members, games, initialPosts, initialNotes, initialSystems, league, defaultGameId, currentUserId,
 }: SallskapPageClientProps) {
   const [activeTab, setActiveTab] = useState<SallskapTab>("forum");
+  // Omgången är gemensam för Forum, Anteckningar och Spel
+  const [gameId, setGameId] = useState<string | null>(defaultGameId);
+  // Serverns data gäller bara tills man byter omgång; därefter hämtas allt färskt
+  const [switched, setSwitched] = useState(false);
+  const [groupName, setGroupName] = useState(group.name);
+  const isDefault = !switched && gameId === defaultGameId;
+  const changeGame = (id: string) => { setSwitched(true); setGameId(id); };
+  const panel = (key: SallskapTab) => ({
+    role: "tabpanel" as const, id: panelId(key), "aria-labelledby": tabId(key), hidden: activeTab !== key, tabIndex: 0,
+  });
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "var(--tn-bg)", color: "var(--tn-text)" }}>
-      <header
-        className="px-4 py-3 flex items-center gap-3 sticky top-0 z-30"
-        style={{ background: "var(--tn-bg)", borderBottom: "1px solid var(--tn-border)" }}
-      >
-        <Link
-          href="/sallskap"
-          className="text-lg w-8 text-center shrink-0 transition"
-          style={{ color: "var(--tn-text-faint)" }}
-          aria-label="Tillbaka till sällskapsöversikten"
-        >
-          ←
-        </Link>
-        <h1 className="text-base font-bold flex-1 truncate">{group.name}</h1>
-        <ThemeToggle />
-      </header>
+    <main className="min-h-screen" style={{ background: "var(--bg)", color: "var(--ink)" }}>
+      <PageHeader
+        title={groupName}
+        sub={`${members.length} ${members.length === 1 ? "medlem" : "medlemmar"}`}
+        backHref="/sallskap"
+        backLabel="Tillbaka till Sällskap"
+      />
 
-      <TabBar activeTab={activeTab} onChange={setActiveTab} />
+      <div className="ta-page" style={{ gap: "var(--space-4)" }}>
+        <TabBar activeTab={activeTab} onChange={setActiveTab} />
 
-      <div className="flex-1">
-        <div className={activeTab === "forum" ? undefined : "hidden"}>
-          <ForumTab
-            groupId={group.id}
-            games={games}
-            initialPosts={initialPosts}
-            initialGameId={defaultGameId}
-            currentUserId={currentUserId}
-          />
+        {activeTab !== "sallskap" && games.length > 0 && (
+          <GameSelect games={games} value={gameId} onChange={changeGame} />
+        )}
+        {activeTab !== "sallskap" && games.length === 0 && (
+          <p className="ta-text">Ingen omgång inladdad ännu. Hämta en omgång i loppvyn först.</p>
+        )}
+
+        <div {...panel("forum")}>
+          {gameId && (
+            <ForumTab key={gameId} groupId={group.id} gameId={gameId} initialPosts={isDefault ? initialPosts : null} currentUserId={currentUserId} />
+          )}
         </div>
-        <div className={activeTab === "anteckningar" ? undefined : "hidden"}>
-          <NotesTab
-            groupId={group.id}
-            games={games}
-            initialGameId={defaultGameId}
-            initialNotes={initialNotes}
-          />
+        <div {...panel("anteckningar")}>
+          {gameId && <NotesTab key={gameId} groupId={group.id} gameId={gameId} initialNotes={isDefault ? initialNotes : null} />}
         </div>
-        <div className={activeTab === "spel" ? undefined : "hidden"}>
-          <SpelTab
-            groupId={group.id}
-            games={games}
-            initialGameId={defaultGameId}
-            initialSystems={initialSystems}
-            league={league}
-            currentUserId={currentUserId}
-          />
+        <div {...panel("spel")}>
+          {gameId && (
+            <SpelTab key={gameId} groupId={group.id} gameId={gameId} gameType={games.find((g) => g.id === gameId)?.game_type ?? ""}
+              initialSystems={isDefault ? initialSystems : null} league={league} currentUserId={currentUserId} />
+          )}
         </div>
-        <div className={activeTab === "sallskap" ? undefined : "hidden"}>
-          <AdminTab
-            group={group}
-            members={members}
-            currentUserId={currentUserId}
-          />
+        <div {...panel("sallskap")}>
+          <AdminTab group={group} members={members} currentUserId={currentUserId} onRenamed={setGroupName} />
         </div>
       </div>
-    </div>
+    </main>
   );
 }

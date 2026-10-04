@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui";
 import { useState, useEffect } from "react";
 import { savePushSubscription, deletePushSubscription } from "@/lib/actions/push";
 
@@ -100,34 +101,21 @@ export function NotificationToggle() {
   if (state === "loading" || state === "unsupported") return null;
 
   return (
-    <div>
+    <div className="ta-stack">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm font-medium" style={{ color: "var(--tn-text)" }}>Notiser</p>
-          <p className="text-xs" style={{ color: "var(--tn-text-faint)" }}>
-            Få en pushnotis när en omgång rättats och systemen fått sina poäng.
-          </p>
+          <p style={{ margin: 0, font: "500 15px/20px var(--font-sans)", color: "var(--ink)" }}>Notiser</p>
+          <p className="ta-text-sm">När en omgång är rättad och systemen har fått sina poäng.</p>
         </div>
         {state === "denied" ? (
-          <span className="text-xs shrink-0" style={{ color: "var(--tn-text-faint)" }}>Blockerat i webbläsaren</span>
+          <span className="ta-text-sm shrink-0">Blockerat i webbläsaren</span>
         ) : (
-          <button
-            onClick={state === "on" ? disable : enable}
-            disabled={state === "working"}
-            className="text-sm font-semibold rounded-lg transition shrink-0 disabled:opacity-50"
-            style={{
-              padding: "6px 14px",
-              background: state === "on" ? "var(--tn-bg-chip)" : "var(--tn-accent-faint)",
-              border: `1px solid ${state === "on" ? "var(--tn-border)" : "var(--tn-accent-soft)"}`,
-              color: state === "on" ? "var(--tn-text-dim)" : "var(--tn-accent)",
-              cursor: "pointer",
-            }}
-          >
-            {state === "working" ? "…" : state === "on" ? "Av" : "Slå på"}
-          </button>
+          <Button size="sm" onClick={state === "on" ? disable : enable} disabled={state === "working"} aria-pressed={state === "on"}>
+            {state === "working" ? "Vänta …" : state === "on" ? "Stäng av" : "Slå på"}
+          </Button>
         )}
       </div>
-      {error && <p className="text-xs mt-1" style={{ color: "var(--tn-value-low)" }}>{error}</p>}
+      {error && <p className="ta-error" style={{ margin: 0 }}>{error}</p>}
     </div>
   );
 }

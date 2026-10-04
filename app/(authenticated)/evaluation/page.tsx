@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isAdmin, getAuthUser } from "@/lib/supabase/guards";
 import { EvaluationPanel } from "@/components/EvaluationPanel";
 import { computeEvaluation, type EvalStarterRow } from "@/lib/evaluation";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { PageHeader } from "@/components/ui";
 import { redirect } from "next/navigation";
 
 interface GameSummary {
@@ -90,16 +90,9 @@ export default async function EvaluationPage() {
   });
 
   return (
-    <main className="min-h-screen" style={{ background: "var(--tn-bg)", color: "var(--tn-text)" }}>
-      <header
-        className="sticky top-0 z-30 px-4 py-3 flex items-center justify-between gap-4"
-        style={{ background: "var(--tn-bg)", borderBottom: "1px solid var(--tn-border)" }}
-      >
-        <h1 className="text-lg font-bold">Modell-utvärdering</h1>
-        <ThemeToggle />
-      </header>
-
-      <div className="max-w-4xl mx-auto px-4 py-6">
+    <main className="min-h-screen" style={{ background: "var(--bg)", color: "var(--ink)" }}>
+      <PageHeader title="Utvärdering" sub="Hur ofta modellernas toppval vinner" />
+      <div className="ta-page">
         <EvaluationPanel overall={overall} games={games} allGames={allGames} isAdmin={isAdmin(user.id)} />
       </div>
     </main>

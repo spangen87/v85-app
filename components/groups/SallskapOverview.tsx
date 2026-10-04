@@ -5,8 +5,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { Badge, Button } from "@/components/ui";
 import { ProfileForm } from "./ProfileForm";
-import { GroupList } from "./GroupList";
 import { CreateGroupForm } from "./CreateGroupForm";
 import { JoinGroupForm } from "./JoinGroupForm";
 import { NotificationToggle } from "@/components/NotificationToggle";
@@ -16,16 +16,20 @@ interface SallskapOverviewProps {
   profile: Profile | null;
   initialGroups: Group[];
   userEmail: string;
-  /** Osedda händelser per sällskap — visas som badge i listan */
+  /** Osedda händelser per sällskap — visas som märke i listan */
   unseenByGroup?: Record<string, number>;
 }
 
+const Chevron = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+    aria-hidden="true" style={{ flex: "none", color: "var(--ink-muted)" }}><path d="m9 6 6 6-6 6" /></svg>
+);
+
 /**
- * Innehållet på /sallskap — mobilens ingång till sällskapen (Profil-fliken i
- * BottomNav) och profilinställningar. Desktop når samma funktioner via
- * profilmenyn, men sidan fungerar på alla skärmstorlekar.
+ * Innehållet på /sallskap: dina sällskap, skapa eller gå med, och inställningar.
+ * Inbjudan och "Lämna" finns inne i varje sällskap under fliken Sällskapet.
  */
-export function SallskapOverview({ profile, initialGroups, userEmail, unseenByGroup }: SallskapOverviewProps) {
+export function SallskapOverview({ profile, initialGroups, userEmail, unseenByGroup = {} }: SallskapOverviewProps) {
   const [groups, setGroups] = useState<Group[]>(initialGroups);
   const router = useRouter();
 
@@ -34,9 +38,6 @@ export function SallskapOverview({ profile, initialGroups, userEmail, unseenByGr
   }
   function handleJoined(group: Group) {
     setGroups((prev) => (prev.find((g) => g.id === group.id) ? prev : [...prev, group]));
-  }
-  function handleLeft(groupId: string) {
-    setGroups((prev) => prev.filter((g) => g.id !== groupId));
   }
 
   async function handleSignOut() {
@@ -48,83 +49,67 @@ export function SallskapOverview({ profile, initialGroups, userEmail, unseenByGr
   const displayName = profile?.display_name || userEmail.split("@")[0];
 
   return (
-    <div className="px-4 py-5 space-y-7 max-w-2xl mx-auto">
-      {/* Profil */}
-      <header className="flex items-center gap-3">
-        <span
-          className="w-12 h-12 rounded-full flex items-center justify-center text-base font-bold shrink-0"
-          style={{ background: "var(--tn-accent)", color: "#fff" }}
-        >
+    <main className="min-h-screen" style={{ background: "var(--bg)", color: "var(--ink)" }}>
+      <header className="ta-page-head sticky top-0 z-30 md:static">
+        <span className="ta-avatar" style={{ width: 44, height: 44, fontSize: 15 }} aria-hidden="true">
           {displayName.slice(0, 2).toUpperCase()}
         </span>
         <div className="min-w-0">
-          <h1 className="text-lg font-bold truncate" style={{ color: "var(--tn-text)" }}>
-            {displayName}
-          </h1>
-          <p className="text-xs truncate" style={{ color: "var(--tn-text-faint)" }}>{userEmail}</p>
+          <h1 className="ta-page-title">{displayName}</h1>
+          <p className="ta-page-sub truncate">{userEmail}</p>
         </div>
       </header>
 
-      {/* Sällskap */}
-      <section>
-        <h2 className="tn-eyebrow mb-2">Mina sällskap</h2>
-        {groups.length === 0 && (
-          <p className="text-sm mb-3 leading-relaxed" style={{ color: "var(--tn-text-dim)" }}>
-            Sällskap är platsen där du och dina spelvänner delar anteckningar om hästarna,
-            diskuterar omgången och jämför era system när resultaten rättats. Skapa ett
-            sällskap nedan eller gå med i ett befintligt via en inbjudningskod.
-          </p>
-        )}
-        <GroupList groups={groups} onLeft={handleLeft} unseenByGroup={unseenByGroup} />
-      </section>
+      <div className="ta-page">
+        <section className="ta-section">
+          <h2 className="ta-section-title">Mina sällskap</h2>
+          {groups.length === 0 ? (
+            <p className="ta-text">
+              I ett sällskap delar du anteckningar om hästarna med dina spelvänner, diskuterar omgången och jämför
+              era system när resultaten är rättade. Skapa ett eller gå med via en inbjudningskod.
+            </p>
+          ) : (
+            <nav aria-label="Mina sällskap" className="ta-card" style={{ overflow: "hidden" }}>
+              {groups.map((g) => {
+                const unseen = unseenByGroup[g.id] ?? 0;
+                return (
+                  <Link key={g.id} href={`/sallskap/${g.id}`} className="ta-linkrow">
+                    <span className="flex-1 min-w-0 truncate" style={{ font: "500 15px/20px var(--font-sans)" }}>{g.name}</span>
+                    {unseen > 0 && <Badge tone="accent">{`${unseen > 9 ? "9+" : unseen} nya`}</Badge>}
+                    <Chevron />
+                  </Link>
+                );
+              })}
+            </nav>
+          )}
+        </section>
 
-      <section>
-        <h2 className="tn-eyebrow mb-2">Skapa nytt sällskap</h2>
-        <CreateGroupForm onCreated={handleCreated} />
-      </section>
+        <section className="ta-section">
+          <h2 className="ta-section-title">Skapa eller gå med</h2>
+          <div className="ta-card ta-card-pad flex flex-col gap-4">
+            <CreateGroupForm onCreated={handleCreated} />
+            <JoinGroupForm onJoined={handleJoined} />
+          </div>
+        </section>
 
-      <section>
-        <h2 className="tn-eyebrow mb-2">Gå med via inbjudningskod</h2>
-        <JoinGroupForm onJoined={handleJoined} />
-      </section>
+        <section className="ta-section">
+          <h2 className="ta-section-title">Inställningar</h2>
+          <div className="ta-card ta-card-pad flex flex-col gap-5">
+            <ProfileForm initialName={profile?.display_name ?? ""} />
+            <div className="ta-stack" style={{ gap: 6 }}>
+              <span className="ta-field-label">Utseende</span>
+              <div><ThemeChoiceControl /></div>
+              <p className="ta-text-sm">Som enheten följer telefonens eller datorns inställning.</p>
+            </div>
+            <NotificationToggle />
+          </div>
+        </section>
 
-      {/* Inställningar */}
-      <section>
-        <h2 className="tn-eyebrow mb-2">Visningsnamn</h2>
-        <p className="text-xs mb-2" style={{ color: "var(--tn-text-faint)" }}>
-          Syns för övriga medlemmar i dina sällskap.
-        </p>
-        <ProfileForm initialName={profile?.display_name ?? ""} />
-      </section>
-
-      <section className="flex flex-col gap-2">
-        <div>
-          <p className="text-sm font-medium" style={{ color: "var(--ink)" }}>Utseende</p>
-          <p className="text-xs" style={{ color: "var(--ink-muted)" }}>Som enheten följer telefonens eller datorns inställning.</p>
+        <div className="flex items-center justify-between gap-3">
+          <Link href="/manual" className="ta-link" style={{ fontSize: 15 }}>Manual</Link>
+          <Button variant="quiet" onClick={handleSignOut}>Logga ut</Button>
         </div>
-        <ThemeChoiceControl />
-      </section>
-
-      <section>
-        <NotificationToggle />
-      </section>
-
-      <section className="pt-1 space-y-2">
-        <Link
-          href="/manual"
-          className="block text-sm"
-          style={{ color: "var(--tn-accent)" }}
-        >
-          Användarmanual
-        </Link>
-        <button
-          onClick={handleSignOut}
-          className="text-sm transition"
-          style={{ color: "var(--tn-value-low)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
-        >
-          Logga ut
-        </button>
-      </section>
-    </div>
+      </div>
+    </main>
   );
 }

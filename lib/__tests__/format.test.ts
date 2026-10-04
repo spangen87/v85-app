@@ -1,4 +1,4 @@
-import { fmtClock, fmtDelta, fmtGameDate, fmtKmTime, fmtKr, fmtNum, fmtOrdinal, fmtPct, fmtStartMethod } from "../format";
+import { fmtClock, fmtDelta, fmtGameDate, fmtGameLabel, fmtGameShort, fmtKmTime, fmtKr, fmtNum, fmtOrdinal, fmtPct, fmtStartMethod } from "../format";
 
 const NB = " ";
 
@@ -75,5 +75,16 @@ describe("fmtGameDate och fmtClock", () => {
   it("klockslag i svensk tid", () => {
     expect(fmtClock("2026-10-10T14:20:00Z")).toBe("16:20");
     expect(fmtClock(null)).toBe("");
+  });
+});
+
+describe("fmtGameShort och fmtGameLabel", () => {
+  it("kort datum utan punkter", () => {
+    expect(fmtGameShort("2026-10-10")).toBe("lör 10 okt");
+  });
+  it("omgångens namn med spel, bana och datum", () => {
+    expect(fmtGameLabel({ game_type: "V85", track: "Solvalla", date: "2026-10-10" })).toBe("V85 · Solvalla · lör 10 okt");
+    expect(fmtGameLabel({ game_type: "V85", track: null, date: "2026-10-10" })).toBe("V85 · lör 10 okt");
+    expect(fmtGameLabel({ track: "Åby", date: "2026-10-10" })).toBe("Åby · lör 10 okt");
   });
 });
