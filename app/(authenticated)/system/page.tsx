@@ -2,7 +2,9 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getAuthUser } from '@/lib/supabase/guards'
 import { getSystemsForUser, getWinnersForGame } from '@/lib/actions/systems'
+import Link from 'next/link'
 import { SystemsPageClient } from '@/components/SystemsPageClient'
+import { EmptyState, PageHeader } from '@/components/ui'
 
 async function getAllGames(supabase: Awaited<ReturnType<typeof createClient>>) {
   const { data } = await supabase
@@ -26,13 +28,14 @@ export default async function SystemPage({
 
   if (games.length === 0) {
     return (
-      <main className="min-h-screen" style={{ background: "var(--tn-bg)", color: "var(--tn-text)" }}>
-        <div className="px-4 py-6 max-w-2xl mx-auto">
-          <h1 className="text-xl font-bold mb-6">Mina system</h1>
-          <div className="text-center py-16">
-            <p className="text-base mb-1" style={{ color: "var(--tn-text-faint)" }}>Ingen omgång inladdad ännu.</p>
-            <p className="text-sm" style={{ color: "var(--tn-text-faint)" }}>Gå till Analys-fliken för att hämta ett spel.</p>
-          </div>
+      <main className="min-h-screen" style={{ background: "var(--bg)", color: "var(--ink)" }}>
+        <PageHeader title="Mina system" sub="Dina utkast och sparade system per omgång" />
+        <div className="ta-page">
+          <EmptyState
+            title="Ingen omgång inladdad ännu"
+            text="Hämta en omgång i loppvyn, så kan du bygga ett system."
+            action={<Link href="/" className="ta-btn ta-btn-primary">Till loppvyn</Link>}
+          />
         </div>
       </main>
     )
@@ -48,10 +51,8 @@ export default async function SystemPage({
   ])
 
   return (
-    <main className="min-h-screen" style={{ background: "var(--tn-bg)", color: "var(--tn-text)" }}>
-      <div className="px-4 pt-6 max-w-2xl mx-auto">
-        <h1 className="text-xl font-bold mb-4">Mina system</h1>
-      </div>
+    <main className="min-h-screen" style={{ background: "var(--bg)", color: "var(--ink)" }}>
+      <PageHeader title="Mina system" sub="Dina utkast och sparade system per omgång" />
       <SystemsPageClient
         games={games}
         initialGameId={selectedId}

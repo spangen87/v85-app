@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui";
 import type { GroupMember } from "@/lib/types";
 
 function relativeDate(dateStr: string): string {
@@ -5,40 +6,20 @@ function relativeDate(dateStr: string): string {
   const days = Math.floor(diff / 86_400_000);
   if (days === 0) return "idag";
   if (days === 1) return "igår";
-  if (days < 30) return `${days} dagar sedan`;
-  if (days < 365) return `${Math.floor(days / 30)} månader sedan`;
+  if (days < 30) return `för ${days} dagar sedan`;
+  if (days < 365) { const m = Math.floor(days / 30); return `för ${m} ${m === 1 ? "månad" : "månader"} sedan`; }
   return new Date(dateStr).toLocaleDateString("sv-SE");
 }
 
 export function MemberList({ members, creatorId }: { members: GroupMember[]; creatorId: string }) {
   return (
-    <ul className="space-y-2">
+    <ul className="ta-card ta-divided" style={{ listStyle: "none", margin: 0, padding: 0, overflow: "hidden" }}>
       {members.map((m) => (
-        <li
-          key={m.user_id}
-          className="flex items-center justify-between gap-2 rounded-lg px-3 py-2"
-          style={{ background: "var(--tn-bg-chip)" }}
-        >
-          <div className="flex items-center gap-2 min-w-0">
-            <span
-              className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
-              style={{ background: "var(--tn-accent)", color: "#fff" }}
-            >
-              {m.display_name.slice(0, 2).toUpperCase()}
-            </span>
-            <span className="text-sm truncate" style={{ color: "var(--tn-text)" }}>{m.display_name}</span>
-            {m.user_id === creatorId && (
-              <span
-                className="text-xs px-1.5 py-0.5 rounded shrink-0"
-                style={{ background: "var(--tn-bg-card)", color: "var(--tn-text-faint)" }}
-              >
-                skapare
-              </span>
-            )}
-          </div>
-          <span className="text-xs shrink-0" style={{ color: "var(--tn-text-faint)" }}>
-            {relativeDate(m.joined_at)}
-          </span>
+        <li key={m.user_id} className="ta-linkrow">
+          <span className="ta-avatar" aria-hidden="true">{m.display_name.slice(0, 2).toUpperCase()}</span>
+          <span className="flex-1 min-w-0 truncate" style={{ font: "500 15px/20px var(--font-sans)" }}>{m.display_name}</span>
+          {m.user_id === creatorId && <Badge>Skapare</Badge>}
+          <span className="ta-text-sm shrink-0">{`Gick med ${relativeDate(m.joined_at)}`}</span>
         </li>
       ))}
     </ul>

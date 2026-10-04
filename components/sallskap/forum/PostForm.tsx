@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { addPost } from "@/lib/actions/posts";
+import { Button } from "@/components/ui";
 import type { GroupPost } from "@/lib/types";
 
 interface PostFormProps {
@@ -17,7 +18,7 @@ export function PostForm({ groupId, gameId, parentId, onAdded, onCancel, compact
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
+  const id = useId();
   const isReply = !!parentId;
 
   async function handleSubmit(e: React.FormEvent) {
@@ -31,36 +32,26 @@ export function PostForm({ groupId, gameId, parentId, onAdded, onCancel, compact
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-2">
+    <form onSubmit={handleSubmit} className="ta-stack">
+      <label htmlFor={id} className={isReply ? "sr-only" : "ta-field-label"}>
+        {isReply ? "Ditt svar" : "Dela din analys om omgången"}
+      </label>
       <textarea
+        id={id}
         value={content}
         onChange={(e) => setContent(e.target.value)}
-        placeholder={isReply ? "Skriv ett svar…" : "Dela din analys om omgången…"}
+        placeholder={isReply ? "Skriv ett svar …" : "Spikar, skrällbud, spårtips …"}
         rows={compact ? 2 : 3}
-        className="w-full rounded-lg px-3 py-2 text-sm resize-none outline-none"
-        style={{ background: "var(--tn-bg-chip)", border: "1px solid var(--tn-border)", color: "var(--tn-text)" }}
+        className="ta-field"
+        style={{ resize: "vertical", padding: "10px 12px" }}
       />
+      {error && <p className="ta-error" style={{ margin: 0 }}>{error}</p>}
       <div className="flex gap-2 justify-end">
-        {onCancel && (
-          <button
-            type="button"
-            onClick={onCancel}
-            className="text-xs px-3 py-1.5 rounded-lg transition"
-            style={{ color: "var(--tn-text-faint)", background: "none", border: "none", cursor: "pointer" }}
-          >
-            Avbryt
-          </button>
-        )}
-        <button
-          type="submit"
-          disabled={loading || !content.trim()}
-          className="text-xs px-3 py-1.5 rounded-lg transition disabled:opacity-50"
-          style={{ background: "var(--tn-accent)", color: "#fff", border: "none", cursor: "pointer" }}
-        >
-          {loading ? "Skickar…" : isReply ? "Svara" : "Publicera"}
-        </button>
+        {onCancel && <Button size="sm" variant="quiet" onClick={onCancel}>Avbryt</Button>}
+        <Button size="sm" type="submit" variant={isReply ? "secondary" : "primary"} disabled={loading || !content.trim()}>
+          {loading ? "Skickar …" : isReply ? "Svara" : "Publicera"}
+        </Button>
       </div>
-      {error && <p className="text-xs" style={{ color: "var(--tn-value-low)" }}>{error}</p>}
     </form>
   );
 }

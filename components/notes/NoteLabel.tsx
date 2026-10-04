@@ -24,6 +24,17 @@ const LABEL_NAMES: Record<NoteLabel, string> = {
 
 export const NOTE_LABELS: NoteLabel[] = ["red", "orange", "yellow", "green", "blue", "purple"];
 
+/** Etikett med färgprick och namn ("Spik"), utan tooltip. */
+export function NoteLabelTag({ label }: { label: NoteLabel | null }) {
+  if (!label) return null;
+  return (
+    <span className="inline-flex items-center gap-1.5" style={{ font: "500 12px/16px var(--font-sans)", color: "var(--ink-muted)" }}>
+      <span className="inline-block w-2.5 h-2.5 rounded-full shrink-0" style={{ background: LABEL_HEX[label] }} aria-hidden="true" />
+      {LABEL_NAMES[label]}
+    </span>
+  );
+}
+
 export function NoteLabelDot({ label }: { label: NoteLabel | null }) {
   if (!label) return null;
   return (

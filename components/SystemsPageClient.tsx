@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
+import { EmptyState, GameSelect } from '@/components/ui'
 import { SystemCard } from '@/components/sallskap/spel/SystemCard'
 import { getSystemsForUser, getWinnersForGame } from '@/lib/actions/systems'
 import type { GameSystem } from '@/lib/types'
@@ -63,79 +65,43 @@ export function SystemsPageClient({
 
   const gameType = games.find(g => g.id === selectedGameId)?.game_type ?? ''
 
+  const cards = (list: GameSystem[]) => list.map(system => (
+    <SystemCard
+      key={system.id}
+      system={system}
+      currentUserId={currentUserId}
+      onDeleted={handleDeleted}
+      winnersByRace={winners}
+      gameType={gameType}
+      gameId={selectedGameId}
+    />
+  ))
+
   return (
-    <div className="px-4 py-4 max-w-2xl mx-auto">
-      <div className="mb-6">
-        <select
-          value={selectedGameId ?? ''}
-          onChange={e => handleGameChange(e.target.value)}
-          className="w-full text-sm rounded-lg outline-none"
-          style={{
-            padding: "8px 12px",
-            background: "var(--tn-bg-chip)",
-            border: "1px solid var(--tn-border)",
-            color: "var(--tn-text)",
-          }}
-        >
-          {games.map(g => (
-            <option key={g.id} value={g.id}>
-              {g.date} · {g.game_type}{g.track ? ` · ${g.track}` : ''}
-            </option>
-          ))}
-        </select>
-      </div>
+    <div className="ta-page">
+      <GameSelect games={games} value={selectedGameId} onChange={handleGameChange} />
 
       {loading ? (
-        <div className="text-center py-10 text-sm" style={{ color: "var(--tn-text-faint)" }}>Laddar system...</div>
+        <p className="ta-text" role="status">Laddar system …</p>
+      ) : myDrafts.length === 0 && sortedSaved.length === 0 ? (
+        <EmptyState
+          title="Inga system för omgången"
+          text="Tryck på startnumren i loppvyn, så sparas systemet som utkast medan du bygger."
+          action={selectedGameId ? <Link href={`/?game=${encodeURIComponent(selectedGameId)}`} className="ta-btn ta-btn-primary">Bygg ett system</Link> : undefined}
+        />
       ) : (
         <>
           {myDrafts.length > 0 && (
-            <section className="mb-8">
-              <h2 className="tn-eyebrow mb-3" style={{ color: "var(--tn-warn)" }}>
-                Mina utkast
-              </h2>
-              <div className="flex flex-col gap-4">
-                {myDrafts.map(system => (
-                  <SystemCard
-                    key={system.id}
-                    system={system}
-                    currentUserId={currentUserId}
-                    onDeleted={handleDeleted}
-                    winnersByRace={winners}
-                    gameType={gameType}
-                    gameId={selectedGameId}
-                  />
-                ))}
-              </div>
+            <section className="ta-section">
+              <h2 className="ta-section-title">Utkast</h2>
+              {cards(myDrafts)}
             </section>
           )}
-
           {sortedSaved.length > 0 && (
-            <section>
-              {myDrafts.length > 0 && (
-                <h2 className="tn-eyebrow mb-3">Sparade system</h2>
-              )}
-              <div className="flex flex-col gap-4">
-                {sortedSaved.map(system => (
-                  <SystemCard
-                    key={system.id}
-                    system={system}
-                    currentUserId={currentUserId}
-                    onDeleted={handleDeleted}
-                    winnersByRace={winners}
-                    gameType={gameType}
-                    gameId={selectedGameId}
-                  />
-                ))}
-              </div>
+            <section className="ta-section">
+              <h2 className="ta-section-title">Sparade system</h2>
+              {cards(sortedSaved)}
             </section>
-          )}
-
-          {myDrafts.length === 0 && sortedSaved.length === 0 && (
-            <div className="text-center py-16" style={{ color: "var(--tn-text-faint)" }}>
-              <p className="text-base mb-1">Inga system sparade för denna omgång.</p>
-              <p className="text-sm">Gå till Analys-fliken och klicka &ldquo;Bygg system&rdquo;.</p>
-            </div>
           )}
         </>
       )}

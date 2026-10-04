@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui";
+import { fmtGameLabel } from "@/lib/format";
 
 export type FetchStatus = "idle" | "pending" | "success" | "not_ready" | "error";
 
@@ -62,52 +64,28 @@ export function BulkResultsButton({ pendingGames }: Props) {
   }
 
   const pendingCount = pendingGames.length;
-
-  const statusStyle = (status: FetchStatus): React.CSSProperties => {
-    if (status === "success") return { background: "rgba(52,211,153,0.15)", color: "var(--tn-value-high)" };
-    if (status === "not_ready") return { background: "rgba(251,191,36,0.15)", color: "var(--tn-warn)" };
-    if (status === "error") return { background: "rgba(248,113,113,0.15)", color: "var(--tn-value-low)" };
-    return { background: "var(--tn-bg-chip)", color: "var(--tn-text-faint)" };
-  };
+  const statusText = (s: GameStatus) =>
+    s.status === "pending" ? "Väntar …"
+      : s.status === "success" ? `Klar: ${s.message}`
+      : s.status === "not_ready" ? "Inte klar än"
+      : `Fel: ${s.message}`;
 
   return (
     <div className="flex flex-col gap-3">
-      <button
-        onClick={handleFetchAll}
-        disabled={pendingCount === 0 || fetching}
-        className="self-start text-sm font-medium rounded-lg transition disabled:opacity-40"
-        style={{
-          padding: "8px 16px",
-          background: "var(--tn-bg-chip)",
-          border: "1px solid var(--tn-border)",
-          color: "var(--tn-text-dim)",
-          cursor: "pointer",
-        }}
-      >
-        {fetching ? "Hämtar..." : pendingCount === 0 ? "Alla resultat hämtade" : `Hämta alla resultat (${pendingCount})`}
-      </button>
-
+      <div>
+        <Button onClick={handleFetchAll} disabled={pendingCount === 0 || fetching}>
+          {fetching ? "Hämtar …" : pendingCount === 0 ? "Alla resultat hämtade" : "Hämta saknade resultat"}
+        </Button>
+      </div>
       {statuses.length > 0 && (
-        <div className="flex flex-col gap-1">
+        <ul className="ta-card ta-divided" style={{ listStyle: "none", margin: 0, padding: 0, overflow: "hidden" }} aria-live="polite">
           {statuses.map((s) => (
-            <div
-              key={s.game_id}
-              className="flex items-center justify-between px-4 py-2 rounded-lg text-sm"
-              style={{ background: "var(--tn-bg-card)" }}
-            >
-              <span style={{ color: "var(--tn-text)" }}>{s.date} · {s.game_type} · {s.track}</span>
-              <span
-                className="tn-mono flex items-center gap-1.5 text-xs font-semibold px-2 py-0.5 rounded-full"
-                style={statusStyle(s.status)}
-              >
-                {s.status === "pending" && "Väntar..."}
-                {s.status === "success" && `Klar — ${s.message}`}
-                {s.status === "not_ready" && "Inte redo"}
-                {s.status === "error" && `Fel: ${s.message}`}
-              </span>
-            </div>
+            <li key={s.game_id} className="ta-linkrow">
+              <span className="flex-1 min-w-0">{fmtGameLabel(s)}</span>
+              <span className="ta-text-sm" style={s.status === "error" ? { color: "var(--danger)" } : undefined}>{statusText(s)}</span>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </div>
   );

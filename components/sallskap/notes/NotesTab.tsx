@@ -1,138 +1,83 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { getGroupNotesForGame, type RaceWithNotes } from "@/lib/actions/notes";
-import { NoteLabelDot } from "@/components/notes/NoteLabel";
-
-type Game = { id: string; date: string; track: string | null };
+import { NoteLabelTag } from "@/components/notes/NoteLabel";
+import { EmptyState } from "@/components/ui";
+import { fmtClock } from "@/lib/format";
+import { relativeTime } from "@/lib/relativeTime";
 
 interface NotesTabProps {
   groupId: string;
-  games: Game[];
-  initialGameId: string | null;
-  initialNotes: RaceWithNotes[];
+  gameId: string;
+  /** Anteckningar som redan är hämtade (sidans standardomgång); null = hämta */
+  initialNotes: RaceWithNotes[] | null;
 }
 
-function formatTime(isoStr: string): string {
-  try { return new Date(isoStr).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" }); }
-  catch { return ""; }
-}
+export function NotesTab({ groupId, gameId, initialNotes }: NotesTabProps) {
+  const [races, setRaces] = useState<RaceWithNotes[] | null>(initialNotes);
+  const [error, setError] = useState<string | null>(null);
 
-function relativeTime(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const minutes = Math.floor(diff / 60_000);
-  if (minutes < 1) return "just nu";
-  if (minutes < 60) return `${minutes} min sedan`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} tim sedan`;
-  const days = Math.floor(hours / 24);
-  if (days < 30) return `${days} dag${days > 1 ? "ar" : ""} sedan`;
-  return new Date(dateStr).toLocaleDateString("sv-SE");
-}
+  useEffect(() => {
+    if (races !== null) return;
+    let cancelled = false;
+    getGroupNotesForGame(groupId, gameId)
+      .then((data) => { if (!cancelled) setRaces(data); })
+      .catch(() => { if (!cancelled) { setRaces([]); setError("Kunde inte hämta anteckningarna. Försök igen."); } });
+    return () => { cancelled = true; };
+  }, [groupId, gameId, races]);
 
-export function NotesTab({ groupId, games, initialGameId, initialNotes }: NotesTabProps) {
-  const [selectedGameId, setSelectedGameId] = useState(initialGameId);
-  const [races, setRaces] = useState<RaceWithNotes[]>(initialNotes);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => { setRaces(initialNotes); }, [initialNotes]);
-
-  async function handleGameChange(gameId: string) {
-    setSelectedGameId(gameId);
-    setLoading(true);
-    const data = await getGroupNotesForGame(groupId, gameId);
-    setRaces(data);
-    setLoading(false);
+  if (races === null) return <p className="ta-text" role="status">Laddar anteckningar …</p>;
+  if (error) return <p className="ta-error" style={{ margin: 0 }}>{error}</p>;
+  if (races.length === 0) {
+    return (
+      <EmptyState
+        title="Inga anteckningar för omgången"
+        text="Skriv anteckningar i hästens detaljvy i loppvyn. De samlas här och följer hästen till nästa start."
+      />
+    );
   }
 
   const totalNotes = races.reduce((sum, r) => sum + r.horses.reduce((s, h) => s + h.notes.length, 0), 0);
+  const totalHorses = races.reduce((s, r) => s + r.horses.length, 0);
 
   return (
-    <div className="px-4 py-5 space-y-4 max-w-2xl mx-auto">
-      {games.length > 0 && (
-        <select
-          value={selectedGameId ?? ""}
-          onChange={(e) => handleGameChange(e.target.value)}
-          className="w-full rounded-lg px-3 py-2 text-sm outline-none"
-          style={{ background: "var(--tn-bg-chip)", border: "1px solid var(--tn-border)", color: "var(--tn-text)" }}
-        >
-          {games.map((g) => (
-            <option key={g.id} value={g.id}>{g.date}{g.track ? ` – ${g.track}` : ""}</option>
-          ))}
-        </select>
-      )}
-
-      {games.length === 0 && (
-        <p className="text-sm italic" style={{ color: "var(--tn-text-faint)" }}>
-          Ingen omgång inladdad ännu. Hämta en V85-omgång på startsidan först.
-        </p>
-      )}
-
-      {loading && <p className="text-sm text-center py-4" style={{ color: "var(--tn-text-faint)" }}>Laddar…</p>}
-
-      {!loading && selectedGameId && races.length === 0 && (
-        <p className="text-sm text-center py-6 leading-relaxed" style={{ color: "var(--tn-text-faint)" }}>
-          Inga sällskapsanteckningar för den här omgången ännu.
-          <br />
-          Skriv anteckningar direkt på hästkorten i loppvyn — de samlas här och
-          följer hästen till nästa start.
-        </p>
-      )}
-
-      {!loading && races.length > 0 && (
-        <>
-          <p className="text-xs" style={{ color: "var(--tn-text-faint)" }}>
-            {totalNotes} anteckning{totalNotes !== 1 ? "ar" : ""} på {races.reduce((s, r) => s + r.horses.length, 0)} hästar
-          </p>
-          <div className="space-y-4">
-            {races.map((race) => (
-              <div key={race.race_number} className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="tn-eyebrow">
-                    Avd {race.race_number}{race.race_name ? ` – ${race.race_name}` : ""}{race.start_time ? ` · ${formatTime(race.start_time)}` : ""}
-                  </span>
-                  <div className="flex-1 h-px" style={{ background: "var(--tn-border)" }} />
-                </div>
-
-                {race.horses.map((horse) => (
-                  <div key={horse.horse_id} className="space-y-2">
-                    <p className="text-xs font-medium pl-1" style={{ color: "var(--tn-text-dim)" }}>
-                      {horse.start_number}. {horse.horse_name}
-                    </p>
-                    <div className="space-y-2 pl-1">
-                      {horse.notes.map((note) => (
-                        <div key={note.id} className="rounded-lg p-3 space-y-1.5" style={{ background: "var(--tn-bg-chip)" }}>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <NoteLabelDot label={note.label} />
-                            <span className="text-xs font-medium" style={{ color: "var(--tn-text)" }}>{note.author_display_name}</span>
-                            <span className="text-xs ml-auto" style={{ color: "var(--tn-text-faint)" }}>{relativeTime(note.created_at)}</span>
-                          </div>
-                          <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: "var(--tn-text)" }}>{note.content}</p>
-                          {note.replies.length > 0 && (
-                            <div className="mt-2 space-y-2">
-                              {note.replies.map((reply) => (
-                                <div key={reply.id} className="ml-4 pl-3" style={{ borderLeft: "2px solid var(--tn-border)" }}>
-                                  <div className="rounded-lg p-2.5 space-y-1" style={{ background: "var(--tn-bg-card)" }}>
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-xs font-medium" style={{ color: "var(--tn-text)" }}>{reply.author_display_name}</span>
-                                      <span className="text-xs ml-auto" style={{ color: "var(--tn-text-faint)" }}>{relativeTime(reply.created_at)}</span>
-                                    </div>
-                                    <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: "var(--tn-text)" }}>{reply.content}</p>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
+    <div className="flex flex-col gap-6">
+      <p className="ta-text">{`${totalNotes} ${totalNotes === 1 ? "anteckning" : "anteckningar"} om ${totalHorses} ${totalHorses === 1 ? "häst" : "hästar"}`}</p>
+      {races.map((race) => (
+        <section key={race.race_number} className="ta-section">
+          <h2 className="ta-section-title">
+            {`Avdelning ${race.race_number}`}
+            {race.start_time && <span className="ta-text-sm" style={{ marginLeft: 8 }}>{`Start ${fmtClock(race.start_time)}`}</span>}
+          </h2>
+          {race.horses.map((horse) => (
+            <div key={horse.horse_id} className="flex flex-col gap-2">
+              <p className="flex items-center gap-2" style={{ margin: 0, font: "600 15px/20px var(--font-sans)", color: "var(--ink)" }}>
+                <span className="ta-sn">{horse.start_number}</span>{horse.horse_name}
+              </p>
+              {horse.notes.map((note) => (
+                <article key={note.id} className="ta-card ta-card-pad flex flex-col gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span style={{ font: "500 14px/20px var(--font-sans)", color: "var(--ink)" }}>{note.author_display_name}</span>
+                    <NoteLabelTag label={note.label} />
+                    <span className="ta-text-sm" style={{ marginLeft: "auto", fontSize: 12 }}>{relativeTime(note.created_at)}</span>
                   </div>
-                ))}
-              </div>
-            ))}
-          </div>
-        </>
-      )}
+                  <p style={{ margin: 0, font: "400 15px/22px var(--font-sans)", color: "var(--ink)", whiteSpace: "pre-wrap" }}>{note.content}</p>
+                  {note.replies.map((reply) => (
+                    <div key={reply.id} className="flex flex-col gap-1" style={{ marginLeft: 16, paddingLeft: 12, borderLeft: "2px solid var(--line)" }}>
+                      <div className="flex items-center gap-2">
+                        <span style={{ font: "500 14px/20px var(--font-sans)", color: "var(--ink)" }}>{reply.author_display_name}</span>
+                        <span className="ta-text-sm" style={{ marginLeft: "auto", fontSize: 12 }}>{relativeTime(reply.created_at)}</span>
+                      </div>
+                      <p style={{ margin: 0, font: "400 15px/22px var(--font-sans)", color: "var(--ink)", whiteSpace: "pre-wrap" }}>{reply.content}</p>
+                    </div>
+                  ))}
+                </article>
+              ))}
+            </div>
+          ))}
+        </section>
+      ))}
     </div>
   );
 }

@@ -168,7 +168,7 @@ Systemet sparas automatiskt som utkast, med namnet du gett det, några sekunder 
 
 #### Se dina system
 
-Sparade system finns under **System** i menyn och, om du valt ett sällskap, under sällskapets flik **Spel**.
+Under **System** i menyn finns **Mina system**. Välj omgång överst. Där ligger dina **utkast** och **sparade system**. Varje system visar avdelningarna med de hästar du valt, antal rader och kostnad. När omgången är rättad står resultatet till höger, till exempel **6 av 8 rätt**, och vinnaren i varje avdelning är guldfärgad. **Fortsätt bygga** öppnar utkastet i loppvyn, och **Kopiera** kopierar systemet som text. System som du sparat till ett sällskap finns också under sällskapets flik **Spel**.
 
 ---
 
@@ -176,15 +176,15 @@ Sparade system finns under **System** i menyn och, om du valt ett sällskap, und
 
 Sällskap låter dig och dina spelvänner diskutera hästar, dela anteckningar och följa varandras synpunkter inför spelet.
 
-**Profil-fliken** i mobilnavigeringen (eller **profilmenyn** uppe till höger på desktop) öppnar sällskapsöversikten. Där ser du dina sällskap (klicka på namnet för att öppna), skapar nya, går med via inbjudningskod, byter visningsnamn och loggar ut.
+**Sällskap** i menyn (eller **profilmenyn** uppe till höger på datorn) öppnar sällskapsöversikten. Där finns **Mina sällskap** (tryck på ett namn för att öppna det), **Skapa eller gå med**, och **Inställningar** med visningsnamn, utseende och notiser. Längst ner finns **Manual** och **Logga ut**.
 
 ### Nytt sedan sist
 
 När andra medlemmar skrivit foruminlägg, antecknat på hästar eller sparat system sedan du senast besökte sällskapet visas det som:
 
-- En **siffer-badge** på Profil-fliken (mobil) och en prick på din avatar (desktop).
+- En **siffra** på Sällskap i menyn (mobil) och en prick på din avatar (dator).
 - Sektionen **"Nytt i dina sällskap"** högst upp på startsidan med de senaste händelserna — klicka för att gå direkt till sällskapet.
-- Antal nya händelser bredvid sällskapets namn i listor och menyer.
+- Märket **2 nya** bredvid sällskapets namn i listan.
 
 Badgen nollställs för ett sällskap när du öppnar det. Endast andras aktivitet räknas — dina egna inlägg skapar inga notiser.
 
@@ -194,57 +194,48 @@ När en omgång rättats där du eller någon i dina sällskap hade sparade syst
 
 ### Notiser
 
-På sällskapsöversikten (via **Profil**) kan du slå på **notiser**. Då får du en pushnotis till mobilen eller datorn när en omgång rättats och systemen fått sina poäng — så du inte missar resultatkvällen. Notiser kräver att du tillåter dem i webbläsaren. På iPhone måste appen först vara **installerad** på hemskärmen (PWA). Du kan stänga av notiserna när som helst samma väg.
+Under **Sällskap → Inställningar** kan du slå på **notiser**. Då får du en pushnotis till mobilen eller datorn när en omgång rättats och systemen fått sina poäng — så du inte missar resultatkvällen. Notiser kräver att du tillåter dem i webbläsaren. På iPhone måste appen först vara **installerad** på hemskärmen (PWA). Du kan stänga av notiserna när som helst samma väg.
 
 ### 7.1 Skapa ett sällskap
 
-1. Gå till sällskapsöversikten via **Profil**-fliken (mobil) eller **profilmenyn → Hantera sällskap** (desktop).
-2. Ange ett namn under **Skapa nytt sällskap**.
-3. Klicka på **Skapa**.
-4. Du blir automatiskt sällskapets **skapare** och en unik **inbjudningskod** genereras.
-5. Dela inbjudningskoden eller inbjudningslänken med de du vill bjuda in.
+1. Gå till **Sällskap** i menyn (på datorn: **profilmenyn → Hantera sällskap**).
+2. Skriv ett namn under **Skapa eller gå med → Nytt sällskap**.
+3. Tryck på **Skapa**.
+4. Du blir sällskapets **skapare** och får en **inbjudningskod**. Den finns i sällskapet under fliken **Sällskapet → Bjud in**.
 
 ### 7.2 Gå med i ett sällskap
 
-1. Gå till sällskapsöversikten via **Profil**-fliken (mobil) eller **profilmenyn → Hantera sällskap** (desktop).
-2. Ange den **inbjudningskod** du fått av sällskapets skapare under **Gå med via inbjudningskod** (eller öppna inbjudningslänken direkt).
-3. Klicka på **Gå med**.
-4. Du är nu medlem och kan se och skriva i sällskapet.
+1. Gå till **Sällskap** i menyn.
+2. Skriv koden du fått under **Skapa eller gå med → Inbjudningskod** (eller öppna inbjudningslänken direkt).
+3. Tryck på **Gå med**.
 
 ### 7.3 Flikar i sällskapet
 
-Inne i ett sällskap finns fyra flikar:
+Inne i ett sällskap finns flikarna **Forum**, **Anteckningar**, **Spel** och **Sällskapet**. Under flikarna väljer du **omgång**. Valet gäller för Forum, Anteckningar och Spel.
 
 **Forum**
-- Diskutera hästar och omgångar i ett chattliknande format.
-- Välj vilken omgång forumet gäller via rullgardinsmenyn.
-- Skriv inlägg och svara på andras inlägg.
-- Du kan ta bort dina egna inlägg.
+- Skriv i fältet **Dela din analys om omgången** och tryck på **Publicera**.
+- Tryck på **Svara** under ett inlägg för att svara. Du kan ta bort dina egna inlägg och svar.
 
 **Anteckningar**
-- Visar alla hästanteckningar från sällskapets medlemmar, grupperade per omgång.
-- Anteckningar skrivs i hästens detaljvy på startsidan (se avsnitt 8).
+- Alla anteckningar från sällskapets medlemmar för omgången, grupperade per avdelning och häst. Etiketten står med namn, till exempel **Spik** eller **Skrällbud**.
+- Anteckningar skrivs i hästens detaljvy i loppvyn (se avsnitt 8).
 
 **Spel**
-- Visar sällskapets sparade system och utkast för vald omgång.
-- När resultat hämtats rättas systemen automatiskt — antal rätt visas som t.ex. **6/8** och vinnande hästar markeras gröna.
-- **Sällskapsligan** — topplista över medlemmarnas systemträffar i alla rättade omgångar: antal omgångar, totala rätt, snitt och bästa omgång. Har du flera system i samma omgång räknas det bästa. 👑 markerar vem som vann den senast rättade omgången.
-- Under **Insatser** registrerar du dina spel. Enklast: klicka **Jag spelade detta** på ett systemkort — insatsen (rader × radpris) fylls i automatiskt och kopplas till systemet, så att insatsraden visar systemets träff (t.ex. 6/8). Du kan även lägga till spel manuellt (speltyp, eventuell avdelning/häst och insats i kronor). När omgången är avgjord fyller du i utdelningen på dina egna insatser. Du kan ta bort dina egna insatser med **×** – appen frågar först om du är säker, eftersom insatsen då försvinner ur ROI-beräkningen.
-- **ROI per medlem** visar varje medlems totala insats, utdelning och avkastning över alla omgångar.
+- **Bygg system** öppnar loppvyn för omgången. System du sparar där kan du dela med sällskapet.
+- Sällskapets **utkast** och **sparade system**. När resultaten är hämtade rättas systemen: resultatet står som **6 av 8 rätt** och vinnaren i varje avdelning är guldfärgad.
+- **Sällskapsligan** är en topplista över medlemmarnas systemträffar i alla rättade omgångar: antal omgångar, totala rätt, snitt och bästa omgång. Har du flera system i samma omgång räknas det bästa. De tre första har guld, silver och brons, och märket **Vann senast** visar vem som vann den senast rättade omgången.
+- Under **Insatser** registrerar du dina spel. Enklast är att trycka på **Jag spelade detta** på ett system. Då fylls insatsen (rader × radpris) i och kopplas till systemet. Du kan också fylla i **Spel**, **Avd**, **Häst** och **Insats** själv och trycka på **Lägg till insats**. När omgången är avgjord skriver du in utdelningen på dina egna insatser och trycker på **Spara**. **Ta bort** frågar först om du är säker.
+- **Visa avkastning per medlem** visar varje medlems insats, utdelning och avkastning över alla omgångar.
 
-**Sällskap**
-- Administrera sällskapets inställningar (se avsnitt 7.4).
+**Sällskapet**
+- **Namn**, **ATG-lag**, **Bjud in** (koden och knapparna **Kopiera kod** och **Kopiera länk**) och **Medlemmar**.
 
 ### 7.4 Hantera sällskapet (skaparen)
 
-Skaparen kan:
+Skaparen kan ändra **sällskapets namn** och lägga in en länk till sällskapets **ATG-lag** under fliken **Sällskapet**. Alla medlemmar ser inbjudningskoden och medlemslistan.
 
-- **Ändra sällskapets namn** via namnformuläret.
-- **Lägga till ATG-lag-URL** för att koppla sällskapet till ett ATG-lag.
-- Se den aktiva **inbjudningskoden** och kopiera den eller länken.
-- Se alla **medlemmar** med deras visningsnamn och när de gick med.
-
-Alla medlemmar (inklusive skaparen) kan **lämna sällskapet** via knappen längst ner. Appen frågar först om du är säker – lämnar du sällskapet förlorar du åtkomst till dess forum, anteckningar och system, och behöver en ny inbjudningskod för att komma tillbaka. Om skaparen lämnar kvarstår sällskapet för övriga.
+Alla medlemmar, även skaparen, kan **lämna sällskapet** längst ner under **Sällskapet**. Appen frågar först om du är säker. Lämnar du förlorar du åtkomst till sällskapets forum, anteckningar och system och behöver en ny inbjudningskod för att komma tillbaka. Sällskapet finns kvar för de andra.
 
 ---
 
@@ -283,20 +274,17 @@ Anteckningar är kopplade till en specifik häst och visas för alla i de sälls
 
 ## 9. Utvärdering
 
-Navigera till **Utvärdering** i menyn för att se hur väl systemets toppval har presterat historiskt.
+**Utvärdering** i menyn visar hur ofta modellernas toppval har vunnit.
 
-Sidan visar:
+- **Träffsäkerhet** jämför **CS** och **Grund** sida vid sida: hur ofta **toppvalet vinner** (hästen med högst värde i avdelningen) och hur ofta **vinnaren finns bland topp 3**. Under tabellen står hur många omgångar och avdelningar som räknas. Grund räknas bara på avdelningar där den finns, och strukna hästar räknas inte.
+- **Per omgång** listar varje omgång med raden **Toppval vann 3 av 8**. Tryck på en omgång för att se vinnare, toppval och utfall per avdelning: **Vann** (guld), **Topp 3**, eller ett streck för miss.
+- **Omgångar** visar hur många omgångar som väntar på resultat. **Visa alla omgångar** listar alla inladdade omgångar som **Rättad** eller **Väntar på resultat**.
 
-- **Topprankad (CS) vinner** – andel lopp där hästen med högst CS verkligen vann.
-- **Vinnare bland topp 3 (CS)** – hur ofta vinnaren återfanns bland de tre hästarna med högst CS.
-- **Grundchans toppval vinner** och **Vinnare bland topp 3 (Grundchans)** – samma mått för Grundchans (räknas på avdelningar där Grundchans finns; strukna hästar räknas inte).
-- **Per omgång** – detaljerad genomgång per sparad omgång: vinnare, toppval och träff per avdelning.
+Alla startande räknas, även hästar som galopperat eller diskvalificerats. En favorit som galopperar räknas alltså som en miss.
 
-Alla startande räknas, även hästar som galopperat eller diskvalificerats — en favorit som galopperar räknas alltså som en miss.
+> Utvärderingen kräver att loppresultat har hämtats. Resultaten hämtas **automatiskt varje kväll** (runt midnatt) för sparade omgångar från den senaste veckan. Systemen rättas och notiser skickas utan att någon behöver trycka på något.
 
-> Utvärderingen kräver att loppresultat har hämtats. Resultaten hämtas **automatiskt varje kväll** (runt midnatt) för sparade omgångar från den senaste veckan – systemen rättas och notiser skickas utan att någon behöver trycka på något.
-
-> **Tips:** Vill du se resultaten direkt efter sista loppet hämtar knappen **Hämta alla resultat** på utvärderingssidan resultat för alla omgångar som saknar dem i ett svep.
+> **Tips:** Vill du se resultaten direkt efter sista loppet hämtar knappen **Hämta saknade resultat** resultat för alla omgångar som saknar dem på en gång.
 
 ---
 

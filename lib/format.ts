@@ -53,6 +53,17 @@ export function fmtGameDate(isoDate: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+/** "2026-10-10" → "lör 10 okt" (kort, för listor och väljare). */
+export function fmtGameShort(isoDate: string): string {
+  const d = new Date(`${isoDate}T12:00:00Z`);
+  return d.toLocaleDateString("sv-SE", { weekday: "short", day: "numeric", month: "short", timeZone: "Europe/Stockholm" }).replace(/\./g, "");
+}
+
+/** Omgångens namn: "V85 · Solvalla · lör 10 okt". */
+export function fmtGameLabel(g: { game_type?: string | null; track?: string | null; date: string }): string {
+  return [g.game_type, g.track, fmtGameShort(g.date)].filter(Boolean).join(" · ");
+}
+
 /** ISO-tid → "16:20" i svensk tid. */
 export function fmtClock(iso: string | null | undefined): string {
   if (!iso) return "";

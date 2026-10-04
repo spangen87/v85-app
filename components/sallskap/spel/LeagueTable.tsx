@@ -1,72 +1,51 @@
 'use client'
 
+import { Badge } from '@/components/ui'
+import { fmtGameShort } from '@/lib/format'
 import type { GroupLeague } from '@/lib/actions/systems'
 
 /**
- * Sällskapsligan — topplista över medlemmarnas systemträffar i rättade
- * omgångar. Bästa systemet per medlem och omgång räknas; 👑 markerar vem
- * som vann den senast rättade omgången.
+ * Sällskapsligan: medlemmarnas systemträffar i rättade omgångar. Bästa
+ * systemet per medlem och omgång räknas. Topp tre har placeringsfärg.
  */
 export function LeagueTable({ league }: { league: GroupLeague }) {
   if (league.rows.length === 0) return null
 
   return (
-    <section className="mt-8">
-      <h2
-        className="text-sm font-semibold uppercase tracking-wide mb-1 tn-eyebrow"
-        style={{ color: 'var(--tn-text-dim)' }}
-      >
-        Sällskapsligan
-      </h2>
-      {league.last_round_date && (
-        <p className="text-xs mb-3" style={{ color: 'var(--tn-text-faint)' }}>
-          Bästa systemet per medlem och omgång räknas · senast rättad {league.last_round_date}
+    <section className="ta-section">
+      <div>
+        <h2 className="ta-section-title">Sällskapsligan</h2>
+        <p className="ta-text-sm" style={{ marginTop: 2 }}>
+          Bästa systemet per medlem och omgång räknas
+          {league.last_round_date ? ` · senast rättad ${fmtGameShort(league.last_round_date)}` : ''}
         </p>
-      )}
-      <div
-        className="rounded-xl overflow-hidden"
-        style={{ background: 'var(--tn-bg-card)', border: '1px solid var(--tn-border)' }}
-      >
-        <table className="w-full text-sm">
+      </div>
+      <div className="ta-card overflow-x-auto">
+        <table className="ta-table">
           <thead>
-            <tr style={{ borderBottom: '1px solid var(--tn-border)' }}>
-              <th className="text-left px-3 py-2 tn-eyebrow font-normal">#</th>
-              <th className="text-left px-3 py-2 tn-eyebrow font-normal">Medlem</th>
-              <th className="text-right px-3 py-2 tn-eyebrow font-normal">Omg.</th>
-              <th className="text-right px-3 py-2 tn-eyebrow font-normal">Rätt</th>
-              <th className="text-right px-3 py-2 tn-eyebrow font-normal">Snitt</th>
-              <th className="text-right px-3 py-2 tn-eyebrow font-normal">Bäst</th>
+            <tr>
+              <th className="ta-left">Plats</th>
+              <th className="ta-left">Medlem</th>
+              <th>Omgångar</th>
+              <th>Rätt</th>
+              <th>Snitt</th>
+              <th>Bäst</th>
             </tr>
           </thead>
           <tbody>
             {league.rows.map((row, i) => (
-              <tr key={row.user_id} style={{ borderTop: i > 0 ? '1px solid var(--tn-border)' : 'none' }}>
-                <td
-                  className="px-3 py-2 tn-mono text-xs"
-                  style={{ color: i === 0 ? 'var(--tn-p1)' : 'var(--tn-text-faint)' }}
-                >
-                  {i + 1}
+              <tr key={row.user_id}>
+                <td className="ta-left"><span className={`ta-sn${i < 3 ? ` ta-sn-p${i + 1}` : ''}`}>{i + 1}</span></td>
+                <td className="ta-left">
+                  <span className="inline-flex items-center gap-2">
+                    {row.display_name}
+                    {row.is_last_round_winner && <Badge>Vann senast</Badge>}
+                  </span>
                 </td>
-                <td className="px-3 py-2 font-medium" style={{ color: 'var(--tn-text)' }}>
-                  {row.display_name}
-                  {row.is_last_round_winner && (
-                    <span className="ml-1.5" title="Vann senast rättade omgången" aria-label="Vann senast rättade omgången">
-                      👑
-                    </span>
-                  )}
-                </td>
-                <td className="px-3 py-2 text-right tn-mono" style={{ color: 'var(--tn-text-dim)' }}>
-                  {row.rounds}
-                </td>
-                <td className="px-3 py-2 text-right tn-mono font-semibold" style={{ color: 'var(--tn-text)' }}>
-                  {row.total_score}
-                </td>
-                <td className="px-3 py-2 text-right tn-mono" style={{ color: 'var(--tn-text-dim)' }}>
-                  {row.avg_score.toFixed(1).replace('.', ',')}
-                </td>
-                <td className="px-3 py-2 text-right tn-mono" style={{ color: 'var(--tn-text-dim)' }}>
-                  {row.best_score}/8
-                </td>
+                <td className="ta-muted">{row.rounds}</td>
+                <td className="ta-strong">{row.total_score}</td>
+                <td className="ta-muted">{row.avg_score.toFixed(1).replace('.', ',')}</td>
+                <td className="ta-muted">{row.best_score}</td>
               </tr>
             ))}
           </tbody>
