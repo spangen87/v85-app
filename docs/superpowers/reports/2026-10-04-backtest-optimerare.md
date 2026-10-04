@@ -11,7 +11,7 @@
 - **Värdevikt:** den värdevägda varianten (λ = 0,3, vald på träningsperioden) gav **inte** högre avkastning per krona än Max chans eller referenssystemet på valideringsperioden. Utfallet varierar mellan spelen: sämre på V85, bättre på V86, och lika sammantaget.
 - **Kalibrering:** förutsagd P(alla rätt) och P(alla utom en) stämmer på träningsperioden. På valideringsperioden förutsades 67,5 träffar med alla rätt men det blev 56, cirka 20 % för högt. Chansen att alla spikar håller var cirka 25 % för hög. Orsaken är att spikarnas chans överskattas med 5–6 procentenheter.
 - **Märkena** Understreckad och Överstreckad säger det de ska om V-spelsvärde: understreckade hästar vann 1,5–1,8 gånger sitt streck och överstreckade 0,6–0,7 gånger. De är däremot inga vinnarspelstips.
-- **Radpris:** V85, V86 och V75 stämmer med `getRowPrice`. **V65 är troligen 1 kr per rad, inte 0,50 kr** som i `getRowPrice`. V64 och GS75 stämmer med 1 kr.
+- **Radpris:** V85, V86 och V75 stämmer med `getRowPrice`. **V65 är troligen 1 kr per rad, inte 0,50 kr** som i `getRowPrice`. V64 och GS75 stämmer med 1 kr. *(Uppdatering: `getRowPrice('V65')` är ändrat till 1,00 kr.)*
 
 Den tydligaste positiva effekten är att optimeraren fördelar hästarna efter kalibrerad chans i stället för efter streck. Mot Ref B (samma optimerare med streck som chans) gav Max chans +0,19 kr per satsad krona på valideringen (90 %-intervall 0,04–0,38) för alla spel, och +0,42 (0,11–0,87) för V85+V86. På träningsperioden var bilden blandad: bättre för alla spel (0,75 mot 0,63), sämre för V85+V86 (0,47 mot 0,56).
 
