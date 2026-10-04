@@ -3,6 +3,7 @@ import { fetchGame, fetchRaceHistories, HorseStart } from "@/lib/atg";
 import { calculateCompositeScore } from "@/lib/formscore";
 import { computeFundamentalForRows, MODEL, type FundamentalResult } from "@/lib/fundamental";
 import { getTrackConfig } from "@/lib/actions/tracks";
+import { buildOddsSnapshots, saveOddsSnapshots, type OddsSnapshotRow } from "@/lib/oddsSnapshots";
 import { createServiceClient } from "@/lib/supabase/server";
 
 // Historikhämtningen (ett anrop per avdelning, med retry) kan ta längre tid
@@ -75,6 +76,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Ögonblicksbild av odds och streck för varje start (samma tidsstämpel för hela hämtningen)
+    const capturedAt = new Date().toISOString();
+    const snapshots: OddsSnapshotRow[] = [];
+
     for (const race of game.races) {
       const raceId = `${game.game_id}_${race.race_number}`;
 
@@ -108,6 +113,7 @@ export async function POST(request: NextRequest) {
       });
 
       console.log(`[fetch] Avd ${race.race_number}: ATG=${race.starters.length}, giltiga=${validStarters.length}, unika=${uniqueStarters.length}`);
+      snapshots.push(...buildOddsSnapshots(game.game_id, raceId, race.race_number, uniqueStarters, capturedAt));
 
       // Hämta starterhistorik för hela avdelningen med ett anrop
       // (/races/{id}/extended ger de 5 senaste starterna per häst)
@@ -233,6 +239,9 @@ export async function POST(request: NextRequest) {
       const { error: insertErr } = await supabase.from("starters").insert(starterRows);
       if (insertErr) console.error(`[fetch] starters.insert fel avd ${race.race_number}:`, insertErr.message);
     }
+
+    // Får inte stoppa hämtningen — saknas tabellen (migration v15) loggas det bara
+    await saveOddsSnapshots(supabase, snapshots);
 
     const totalStarters = game.races.reduce((sum, r) => sum + r.starters.length, 0);
     return NextResponse.json({ success: true, game_id: game.game_id, races: game.races.length, starters: totalStarters });

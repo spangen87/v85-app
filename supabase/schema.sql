@@ -116,3 +116,21 @@ create policy "Service kan skriva starters" on starters for all using (auth.role
 -- alter table starters add column if not exists start_points integer;
 -- alter table starters add column if not exists fundamental_p double precision;
 -- alter table starters add column if not exists fundamental_version text;
+
+-- Migration v15 (ögonblicksbilder av odds/streck) — se migration_v15_odds_snapshots.sql
+-- create table if not exists odds_snapshots (
+--   id uuid primary key default gen_random_uuid(),
+--   game_id text not null references games(id) on delete cascade,
+--   race_id text not null,
+--   race_number integer not null,
+--   start_number integer not null,
+--   horse_id text,
+--   odds double precision,
+--   bet_distribution double precision,
+--   captured_at timestamptz not null default now()
+-- );
+-- create index if not exists idx_odds_snapshots_game on odds_snapshots(game_id, captured_at);
+-- create index if not exists idx_odds_snapshots_race on odds_snapshots(race_id, start_number, captured_at);
+-- alter table odds_snapshots enable row level security;
+-- create policy "Inloggade kan läsa odds_snapshots" on odds_snapshots for select using (auth.role() = 'authenticated');
+-- create policy "Service kan skriva odds_snapshots" on odds_snapshots for all using (auth.role() = 'service_role');

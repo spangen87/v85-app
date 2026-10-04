@@ -22,7 +22,7 @@ function manualSlugs(): Set<string> {
   return out;
 }
 
-const IDS: TermId[] = ["chans", "streck", "odds", "varde", "grund", "cs", "skrall", "signal", "oense", "form", "spar"];
+const IDS: TermId[] = ["chans", "streck", "odds", "varde", "grund", "cs", "skrall", "signal", "oense", "form", "spar", "vardeindex"];
 
 describe("GLOSSARY", () => {
   it("har titel och förklaring för varje term", () => {

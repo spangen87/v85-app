@@ -13,7 +13,7 @@ import { getDraftForGame } from "@/lib/actions/systems";
 import { getNoteCountsForHorses } from "@/lib/actions/notes";
 import { getGamePostSummary } from "@/lib/actions/posts";
 import { getTrackConfig } from "@/lib/actions/tracks";
-import { getAuthUser } from "@/lib/supabase/guards";
+import { getAuthUser, isAdmin } from "@/lib/supabase/guards";
 import { redirect } from "next/navigation";
 import { parseHastParam } from "@/lib/raceView";
 import Link from "next/link";
@@ -162,6 +162,7 @@ export default async function HomePage({
           trackConfig={trackConfig}
           noteCounts={noteCounts}
           initialDetail={hast?.start ?? null}
+          isAdmin={isAdmin(user.id)}
         />
       </div>
     </main>

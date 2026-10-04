@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { RaceList } from '@/components/RaceList'
 import { SaveSystemDialog } from '@/components/SaveSystemDialog'
 import { SystemSidebar } from '@/components/SystemSidebar'
@@ -14,6 +14,9 @@ import { useRaceTab } from '@/components/RaceTabContext'
 import { openGamePicker } from '@/lib/uiEvents'
 import { summarizeSystem } from '@/lib/systemSummary'
 import { createDraftAutosave, type DraftStatus } from '@/lib/draftAutosave'
+import { optimizerRacesFromRaces, systemMetrics } from '@/lib/optimizer'
+import { getRowPrice } from '@/lib/atg'
+import { ProposeSheet, SystemInsights } from '@/components/OptimizerPanel'
 import type { Race } from '@/lib/raceTypes'
 
 interface MainPageClientProps {
@@ -32,6 +35,8 @@ interface MainPageClientProps {
   noteCounts?: Record<string, number>
   /** Startnummer att öppna direkt (från ?hast= i länken) */
   initialDetail?: number | null
+  /** Systemförslag och träffchans visas bara för administratörer (under utvärdering) */
+  isAdmin?: boolean
 }
 
 export function MainPageClient({
@@ -47,6 +52,7 @@ export function MainPageClient({
   trackConfig = null,
   noteCounts = {},
   initialDetail = null,
+  isAdmin = false,
 }: MainPageClientProps) {
   const { activeRaceNumber: activeRace, setActiveRaceNumber: setActiveRace } = useRaceTab()
   const [systemSelections, setSystemSelections] = useState<SystemSelection[]>(initialSelections)
@@ -149,6 +155,17 @@ export function MainPageClient({
 
   const summary = summarizeSystem(systemSelections, races.length, gameType)
   const hasSystem = systemSelections.length > 0
+  const showBar = hasSystem || isAdmin
+
+  // Optimeraren: kalibrerad chans per avdelning, bara för administratörer
+  const [showPropose, setShowPropose] = useState(false)
+  const optimizerRaces = useMemo(() => (isAdmin ? optimizerRacesFromRaces(races) : null), [isAdmin, races])
+  const metrics = useMemo(
+    () => (optimizerRaces && hasSystem ? systemMetrics(optimizerRaces, systemSelections) : null),
+    [optimizerRaces, hasSystem, systemSelections],
+  )
+  const insights = optimizerRaces && metrics ? <SystemInsights races={optimizerRaces} metrics={metrics} /> : undefined
+  const openPropose = isAdmin ? () => { setShowDrawer(false); setShowPropose(true) } : undefined
 
   if (races.length === 0) {
     return (
@@ -162,7 +179,7 @@ export function MainPageClient({
 
   return (
     <>
-      <div className="flex flex-wrap gap-6 items-start" style={{ paddingBottom: hasSystem ? 88 : 0 }}>
+      <div className="flex flex-wrap gap-6 items-start" style={{ paddingBottom: showBar ? 88 : 0 }}>
         <div style={{ flex: '999 1 560px', minWidth: 0 }}>
           <RaceList
             races={races}
@@ -186,10 +203,12 @@ export function MainPageClient({
           summary={summary}
           draftName={draftName}
           draftStatus={draftSaveStatus}
+          insights={insights}
+          onPropose={openPropose}
         />
       </div>
 
-      {hasSystem && (
+      {showBar && (
         <SystemBar summary={summary} draftStatus={draftSaveStatus} onOpen={() => setShowDrawer(true)} />
       )}
 
@@ -207,7 +226,21 @@ export function MainPageClient({
         draftStatus={draftSaveStatus}
         savedDrafts={savedDrafts}
         onLoadDraft={handleLoadDraft}
+        insights={insights}
+        onPropose={openPropose}
       />
+
+      {optimizerRaces && (
+        <ProposeSheet
+          open={showPropose}
+          onClose={() => setShowPropose(false)}
+          races={optimizerRaces}
+          gameType={gameType}
+          rowPrice={getRowPrice(gameType ?? '')}
+          selections={systemSelections}
+          onApply={setSystemSelections}
+        />
+      )}
 
       <ConfirmDialog
         open={confirmClear}

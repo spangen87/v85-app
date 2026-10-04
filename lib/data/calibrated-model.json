@@ -1,0 +1,105 @@
+{
+  "version": "2026-10-04",
+  "floor": 0.001,
+  "fundamental_version": "2026-10-03",
+  "trained_races": 2788,
+  "modes": {
+    "full": {
+      "streck": 0.179,
+      "odds": 0.846,
+      "grund": 0.0867
+    },
+    "noOdds": {
+      "streck": 0.8423,
+      "odds": 0,
+      "grund": 0.1274
+    },
+    "grundOnly": {
+      "streck": 0,
+      "odds": 0,
+      "grund": 1.0085
+    },
+    "noGrund": {
+      "streck": 0.2107,
+      "odds": 0.8684,
+      "grund": 0
+    },
+    "streckOnly": {
+      "streck": 0.916,
+      "odds": 0,
+      "grund": 0
+    },
+    "oddsOnly": {
+      "streck": 0,
+      "odds": 1.1152,
+      "grund": 0
+    },
+    "oddsGrund": {
+      "streck": 0,
+      "odds": 1.0441,
+      "grund": 0.1038
+    }
+  },
+  "test_metrics": {
+    "Likformig": {
+      "logloss": 2.3347,
+      "pseudo_r2": 0,
+      "n": 1450
+    },
+    "Streck": {
+      "logloss": 1.6959,
+      "pseudo_r2": 0.2736,
+      "n": 1450
+    },
+    "Vinnarodds": {
+      "logloss": 1.6815,
+      "pseudo_r2": 0.2798,
+      "n": 1450
+    },
+    "50/50 streck+odds (Chans idag)": {
+      "logloss": 1.6786,
+      "pseudo_r2": 0.281,
+      "n": 1450
+    },
+    "Grundchans (framåtrullande)": {
+      "logloss": 1.8812,
+      "pseudo_r2": 0.1943,
+      "n": 1450
+    },
+    "Kalibrerad full": {
+      "logloss": 1.6743,
+      "pseudo_r2": 0.2829,
+      "n": 1450
+    },
+    "Kalibrerad noOdds": {
+      "logloss": 1.6897,
+      "pseudo_r2": 0.2763,
+      "n": 1450
+    },
+    "Kalibrerad grundOnly": {
+      "logloss": 1.8826,
+      "pseudo_r2": 0.1936,
+      "n": 1450
+    },
+    "Kalibrerad noGrund": {
+      "logloss": 1.6752,
+      "pseudo_r2": 0.2825,
+      "n": 1450
+    },
+    "Kalibrerad streckOnly": {
+      "logloss": 1.6918,
+      "pseudo_r2": 0.2754,
+      "n": 1450
+    },
+    "Kalibrerad oddsOnly": {
+      "logloss": 1.6774,
+      "pseudo_r2": 0.2815,
+      "n": 1450
+    },
+    "Kalibrerad oddsGrund": {
+      "logloss": 1.6759,
+      "pseudo_r2": 0.2822,
+      "n": 1450
+    }
+  }
+}

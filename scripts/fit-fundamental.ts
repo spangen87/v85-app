@@ -12,17 +12,16 @@
 import fs from "node:fs";
 import path from "node:path";
 import zlib from "node:zlib";
-import { parseTimeToSeconds } from "../lib/analysis";
-import { fromAtgRace, fromAtgStart } from "../lib/fundamental/atgAdapter";
-import {
-  computeRawFeatures, FACTORS, isFaulty,
-  type FundamentalRace, type FundamentalStarter, type SpeedTables,
-} from "../lib/fundamental/features";
-import { standardizeField, type FundamentalModel } from "../lib/fundamental/model";
+import { FACTORS } from "../lib/fundamental/features";
+import { type FundamentalModel } from "../lib/fundamental/model";
 import {
   estimateSpeedTables, evaluate, fitConditionalLogit, raceProbs,
-  type SpeedRecord, type TrainingRace,
+  type TrainingRace,
 } from "../lib/fundamental/fit";
+import {
+  CACHE, FUNDAMENTAL_LAMBDA as LAMBDA, loadExamples, obj, readGz, speedRecords, toTraining,
+  type Json,
+} from "./shared/atgCache";
 
 const ATG_BASE = "https://www.atg.se/services/racinginfo/v1/api";
 const HEADERS = {
@@ -30,12 +29,8 @@ const HEADERS = {
   Accept: "application/json",
 };
 const GAME_TYPES = ["V85", "V86", "V75", "V64", "V65", "GS75"];
-const CACHE = path.join(".cache", "atg");
-const LAMBDA = 3;
 const MIN_PSEUDO_R2 = 0.19;
 const MODEL_PATH = path.join("lib", "data", "fundamental-model.json");
-
-type Json = Record<string, unknown>;
 
 function arg(flag: string): string | undefined {
   const i = process.argv.indexOf(flag);
@@ -43,9 +38,6 @@ function arg(flag: string): string | undefined {
 }
 const has = (flag: string) => process.argv.includes(flag);
 
-function readGz(file: string): Json {
-  return JSON.parse(zlib.gunzipSync(fs.readFileSync(file)).toString("utf8"));
-}
 function writeGz(file: string, data: unknown) {
   fs.writeFileSync(file, zlib.gzipSync(JSON.stringify(data)));
 }
@@ -89,91 +81,6 @@ async function fetchDays(days: string[], label: string) {
     }
     process.stdout.write(`\r  [${label}] ${day}`);
   }
-}
-
-function obj(v: unknown): Json {
-  return v && typeof v === "object" ? (v as Json) : {};
-}
-
-interface Example {
-  id: string;
-  race: FundamentalRace;
-  starters: FundamentalStarter[];
-  horseIds: string[];
-  winner: number;
-  odds: number[];
-  streck: number[];
-}
-
-function loadExamples(): Example[] {
-  // Streck per (lopp-id, startnummer) från spelfilerna
-  const streck = new Map<string, number>();
-  for (const f of fs.readdirSync(path.join(CACHE, "games"))) {
-    const game = readGz(path.join(CACHE, "games", f));
-    const gameType = String(game["id"]).split("_")[0];
-    for (const r of (game["races"] as Json[] | undefined) ?? []) {
-      for (const s of (r["starts"] as Json[] | undefined) ?? []) {
-        const bd = obj(obj(s["pools"])[gameType])["betDistribution"];
-        if (bd != null) streck.set(`${r["id"]}#${s["number"]}`, Number(bd) / 100);
-      }
-    }
-  }
-
-  const out: Example[] = [];
-  for (const f of fs.readdirSync(path.join(CACHE, "races"))) {
-    const raw = readGz(path.join(CACHE, "races", f));
-    if (raw["sport"] !== "trot") continue;
-    const terms = ((raw["terms"] as string[] | undefined) ?? []).join(" ").toLowerCase();
-    if (String(raw["name"] ?? "").toLowerCase().includes("monté") || terms.includes("monté")) continue;
-    const scratched = new Set(((obj(raw["result"])["scratchings"] as number[] | undefined) ?? []).map(Number));
-    const starts = ((raw["starts"] as Json[] | undefined) ?? []).filter(
-      (s) => !scratched.has(Number(s["number"])) && s["result"]
-    );
-    if (starts.length < 5) continue;
-    const finish = starts.map((s) => Number(obj(s["result"])["finishOrder"] ?? 99));
-    if (finish.filter((x) => x === 1).length !== 1) continue;
-    const race = fromAtgRace(raw);
-    out.push({
-      id: String(raw["id"]),
-      race,
-      starters: starts.map((s) => fromAtgStart(s, race)),
-      horseIds: starts.map((s) => String(obj(s["horse"])["id"] ?? obj(s["horse"])["name"] ?? "")),
-      winner: finish.indexOf(1),
-      odds: starts.map((s) => Number(obj(s["result"])["finalOdds"] ?? 0)),
-      streck: starts.map((s) => streck.get(`${raw["id"]}#${s["number"]}`) ?? 0),
-    });
-  }
-  return out.sort((a, b) => a.race.date.localeCompare(b.race.date));
-}
-
-function speedRecords(examples: Example[], beforeDate: string | null): SpeedRecord[] {
-  const seen = new Set<string>();
-  const records: SpeedRecord[] = [];
-  for (const ex of examples) {
-    ex.starters.forEach((s, i) => {
-      for (const h of s.history) {
-        const key = `${ex.horseIds[i]}#${h.date}`;
-        if (seen.has(key)) continue;
-        seen.add(key);
-        if (beforeDate && h.date >= beforeDate) continue;
-        if (isFaulty(h) || !h.start_method) continue;
-        const seconds = parseTimeToSeconds(h.time);
-        if (seconds == null) continue;
-        records.push({
-          breed: ex.race.breed, track: h.track, start_method: h.start_method,
-          distance: h.distance ?? 2140, condition: h.track_condition ?? null, seconds,
-        });
-      }
-    });
-  }
-  return records;
-}
-
-function toTraining(examples: Example[], tables: SpeedTables): TrainingRace[] {
-  return examples.map((ex) => {
-    const z = standardizeField(ex.starters.map((s) => computeRawFeatures(ex.race, s, tables)));
-    return { z: z.map((row) => FACTORS.map((f) => row[f])), winner: ex.winner };
-  });
 }
 
 const normalize = (v: number[]) => {
