@@ -1,0 +1,174 @@
+/* Travappen grundkomponenter — porterat från designsystemets bundle.css. */
+
+.ta-btn:focus-visible, .ta-num:focus-visible, .ta-term:focus-visible, .ta-tab:focus-visible,
+.ta-nav-item:focus-visible, .ta-row:focus-visible, .ta-link:focus-visible, .ta-chip:focus-visible,
+.ta-seg button:focus-visible, .ta-sheet:focus-visible {
+  outline: 2px solid var(--focus); outline-offset: 2px;
+}
+
+/* Button */
+.ta-btn { font: 500 14px/20px var(--font-sans); height: 40px; padding: 0 var(--space-4); border-radius: var(--radius-md);
+  border: 0; background: var(--surface-sunken); color: var(--ink); cursor: pointer; display: inline-flex; align-items: center;
+  justify-content: center; gap: var(--space-2); white-space: nowrap; }
+.ta-btn-primary { background: var(--accent); color: var(--on-accent); }
+.ta-btn-quiet { background: transparent; color: var(--accent); padding: 0 var(--space-2); }
+.ta-btn-sm { height: 32px; padding: 0 var(--space-3); font-size: 13px; }
+.ta-btn:disabled { opacity: .5; cursor: default; }
+
+/* Chip — knapparna i verktygsraden */
+.ta-chip { height: 32px; padding: 0 var(--space-3); border: 0; border-radius: var(--radius-md); background: var(--surface-sunken);
+  color: var(--ink); font: 500 13px/18px var(--font-sans); display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; cursor: pointer; }
+.ta-chip[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
+
+/* SegmentedControl */
+.ta-seg { display: inline-flex; padding: 3px; gap: 2px; border-radius: var(--radius-md); background: var(--surface-sunken); }
+.ta-seg button { height: 28px; padding: 0 var(--space-3); border: 0; border-radius: 8px; background: transparent; cursor: pointer;
+  font: 500 13px/18px var(--font-sans); color: var(--ink-muted); }
+.ta-seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-raised); }
+
+/* Badge */
+.ta-badge { display: inline-flex; align-items: center; height: 22px; padding: 0 var(--space-2); border-radius: var(--radius-sm);
+  font: 600 12px/16px var(--font-sans); background: var(--surface-sunken); color: var(--ink-muted); white-space: nowrap; }
+.ta-badge-skrall { background: var(--skrall-soft); color: var(--skrall); }
+.ta-badge-value { background: var(--value-soft); color: var(--value); }
+.ta-badge-signal { background: var(--surface-sunken); color: var(--ink); }
+
+/* StartNumber */
+.ta-num { width: 36px; height: 36px; flex: none; border-radius: var(--radius-md); display: grid; place-items: center; border: 0; padding: 0;
+  font: 600 15px/1 var(--font-sans); font-variant-numeric: tabular-nums; background: var(--surface-sunken); color: var(--ink); }
+button.ta-num { cursor: pointer; }
+.ta-num-selected { background: var(--accent); color: var(--on-accent); }
+.ta-num-p1 { background: var(--place-1); color: var(--on-place); }
+.ta-num-p2 { background: var(--place-2); color: var(--on-place); }
+.ta-num-p3 { background: var(--place-3); color: var(--on-place); }
+.ta-num-finished { color: var(--ink-muted); }
+
+/* ValueDelta */
+.ta-delta { font: 600 13px/18px var(--font-sans); font-variant-numeric: tabular-nums; border-radius: var(--radius-sm); white-space: nowrap; }
+.ta-delta-hl { background: var(--value-soft); color: var(--value); padding: 1px 6px; }
+.ta-delta-plain { color: var(--ink-muted); font-weight: 500; }
+
+/* Term */
+.ta-term { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: help;
+  text-decoration: underline dotted var(--ink-muted); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+
+/* Sheet / ExplainSheet */
+.ta-backdrop { position: fixed; inset: 0; background: var(--scrim); display: flex; align-items: flex-end; justify-content: center; z-index: 70; }
+.ta-sheet { background: var(--surface); color: var(--ink); width: min(100%, 480px); max-height: 88vh; overflow-y: auto;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0; box-shadow: var(--shadow-sheet);
+  padding: var(--space-3) var(--space-5) calc(var(--space-6) + env(safe-area-inset-bottom, 0px)); text-align: left; }
+.ta-sheet-wide { width: min(100%, 640px); }
+.ta-sheet-handle { width: 36px; height: 4px; border-radius: 2px; background: var(--line-strong); margin: 0 auto var(--space-4); }
+.ta-sheet-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-3); }
+.ta-sheet-title { font: 600 18px/24px var(--font-sans); margin: 0; }
+.ta-sheet-sub { font: 500 12px/16px var(--font-sans); color: var(--ink-muted); margin: var(--space-4) 0 var(--space-1); }
+.ta-sheet-text { font: 400 15px/22px var(--font-sans); margin: 0; max-width: 60ch; }
+.ta-sheet-note { font: 400 14px/20px var(--font-sans); margin: var(--space-4) 0 0; padding: var(--space-3); border-radius: var(--radius-md); background: var(--surface-sunken); }
+.ta-sheet-actions { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); margin-top: var(--space-5); }
+@media (min-width: 768px) {
+  .ta-backdrop { align-items: center; padding: var(--space-6); }
+  .ta-sheet { border-radius: var(--radius-lg); padding-bottom: var(--space-6); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2); }
+  .ta-sheet-handle { display: none; }
+}
+.ta-link { color: var(--accent); font: 500 14px/20px var(--font-sans); text-decoration: none; }
+.ta-link:hover { text-decoration: underline; }
+
+/* Metric */
+.ta-metric { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ta-metric-end { align-items: flex-end; text-align: right; }
+.ta-metric-label { font: 500 12px/16px var(--font-sans); color: var(--ink-muted); }
+.ta-metric-value { font: 600 15px/20px var(--font-sans); font-variant-numeric: tabular-nums; color: var(--ink); }
+.ta-metric-lg .ta-metric-value { font-size: 20px; line-height: 24px; }
+.ta-metric-sub { font: 400 12px/16px var(--font-sans); color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+
+/* FormStrip */
+.ta-form { display: inline-flex; gap: 3px; align-items: center; }
+.ta-form-cell { min-width: 22px; height: 22px; padding: 0 3px; box-sizing: border-box; border-radius: 5px; display: grid; place-items: center;
+  font: 600 12px/1 var(--font-sans); font-variant-numeric: tabular-nums; background: var(--surface-sunken); color: var(--ink-muted); }
+.ta-form-p1 { background: var(--place-1); color: var(--on-place); }
+.ta-form-p2 { background: var(--place-2); color: var(--on-place); }
+.ta-form-p3 { background: var(--place-3); color: var(--on-place); }
+.ta-form-dq { background: transparent; box-shadow: inset 0 0 0 1px var(--line-strong); }
+.ta-form-empty { font: 400 12px/16px var(--font-sans); color: var(--ink-muted); }
+
+/* Kort, rutor och fält */
+.ta-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); }
+.ta-section-title { margin: 0; font: 600 18px/24px var(--font-sans); color: var(--ink); }
+.ta-banner { font: 400 13px/18px var(--font-sans); padding: var(--space-3); border-radius: var(--radius-md); background: var(--skrall-soft); color: var(--skrall); }
+.ta-error { font: 400 13px/18px var(--font-sans); padding: var(--space-3); border-radius: var(--radius-md); background: var(--danger-soft); color: var(--danger); }
+.ta-field { height: 44px; padding: 0 var(--space-3); border-radius: var(--radius-md); border: 1px solid var(--line); background: var(--surface);
+  color: var(--ink); font: 400 15px/22px var(--font-sans); width: 100%; box-sizing: border-box; }
+.ta-field-label { font: 500 12px/16px var(--font-sans); color: var(--ink-muted); }
+
+/* HorseList / HorseRow */
+.ta-list { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); overflow: hidden; }
+.ta-list-head { display: flex; justify-content: space-between; gap: var(--space-3); padding: var(--space-2) var(--space-4);
+  background: var(--surface-sunken); font: 500 12px/16px var(--font-sans); color: var(--ink-muted); }
+.ta-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--space-3); align-items: start;
+  padding: var(--space-3) var(--space-4); background: var(--surface); cursor: pointer; }
+.ta-row + .ta-row { border-top: 1px solid var(--line); }
+.ta-row-scratched { opacity: .55; }
+.ta-row-main { min-width: 0; }
+.ta-row-name { font: 600 16px/22px var(--font-sans); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ta-row-driver { font: 400 13px/18px var(--font-sans); color: var(--ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ta-row-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: 6px; }
+.ta-row-notes { font: 500 12px/16px var(--font-sans); color: var(--ink-muted); }
+.ta-row-side { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.ta-row-chans { display: flex; align-items: center; gap: var(--space-2); }
+.ta-row-chans .ta-delta-hl { font-size: 12px; }
+.ta-row-chans-val { font: 600 20px/24px var(--font-sans); font-variant-numeric: tabular-nums; }
+.ta-row-sub { display: flex; flex-direction: column; align-items: flex-end; font: 500 12px/16px var(--font-sans); color: var(--ink-muted);
+  font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Assessment */
+.ta-assess { margin: 0; }
+.ta-assess-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--space-3); row-gap: 2px; padding: var(--space-3) 0; }
+.ta-assess-row + .ta-assess-row { border-top: 1px solid var(--line); }
+.ta-assess-label { font: 500 14px/20px var(--font-sans); color: var(--ink); }
+.ta-assess-value { margin: 0; font: 600 15px/20px var(--font-sans); font-variant-numeric: tabular-nums; text-align: right; }
+.ta-assess-note { grid-column: 1 / -1; margin: 0; font: 400 13px/18px var(--font-sans); color: var(--ink-muted); }
+
+/* RaceTabs */
+.ta-tabs { display: flex; gap: var(--space-1); padding: var(--space-1); background: var(--surface-sunken); border-radius: var(--radius-md); overflow-x: auto; }
+.ta-tab { flex: 1 0 40px; height: 44px; border: 0; border-radius: 8px; background: transparent; color: var(--ink-muted); cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: var(--font-sans); }
+.ta-tab-n { font: 600 15px/18px var(--font-sans); font-variant-numeric: tabular-nums; }
+.ta-tab-picks { font: 500 12px/14px var(--font-sans); color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+.ta-tab[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-raised); }
+.ta-tab[aria-selected="true"] .ta-tab-picks { color: var(--accent); }
+.ta-tab-done .ta-tab-n { text-decoration: underline; text-decoration-color: var(--place-1); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+
+/* Tabell */
+.ta-table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+.ta-table th { font: 500 12px/16px var(--font-sans); color: var(--ink-muted); background: var(--surface-sunken); padding: 8px 10px; text-align: right; white-space: nowrap; }
+.ta-table td { padding: 8px 10px; text-align: right; white-space: nowrap; border-top: 1px solid var(--line); font: 500 14px/20px var(--font-sans); color: var(--ink); }
+.ta-table .ta-left { text-align: left; }
+.ta-table .ta-stick { position: sticky; left: 0; z-index: 1; text-align: left; }
+.ta-table td.ta-stick { background: var(--surface); }
+.ta-table .ta-strong { font-weight: 600; font-size: 15px; }
+.ta-table .ta-muted { color: var(--ink-muted); }
+
+/* BottomNav */
+.ta-nav { display: flex; background: var(--surface); border-top: 1px solid var(--line); padding-bottom: max(16px, env(safe-area-inset-bottom, 0px)); }
+.ta-nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: var(--space-2) 0 6px;
+  color: var(--ink-muted); font: 500 12px/16px var(--font-sans); text-decoration: none; }
+.ta-nav-active { color: var(--accent); }
+.ta-nav-icon { position: relative; display: grid; place-items: center; }
+.ta-nav-count { position: absolute; top: -4px; right: -10px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px;
+  background: var(--accent); color: var(--on-accent); font: 600 12px/18px var(--font-sans); text-align: center; }
+
+/* Manualen */
+.ta-prose { font: 400 16px/26px var(--font-sans); color: var(--ink); }
+.ta-prose h1 { font: 400 32px/38px var(--font-display); margin: 0 0 var(--space-6); }
+.ta-prose h2 { font: 600 22px/28px var(--font-sans); margin: var(--space-8) 0 var(--space-3); padding-top: var(--space-4); border-top: 1px solid var(--line); scroll-margin-top: 80px; }
+.ta-prose h3 { font: 600 18px/24px var(--font-sans); margin: var(--space-6) 0 var(--space-2); scroll-margin-top: 80px; }
+.ta-prose h4 { font: 600 16px/22px var(--font-sans); margin: var(--space-4) 0 var(--space-2); scroll-margin-top: 80px; }
+.ta-prose p, .ta-prose ul, .ta-prose ol { margin: 0 0 var(--space-3); max-width: 68ch; }
+.ta-prose ul, .ta-prose ol { padding-left: var(--space-6); }
+.ta-prose a { color: var(--accent); }
+.ta-prose code { font-size: 14px; background: var(--surface-sunken); padding: 1px 4px; border-radius: 4px; }
+.ta-prose table { border-collapse: collapse; margin: 0 0 var(--space-4); font-size: 14px; line-height: 20px; display: block; overflow-x: auto; }
+.ta-prose th, .ta-prose td { border: 1px solid var(--line); padding: 6px 10px; text-align: left; vertical-align: top; }
+.ta-prose th { background: var(--surface-sunken); font-weight: 600; }
+.ta-prose blockquote { margin: 0 0 var(--space-3); padding: var(--space-3); border-radius: var(--radius-md); background: var(--surface-sunken); }
+.ta-prose hr { border: 0; border-top: 1px solid var(--line); margin: var(--space-6) 0; }
