@@ -66,13 +66,15 @@ app/
   login/                    # Inloggning/registrering
 
 components/
+  ui/                       # Grundkomponenter från designsystemet (Button, Badge, StartNumber, Term, Sheet …)
+  ManualContent.tsx         # Renderar MANUAL.md på /manual
   HorseCard.tsx             # Hästkort (inline FS/CS, expanderbar detaljvy)
   AnalysisPanel.tsx         # Analysverktyget (CS-rankad tabell + skrällkandidater)
   TopFiveRanking.tsx        # Top 5 widget baserat på CS
   FetchButton.tsx           # Datumväljare + hämtningsknappar
   CollapsibleControls.tsx   # Sortering/filter/sök (kollapsibel på mobil)
   GameSelector.tsx          # Rullgardinsmeny för omgångsval
-  BottomNav.tsx             # Mobil-nav: Analys | Utvärdering | Manual
+  BottomNav.tsx             # Mobil-nav: Lopp | System | Utvärdering | Sällskap (+ Admin)
   EvaluationPanel.tsx       # Utvärderingssida-innehåll
   AutoLoadUpcoming.tsx      # Laddar automatiskt kommande omgångar
   BulkResultsButton.tsx     # Hämtar resultat för flera omgångar
@@ -126,6 +128,10 @@ scripts/
   recompute-formscore.ts    # Räknar om lagrad CS med aktuella vikter (npm run recompute-formscore)
 
 lib/
+  format.ts                 # Formatering: 24,1 %, +4,2, 1.12,4, 41 200 kr
+  glossary.ts               # Ordlistan — enda källan för förklaringar (Term, manualen)
+  theme.ts                  # Temaval (ljust/mörkt/system) + skript mot blink
+  nav.ts                    # Huvudmenyns flikar
   analysis.ts               # Hjälpformler (distanssignal, spårfaktor, tidsparsning)
   formscore.ts              # Composite Score: computeComponents + CS_WEIGHTS
   skrall.ts                 # Skrällkandidat-signal (låg streck + odds/streck-diskrepans + klass)
@@ -261,7 +267,9 @@ påverkar inte CS eller kalibrerad sannolikhet — ett kvalitativt lager ovanpå
   arbetet avslutas.
 - Supabase-klienten skiljer på `createClient` (browser) och `createServerClient` (server/actions).
 - All text i UI är på **svenska**.
-- Teman: mörkt/ljust via `ThemeProvider` + `ThemeToggle` (localStorage).
+- Teman: följer systemet; eget val (ljust/mörkt) sparas i localStorage via `ThemeToggle` under Sällskap → Utseende och i TopNav.
+- **Designsystem:** tokens och komponenter kommer från designsystemet i Claude Design (https://claude.ai/artifact/5KsW2p1tV4vxod4bNTg1Mz). Nya komponenter använder tokens som `--ink`, `--surface`, `--accent` — aldrig `--tn-*` (alias för gamla sidor).
+- **Förklaringar:** alla mått förklaras med `<Term term="…">` från `lib/glossary.ts`. Ändra texten där och under "Ordlista" i MANUAL.md samtidigt. Inga `title=`-tooltips.
 - Mobil-navigation via `BottomNav` (fast, döljs på md+).
 - Kontroller (sortering/filter) är kollapsibla på mobil via `CollapsibleControls`.
 - **Web push** kräver tre miljövariabler (genereras med `npx web-push generate-vapid-keys`):

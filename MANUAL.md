@@ -1,4 +1,4 @@
-# Användarmanual – V85 Analys
+# Användarmanual – Travappen
 
 ## Innehållsförteckning
 
@@ -30,7 +30,11 @@
 
 ## 1. Introduktion
 
-**V85 Analys** är ett verktyg för dig som spelar V85 (och liknande ATG-spel). Systemet hämtar aktuell tävlingsdata direkt från ATG, räknar ut sannolikheter baserat på form, odds, konsistens, tider och startspår, och låter dig dela anteckningar och diskutera med dina spelvänner i ett gemensamt sällskap.
+**Travappen** är ett verktyg för dig som spelar V85 (och liknande ATG-spel). Systemet hämtar aktuell tävlingsdata direkt från ATG, räknar ut sannolikheter baserat på form, odds, konsistens, tider och startspår, och låter dig dela anteckningar och diskutera med dina spelvänner i ett gemensamt sällskap.
+
+Menyn har fyra delar: **Lopp** (omgången och hästarna), **System** (dina sparade system), **Utvärdering** (hur träffsäkra måtten har varit) och **Sällskap** (dina sällskap, din profil och utseendet). Manualen når du från **?** högst upp, och varje understruket ord i appen går att trycka på för en kort förklaring.
+
+Appen följer telefonens ljusa eller mörka läge. Under **Sällskap → Utseende** kan du välja själv.
 
 Appen är byggd för att ge dig ett bättre beslutsunderlag – den ersätter inte din egen bedömning, men hjälper dig hitta hästar vars oddsvärde kan vara bättre än marknadens.
 
@@ -503,4 +507,4 @@ Hästens startspår. På vissa banor ger vissa spår en fördel eller nackdel, o
 
 ---
 
-*Manual version 3.0 – V85 Analys*
+*Manual version 4.0 – Travappen*
