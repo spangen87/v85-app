@@ -159,27 +159,16 @@ Justeringen beskrivs i detaljvyn under **Spår** och syns i tabellens **Spår**-
 
 ### 6.4 Systembyggaren
 
-Klicka på **Bygg system** på startsidan för att öppna systemläget. I systemläget markerar du hästar per avdelning och bygger ett spelkupong-system. Antal **rader** och **kostnad i kronor** (beroende på speltyp) visas löpande medan du bygger.
+Du behöver inte starta något läge. Tryck på ett **startnummer** i listan, tabellen eller detaljvyn så hamnar hästen i ditt system.
 
-#### Skapa och spara system
+- **På telefonen** visas ett fält ovanför menyn: **Ditt system · 144 rader · 72 kr**, eller hur många avdelningar som är klara. Tryck på **Visa** för kupongen, där du ser alla avdelningar, kan trycka på nummer, namnge systemet och öppna tidigare utkast. En avdelning med bara en häst får märket **Spik**.
+- **På datorn** ligger systemet alltid i en panel till höger.
 
-1. Klicka på hästar du vill ha med – de markeras med en bock.
-2. Dina val auto-sparas som ett **utkast** efter några sekunder; du kan namnge utkastet via namnfältet i sidopanelen (till höger på desktop, panel längst ner på mobil).
-3. Klicka **Spara system →** när du är klar.
-4. I dialogen ger du systemet ett namn och väljer om det ska tillhöra ett **sällskap** eller vara **privat**.
-5. Klicka **Spara system** för att publicera det.
-
-#### Ladda ett utkast
-
-Om du har sparade utkast för den aktuella omgången visas de i sidopanelen under **Mina utkast**. Klicka på ett utkast för att ladda in dina tidigare val.
-
-#### Avbryta systemläget
-
-**Avbryt systemläge** tömmer dina markeringar. Har du redan markerat hästar frågar appen först om du är säker – välj **Fortsätt bygga** för att gå tillbaka till kupongen. Har utkastet hunnit sparas finns det kvar under **Mina utkast** även om du avbryter.
+Systemet sparas automatiskt som utkast medan du bygger. **Spara system** går att trycka på när alla avdelningar har minst en häst. **Rensa** tömmer systemet efter att du bekräftat.
 
 #### Se dina system
 
-Klicka på **Se systemet →** direkt efter sparning, eller gå till **System** i menyn. Där visas dina sparade system, och när loppresultat hämtats rättas de automatiskt.
+Sparade system finns under **System** i menyn och, om du valt ett sällskap, under sällskapets flik **Spel**.
 
 ---
 

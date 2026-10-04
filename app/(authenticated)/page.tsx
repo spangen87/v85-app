@@ -98,7 +98,6 @@ export default async function HomePage({
     ? await getNoteCountsForHorses(horseIds)
     : {};
 
-  const initialSystemMode = params.systemMode === '1'
   const initialGroupId = params.groupId ?? null
 
   // Ladda senaste utkastet för spelet (hämtat ovan)
@@ -153,7 +152,6 @@ export default async function HomePage({
           races={races as any}
           userGroups={userGroups}
           currentUserId={user.id}
-          initialSystemMode={initialSystemMode}
           initialGroupId={initialGroupId}
           gameId={selectedId}
           gameType={selectedGame?.game_type ?? null}
