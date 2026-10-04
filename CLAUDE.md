@@ -36,7 +36,8 @@ npm run backfill-history     # Fyll i hästhistorik + resultat (km-tid) i efterh
                              # --dry = torrkörning, --game <id> = en omgång. Kör recompute-formscore efteråt.
 npm run fit-fundamental      # Tränar Grundchans på ett års ATG-data (cache i .cache/atg/). --write skriver lib/data/fundamental-model.json
 npm run fit-calibrated       # Skattar vikterna för kalibrerad chans (streck/odds/Grundchans) på cachen, kronologiskt. --write skriver lib/data/calibrated-model.json
-npm run backtest-optimizer   # Backtest av systemoptimeraren på cachen (träff, utdelning, kalibrering, märken). --out fil.md, --row-price V65=1
+npm run backtest-optimizer   # Backtest av systemoptimeraren på cachen (träff, utdelning, kalibrering, märken). --out fil.md
+                             # --write-coverage skattar kalibreringen av täckningen (kör efter fit-calibrated --write)
 ```
 
 ---
@@ -152,6 +153,7 @@ lib/
   probability.ts            # Kalibrerad vinstsannolikhet (50% streck + 50% odds, BLEND_ALPHA) — Chans i loppvyn
   calibrated.ts             # Kalibrerad chans för optimeraren: softmax(a·log streck + b·log oddsP + c·log grund), läge per lopp
   optimizer.ts              # Systemoptimerare: systemMetrics, optimizeSystem, proposeSystems (rena funktioner)
+                            # adjustCoverage: logit(c′)=α+β·logit(c), rättar överskattade spikar (coverage i modellfilen)
   oddsSnapshots.ts          # Ögonblicksbilder av odds/streck vid hämtning (fel stoppar aldrig hämtningen)
   push.ts                   # Web push-utskick (sendPushToUsers, no-op utan VAPID-env)
   systems.ts                # gradeSystemsForGame (rättar system, returnerar notifierbara sällskap)
@@ -256,7 +258,12 @@ per spik. `optimizeSystem` ordnar hästarna efter `p·r^λ`, prövar prefix topp
 exakt (dynamisk programmering över rader och spikar) maximum av `log P + λ·log värdeindex`
 inom budget och spikvillkor (spik kräver `MIN_SPIKE_CHANCE` = 35 %, låst spik undantagen).
 Stöder lås (in/ut/spik) och egna bedömningar. `proposeSystems` ger Max chans / Balans / Värde
-(λ = 0 / 0,3 / 0,6). Backtest: `docs/superpowers/reports/2026-10-04-backtest-optimerare.md`.
+(λ = 0 / 0,3 / 0,6); appen visar Max chans först och de andra bakom "Visa fler förslag".
+**Kalibrering av täckningen:** optimerarens spikar och smala avdelningar överskattades (urvalseffekt),
+så täckningen justeras med `adjustCoverage` (logit(c′) = α + β·logit(c), `coverage` i modellfilen,
+skattad med `backtest-optimizer --write-coverage`) i både mål och visade mått. Appen skickar
+`APP_COVERAGE_CALIBRATION`; utan den är funktionerna ren matematik (testerna).
+Backtest: `docs/superpowers/reports/2026-10-04-backtest-optimerare.md`.
 
 ### Tabellvyn – `components/RaceTable.tsx`
 Loppvyn växlar mellan Lista (hästrader) och Tabell. Tabellen visar Häst, Chans, Streck,

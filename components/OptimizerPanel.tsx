@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button, Metric, Sheet, Term } from "@/components/ui";
 import { fmtNum, fmtPct } from "@/lib/format";
-import { proposeSystems, type OptimizerRace, type SystemMetrics, type SystemProposal } from "@/lib/optimizer";
+import { APP_COVERAGE_CALIBRATION, proposeSystems, type OptimizerRace, type SystemMetrics, type SystemProposal } from "@/lib/optimizer";
 import { defaultBudget, defaultSpikes, fmtOneIn, hitLabels, locksFromSelections, spikeTradeoffText } from "@/lib/optimizerView";
 import type { SystemSelection } from "@/lib/types";
 
@@ -104,9 +104,12 @@ export function ProposeSheet({ open, onClose, races, gameType, rowPrice, selecti
   onApply: (selection: SystemSelection[]) => void;
 }) {
   const [budget, setBudget] = useState(String(defaultBudget(gameType)));
-  const [spikes, setSpikes] = useState(defaultSpikes(races.length));
+  // Standard: optimeraren väljer antalet spikar (bäst i backtesten); annars ett fast antal
+  const [spikes, setSpikes] = useState<"auto" | number>("auto");
+  const maxSpikes = defaultSpikes(races.length) + 1;
   const [keepMine, setKeepMine] = useState(true);
   const [proposals, setProposals] = useState<SystemProposal[] | null>(null);
+  const [showMore, setShowMore] = useState(false);
 
   function run() {
     const budgetKr = Number(budget.replace(",", "."));
@@ -114,10 +117,17 @@ export function ProposeSheet({ open, onClose, races, gameType, rowPrice, selecti
       races,
       budgetKr: Number.isFinite(budgetKr) ? budgetKr : 0,
       rowPrice,
-      spikes,
+      spikes: spikes === "auto" ? { min: 0, max: maxSpikes } : spikes,
       locks: keepMine ? locksFromSelections(selections) : [],
+      coverageCalibration: APP_COVERAGE_CALIBRATION,
     }));
+    setShowMore(false);
   }
+
+  // Max chans är huvudförslaget; värdevarianterna har inte gett högre avkastning i backtesten
+  const main = proposals?.filter((p) => p.lambda === 0) ?? [];
+  const more = proposals?.filter((p) => p.lambda !== 0) ?? [];
+  const apply = (s: SystemSelection[]) => { onApply(s); onClose(); };
 
   return (
     <Sheet open={open} onClose={onClose} title="Föreslå system" wide
@@ -125,7 +135,7 @@ export function ProposeSheet({ open, onClose, races, gameType, rowPrice, selecti
         Förslagen bygger på odds och streck just nu, och de ändras fram till start. Inget förslag lovar vinst.
       </p>}>
       <div className="flex flex-col gap-4">
-        <p className="ta-text">Under utvärdering, syns bara för administratörer. Optimeraren väljer hästar efter kalibrerad chans inom budgeten.</p>
+        <p className="ta-text">Under utvärdering, syns bara för administratörer. Optimeraren väljer det system inom budgeten som har störst chans att gå in, räknat på kalibrerad chans.</p>
         <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }}>
           <label className="ta-stack" style={{ gap: 6 }} htmlFor="opt-budget">
             <span className="ta-field-label">Budget (kr)</span>
@@ -133,8 +143,10 @@ export function ProposeSheet({ open, onClose, races, gameType, rowPrice, selecti
           </label>
           <label className="ta-stack" style={{ gap: 6 }} htmlFor="opt-spikes">
             <span className="ta-field-label">Spikar</span>
-            <select id="opt-spikes" className="ta-field" style={{ height: 44 }} value={spikes} onChange={(e) => setSpikes(Number(e.target.value))}>
-              {[0, 1, 2, 3, 4].map((n) => <option key={n} value={n}>{n}</option>)}
+            <select id="opt-spikes" className="ta-field" style={{ height: 44 }} value={spikes}
+              onChange={(e) => setSpikes(e.target.value === "auto" ? "auto" : Number(e.target.value))}>
+              <option value="auto">Låt optimeraren välja</option>
+              {Array.from({ length: maxSpikes + 1 }, (_, n) => <option key={n} value={n}>{`Exakt ${n}`}</option>)}
             </select>
           </label>
         </div>
@@ -147,7 +159,18 @@ export function ProposeSheet({ open, onClose, races, gameType, rowPrice, selecti
         <div><Button variant="primary" onClick={run}>Föreslå</Button></div>
         {proposals && (
           <div className="flex flex-col gap-3" aria-live="polite">
-            {proposals.map((p) => <ProposalCard key={p.key} p={p} nRaces={races.length} onApply={(s) => { onApply(s); onClose(); }} />)}
+            {main.map((p) => <ProposalCard key={p.key} p={p} nRaces={races.length} onApply={apply} />)}
+            {more.length > 0 && !showMore && (
+              <div><Button size="sm" variant="quiet" onClick={() => setShowMore(true)}>Visa fler förslag</Button></div>
+            )}
+            {showMore && (
+              <>
+                <p className="ta-text-sm">
+                  Balans och Värde väljer fler hästar som vinner oftare än strecket säger. I backtesten har de inte gett högre avkastning än Max chans.
+                </p>
+                {more.map((p) => <ProposalCard key={p.key} p={p} nRaces={races.length} onApply={apply} />)}
+              </>
+            )}
           </div>
         )}
       </div>

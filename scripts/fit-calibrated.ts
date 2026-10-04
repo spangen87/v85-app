@@ -144,6 +144,8 @@ function main() {
   };
   fs.writeFileSync(MODEL_PATH, JSON.stringify(model, null, 2) + "\n");
   console.log(`\nSkrev ${MODEL_PATH} (version ${model.version}, ${model.trained_races} lopp).`);
+  // Täckningskalibreringen hör till vikterna: skattas om för de nya
+  console.log("Kör nu npm run backtest-optimizer -- --write-coverage för att skatta om kalibreringen av täckningen.");
 }
 
 main();

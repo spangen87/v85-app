@@ -14,7 +14,7 @@ import { useRaceTab } from '@/components/RaceTabContext'
 import { openGamePicker } from '@/lib/uiEvents'
 import { summarizeSystem } from '@/lib/systemSummary'
 import { createDraftAutosave, type DraftStatus } from '@/lib/draftAutosave'
-import { optimizerRacesFromRaces, systemMetrics } from '@/lib/optimizer'
+import { APP_COVERAGE_CALIBRATION, optimizerRacesFromRaces, systemMetrics } from '@/lib/optimizer'
 import { getRowPrice } from '@/lib/atg'
 import { ProposeSheet, SystemInsights } from '@/components/OptimizerPanel'
 import type { Race } from '@/lib/raceTypes'
@@ -161,7 +161,7 @@ export function MainPageClient({
   const [showPropose, setShowPropose] = useState(false)
   const optimizerRaces = useMemo(() => (isAdmin ? optimizerRacesFromRaces(races) : null), [isAdmin, races])
   const metrics = useMemo(
-    () => (optimizerRaces && hasSystem ? systemMetrics(optimizerRaces, systemSelections) : null),
+    () => (optimizerRaces && hasSystem ? systemMetrics(optimizerRaces, systemSelections, { coverageCalibration: APP_COVERAGE_CALIBRATION }) : null),
     [optimizerRaces, hasSystem, systemSelections],
   )
   const insights = optimizerRaces && metrics ? <SystemInsights races={optimizerRaces} metrics={metrics} /> : undefined

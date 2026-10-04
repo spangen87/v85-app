@@ -1,4 +1,5 @@
 import {
+  adjustCoverage,
   applyOverrides,
   MIN_SPIKE_CHANCE,
   optimizeSystem,
@@ -338,5 +339,36 @@ describe("optimizerRacesFromRaces", () => {
     expect(o.horses[0].horse_name).toBe("Häst 1");
     expect(o.horses[0].chance + o.horses[1].chance).toBeCloseTo(1, 10);
     expect(o.horses[2].chance).toBe(0);
+  });
+});
+
+describe("kalibrering av täckning", () => {
+  const cal = { alpha: -0.153, beta: 1.091 };
+  it("utan kalibrering är täckningen oförändrad", () => {
+    expect(adjustCoverage(0.4)).toBe(0.4);
+    expect(adjustCoverage(0.4, null)).toBe(0.4);
+  });
+  it("sänker låg täckning, lämnar hög nästan orörd och håller 0 och 1", () => {
+    expect(adjustCoverage(0.43, cal)).toBeCloseTo(0.389, 2);
+    expect(Math.abs(adjustCoverage(0.85, cal) - 0.85)).toBeLessThan(0.01);
+    expect(adjustCoverage(0, cal)).toBe(0);
+    expect(adjustCoverage(1, cal)).toBe(1);
+    expect(adjustCoverage(0.3, cal)).toBeLessThan(adjustCoverage(0.31, cal));
+  });
+  it("P(alla rätt) och spikarna räknas på justerad täckning", () => {
+    const raw = systemMetrics(v85(), sel({ 1: [1, 2], 2: [1], 3: [1, 2], 4: [1, 2], 5: [1, 2], 6: [1], 7: [1], 8: [1, 2] }));
+    const adj = systemMetrics(v85(), sel({ 1: [1, 2], 2: [1], 3: [1, 2], 4: [1, 2], 5: [1, 2], 6: [1], 7: [1], 8: [1, 2] }), { coverageCalibration: cal });
+    const expected = raw.coverage.reduce((a, c) => a * adjustCoverage(c.chans, cal), 1);
+    expect(adj.p8).toBeCloseTo(expected, 12);
+    expect(adj.p8).toBeLessThan(raw.p8);
+    expect(adj.pAllSpikesHold).toBeLessThan(raw.pAllSpikesHold);
+    expect(adj.coverage[1].chans).toBeCloseTo(adjustCoverage(raw.coverage[1].chans, cal), 12);
+    expect(adj.coverage[1].chansRaw).toBeCloseTo(raw.coverage[1].chans, 12);
+  });
+  it("optimeraren räknar med justerad täckning: förutsagd P(alla rätt) = produkten av justerade", () => {
+    const res = optimizeSystem(base({ coverageCalibration: cal }));
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.system.p8).toBeCloseTo(res.system.metrics.coverage.reduce((a, c) => a * c.chans, 1), 12);
   });
 });

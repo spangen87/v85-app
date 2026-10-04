@@ -53,6 +53,25 @@ export interface CalibratedModel {
   trained_races?: number;
   /** Mått på testperioden (vikter skattade enbart på träningsperioden) */
   test_metrics?: Record<string, CalibratedModeMetrics>;
+  /**
+   * Temperatur τ: chansen blir p^τ normaliserat. Under 1 krymper favoriterna
+   * mot fältet. Saknas = 1. Se docs/superpowers/reports (favoriter och spikar
+   * överskattades med 2–3 procentenheter på valideringen).
+   */
+  temperature?: number;
+  /** Kalibrering av ett systems täckning per avdelning (lib/optimizer.ts → adjustCoverage) */
+  coverage?: CoverageCalibration;
+}
+
+/**
+ * logit(c′) = alpha + beta·logit(c). Skattas på optimerarens egna system i
+ * backtesten: spikar och smala avdelningar överskattades (urvalseffekt).
+ */
+export interface CoverageCalibration {
+  alpha: number;
+  beta: number;
+  /** Antal (avdelning, urval) som skattningen bygger på */
+  n?: number;
 }
 
 // JSON-filen typas av TypeScript utifrån innehållet — omvandla via unknown
@@ -141,7 +160,8 @@ export function computeCalibratedChance(
     return { mode: null, p };
   }
   const w = model.modes[mode];
-  const u = active.map((_, j) => w.streck * logs.streck[j] + w.odds * logs.odds[j] + w.grund * logs.grund[j]);
+  const tau = model.temperature ?? 1;
+  const u = active.map((_, j) => tau * (w.streck * logs.streck[j] + w.odds * logs.odds[j] + w.grund * logs.grund[j]));
   const max = Math.max(...u);
   const e = u.map((v) => Math.exp(v - max));
   const total = e.reduce((a, b) => a + b, 0);
