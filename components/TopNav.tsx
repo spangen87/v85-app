@@ -1,16 +1,12 @@
+import Link from "next/link";
 import { NavActiveLink } from "@/components/NavActiveLink";
+import { NAV_ITEMS } from "@/lib/nav";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { UserMenu } from "@/components/groups/UserMenu";
 import { getProfile, getMyGroups } from "@/lib/actions/groups";
 import { getGroupActivity } from "@/lib/actions/activity";
 import { getAuthUser } from "@/lib/supabase/guards";
 
-const tabs = [
-  { label: "Lopp", href: "/" },
-  { label: "Utvärdering", href: "/evaluation" },
-  { label: "System", href: "/system" },
-  { label: "Manual", href: "/manual" },
-];
 
 export async function TopNav() {
   const user = await getAuthUser();
@@ -27,31 +23,27 @@ export async function TopNav() {
 
   return (
     <nav
-      className="hidden md:flex items-center sticky top-0 z-50 px-6 gap-1"
-      style={{
-        background: "color-mix(in oklab, var(--tn-bg) 88%, transparent)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        borderBottom: "1px solid var(--tn-border)",
-      }}
+      className="hidden md:flex items-center gap-6 sticky top-0 z-50 px-8 py-3"
+      style={{ background: "var(--surface)", borderBottom: "1px solid var(--line)" }}
+      aria-label="Huvudmeny"
     >
-      {/* Brand */}
-      <div className="flex items-baseline gap-2 mr-6 py-3">
-        <span className="tn-brand-mark text-xl">Travappen</span>
-        <span
-          className="inline-block w-1.5 h-1.5 rounded-full"
-          style={{ background: "var(--tn-accent)", transform: "translateY(-3px)" }}
-        />
+      <span style={{ font: "italic 400 26px/30px var(--font-display)", color: "var(--ink)" }}>Travappen</span>
+
+      <div className="flex gap-1">
+        {NAV_ITEMS.map((tab) => (
+          <NavActiveLink key={tab.href} href={tab.href} label={tab.label} />
+        ))}
+        {isAdmin && <NavActiveLink href="/admin" label="Admin" />}
       </div>
 
-      {/* Nav tabs */}
-      {tabs.map((tab) => (
-        <NavActiveLink key={tab.href} href={tab.href} label={tab.label} />
-      ))}
-      {isAdmin && <NavActiveLink href="/admin" label="Admin" />}
-
       <div className="flex-1" />
-      <div className="flex items-center gap-2 py-2">
+      <div className="flex items-center gap-3">
+        <Link href="/manual" className="inline-flex items-center gap-1.5 text-sm font-medium" style={{ color: "var(--ink-muted)" }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" /><path d="M9.5 9.2a2.6 2.6 0 0 1 5 .9c0 1.8-2.5 2.2-2.5 3.9" /><path d="M12 17.2v.1" />
+          </svg>
+          Manual
+        </Link>
         <ThemeToggle />
         {user && profile !== null && (
           <UserMenu

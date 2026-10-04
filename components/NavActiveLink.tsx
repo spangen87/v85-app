@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { isActivePath } from "@/lib/nav";
 
 interface NavActiveLinkProps {
   href: string;
@@ -10,19 +11,14 @@ interface NavActiveLinkProps {
 
 export function NavActiveLink({ href, label }: NavActiveLinkProps) {
   const pathname = usePathname();
-  const isActive =
-    href === "/" ? pathname === "/" : pathname.startsWith(href);
+  const isActive = isActivePath(pathname ?? "/", href);
 
   return (
     <Link
       href={href}
-      className="tn-mono py-4 px-3 text-xs border-b-2 transition-colors"
-      style={{
-        letterSpacing: "0.1em",
-        textTransform: "uppercase",
-        borderBottomColor: isActive ? "var(--tn-accent)" : "transparent",
-        color: isActive ? "var(--tn-accent)" : "var(--tn-text-faint)",
-      }}
+      aria-current={isActive ? "page" : undefined}
+      className="h-9 px-3 rounded-md inline-flex items-center text-sm font-medium"
+      style={isActive ? { background: "var(--accent-soft)", color: "var(--accent)" } : { color: "var(--ink-muted)" }}
     >
       {label}
     </Link>
