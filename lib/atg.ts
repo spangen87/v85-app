@@ -6,7 +6,7 @@ export function getRowPrice(gameType: string): number {
     case 'V86': return 0.25
     case 'V75': return 0.50
     case 'V85': return 0.50
-    case 'V65': return 0.50
+    case 'V65': return 1.00
     case 'V64': return 1.00
     case 'GS75': return 1.00
     default:    return 1.00
