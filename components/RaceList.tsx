@@ -5,6 +5,7 @@ import { Button, HorseList, HorseRow, RaceTabs } from "@/components/ui";
 import { RaceToolbar, type RaceView } from "./RaceToolbar";
 import { StartCountdown } from "./StartCountdown";
 import { HorseDetail } from "./HorseDetail";
+import { RaceTable } from "./RaceTable";
 import { topReasons } from "@/lib/fundamental";
 import { fmtClock, fmtStartMethod } from "@/lib/format";
 import { usePref } from "@/lib/usePref";
@@ -132,7 +133,7 @@ export function RaceList({
           ))}
         </HorseList>
       ) : (
-        <p className="ta-banner" style={{ margin: 0 }}>Tabellen kommer i nästa steg.</p>
+        <RaceTable race={race} rows={rows} trackConfig={trackConfig} canSelect={canSelect} onToggle={toggle} onOpen={openDetail} />
       )}
 
       {detailRow && (
