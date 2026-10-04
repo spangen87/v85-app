@@ -68,11 +68,10 @@ app/
 components/
   ui/                       # Grundkomponenter från designsystemet (Button, Badge, StartNumber, Term, Sheet …)
   ManualContent.tsx         # Renderar MANUAL.md på /manual
-  HorseCard.tsx             # Hästkort (inline FS/CS, expanderbar detaljvy)
-  AnalysisPanel.tsx         # Analysverktyget (CS-rankad tabell + skrällkandidater)
-  TopFiveRanking.tsx        # Top 5 widget baserat på CS
+  HorseDetail.tsx           # Hästens detaljvy (bedömning, signaler, starter, statistik); ?hast=<avd>-<nr>
+  RaceTable.tsx             # Tabellvyn (f.d. analysverktyget)
+  RaceToolbar.tsx           # Lista/Tabell, Sortera, Filter
   FetchButton.tsx           # Datumväljare + hämtningsknappar
-  CollapsibleControls.tsx   # Sortering/filter/sök (kollapsibel på mobil)
   GameSelector.tsx          # Rullgardinsmeny för omgångsval
   BottomNav.tsx             # Mobil-nav: Lopp | System | Utvärdering | Sällskap (+ Admin)
   EvaluationPanel.tsx       # Utvärderingssida-innehåll
@@ -82,7 +81,6 @@ components/
   MainPageClient.tsx        # Client-wrapper för startsidan
   NavActiveLink.tsx         # Aktiv länkindikator i navigering
   RaceList.tsx              # Lista med avdelningar och starter
-  RaceTabBar.tsx            # Flikar per avdelning
   RaceTabContext.tsx        # Context för aktiv avdelningsflik
   ResultsButton.tsx         # Knapp för att hämta loppresultat
   SaveSystemDialog.tsx      # Dialog för att spara spelsystem
@@ -132,6 +130,10 @@ lib/
   glossary.ts               # Ordlistan — enda källan för förklaringar (Term, manualen)
   theme.ts                  # Temaval (ljust/mörkt/system) + skript mot blink
   nav.ts                    # Huvudmenyns flikar
+  raceView.ts               # Rader, sortering, filter och ?hast= för loppvyn
+  raceTypes.ts              # Starter/Race-typer för loppvyn
+  horseDetail.ts            # Texter i detaljvyn (rang, varför, spår)
+  prefs.ts / usePref.ts     # Sparade val per enhet (vy, sortering) med minne som reserv
   analysis.ts               # Hjälpformler (distanssignal, spårfaktor, tidsparsning)
   formscore.ts              # Composite Score: computeComponents + CS_WEIGHTS
   skrall.ts                 # Skrällkandidat-signal (låg streck + odds/streck-diskrepans + klass)
@@ -220,19 +222,20 @@ sparas vid hämtning/omräkning för utvärderingssidan. Bakgrund: issue #93.
 Blandning `p = α·streck_norm + (1−α)·odds_norm` med `BLEND_ALPHA = 0.5`,
 normaliserad så fältet summerar till 1. Backtest mot 221 lopp (2026-06-13) gav
 lägst log-loss vid α≈0.5 (1.58 mot 1.62 för rent streck/odds). Faller tillbaka
-på enbart streck (innan pool öppnat: enbart odds). Beräknas i RaceList och
-skickas som `probMap` till AnalysisPanel (kolumnen "Chans", Värde = chans−streck).
+på enbart streck (innan pool öppnat: enbart odds). Beräknas i `lib/raceView.ts` (strukna hästar
+exkluderas) och visas som Chans; Värde = chans − streck.
 
-### Analysverktyget – `components/AnalysisPanel.tsx`
-Visar per häst: CS, kalibrerad chans, spelvärde (chans − streckning%),
-distanssignal och spårfaktor (inkl. banspecifik justering från `track_configs`)
-samt skrällmarkering. CS-rankad tabell.
+### Tabellvyn – `components/RaceTable.tsx`
+Loppvyn växlar mellan Lista (hästrader) och Tabell. Tabellen visar Häst, Chans, Streck,
+Odds, Värde, Grund och Märke (från md även Senaste 5); "Visa alla kolumner" lägger till
+CS, Distans, Spår och Resultat. Rader, sortering och filter kommer från `lib/raceView.ts`
+(samma för lista, tabell och detaljvy). Kolumnrubrikerna är `<Term>` från ordlistan.
 
 ### Skrällkandidat – `lib/skrall.ts → computeSkrallSignals()`
 Häst flaggas som skrällkandidat när alla tre villkor uppfylls (trösklar i
 `SKRALL_THRESHOLDS`): streck < 15 %, odds-implicit sannolikhet minst 5
 procentenheter över strecket, samt topp-3 i fältet på intjänat per start.
-Beräknas client-side på hela startfältet (RaceList → HorseCard/AnalysisPanel).
+Beräknas client-side på hela startfältet (`lib/raceView.ts` → lista, tabell, detaljvy).
 Trösklarna kommer från databasanalys 2026-06-12 (155 lopp med facit).
 
 ### Tysta signaler / kantpoäng – `lib/edge.ts → computeEdgeSignals()`
@@ -240,7 +243,7 @@ Signaler som inte syns i odds/streck: barfota-byte (+2 runt om, +1 fram/bak,
 −1 skor på), toppkusk (topp-2 i fältet på vinstprocent, minst 15 %, +1),
 formtrend från last_5 (senaste 2 vs äldre, ±1) och uppehåll > 60 dagar (−1).
 Trösklar i `EDGE_THRESHOLDS`. Kantpoäng = summan; ≥ +2 flaggas (`isEdge`).
-Beräknas client-side på hela fältet (RaceList → HorseCard/AnalysisPanel) och
+Beräknas client-side på hela fältet (`lib/raceView.ts` → lista, tabell, detaljvy) och
 påverkar inte CS eller kalibrerad sannolikhet — ett kvalitativt lager ovanpå.
 
 ### Distansfaktor
@@ -271,7 +274,7 @@ påverkar inte CS eller kalibrerad sannolikhet — ett kvalitativt lager ovanpå
 - **Designsystem:** tokens och komponenter kommer från designsystemet i Claude Design (https://claude.ai/artifact/5KsW2p1tV4vxod4bNTg1Mz). Nya komponenter använder tokens som `--ink`, `--surface`, `--accent` — aldrig `--tn-*` (alias för gamla sidor).
 - **Förklaringar:** alla mått förklaras med `<Term term="…">` från `lib/glossary.ts`. Ändra texten där och under "Ordlista" i MANUAL.md samtidigt. Inga `title=`-tooltips.
 - Mobil-navigation via `BottomNav` (fast, döljs på md+).
-- Kontroller (sortering/filter) är kollapsibla på mobil via `CollapsibleControls`.
+- Sortering och filter ligger i blad (`Sheet`) bakom knapparna Sortera och Filter (`RaceToolbar`).
 - **Web push** kräver tre miljövariabler (genereras med `npx web-push generate-vapid-keys`):
   `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (mailto:/URL).
   Saknas de är push helt avstängt — `NotificationToggle` döljs och `sendPushToUsers`
@@ -297,7 +300,7 @@ Pusha med `git push -u origin <branch>`.
 |---------|----------------|
 | Ny speltyp (utöver V85) | `app/api/games/fetch/route.ts`, `lib/atg.ts` |
 | Ändra analysformler | `lib/analysis.ts`, `lib/formscore.ts` |
-| Nytt fält på hästkort | `components/HorseCard.tsx`, `supabase/schema.sql` + migration |
+| Nytt fält i detaljvyn | `components/HorseDetail.tsx`, `lib/raceView.ts`, `supabase/schema.sql` + migration |
 | Ny sida | `app/(authenticated)/[sida]/page.tsx`, `components/BottomNav.tsx` |
 | Nytt sällskapsfunktion | `lib/actions/sallskap.ts`, `components/sallskap/` |
 | Databasändring | Lägg till migration i `supabase/migration_v<N>_<namn>.sql` |

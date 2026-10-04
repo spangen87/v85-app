@@ -7,13 +7,13 @@
    - [Registrering och inloggning](#21-registrering-och-inloggning)
 3. [Hämta omgång](#3-hämta-omgång)
 4. [Navigera bland omgångar](#4-navigera-bland-omgångar)
-   - [Top 5 – högst Composite Score](#41-top-5--högst-composite-score)
-   - [Sortering, filtrering och sökning](#42-sortering-filtrering-och-sökning)
-5. [Hästarnas informationskort](#5-hästarnas-informationskort)
-   - [Expanderad detaljvy](#51-expanderad-detaljvy)
+   - [Lista och tabell](#41-lista-och-tabell)
+   - [Sortera och filtrera](#42-sortera-och-filtrera)
+5. [Hästraden och detaljvyn](#5-hästraden-och-detaljvyn)
+   - [Detaljvyn](#51-detaljvyn)
    - [Composite Score (CS)](#52-composite-score-cs)
-6. [Analysverktyget](#6-analysverktyget)
-   - [Analystabellen](#61-analystabellen)
+6. [Tabellen](#6-tabellen)
+   - [Kolumnerna](#61-kolumnerna)
    - [Grundchans](#62-grundchans)
    - [Spårfaktor och banjusteringar](#63-spårfaktor-och-banjusteringar)
    - [Systembyggaren](#64-systembyggaren)
@@ -62,9 +62,9 @@ Innan du kan analysera en omgång måste du hämta data från ATG.
 
 > **Snabbväg:** Om nästa V86/V85/V75 är tillgänglig visas en **Hämta**-knapp direkt på startsidan – klicka på den för att hämta utan att välja datum manuellt.
 
-1. Öppna spelkontrollerna. På mobil ligger de bakom raden **BYT ELLER HÄMTA OMGÅNG** högst upp – tryck på den för att fälla ut spelväljaren. Har du ingen omgång inladdad är raden redan utfälld, och startsidans knapp **Hämta en omgång** fäller ut väljaren åt dig. På desktop är kontrollerna alltid synliga.
+1. Tryck på omgångens namn högst upp (t.ex. **V85 · Solvalla**, eller **Välj omgång** om ingen är inladdad). Ett blad öppnas med datumväljare, tillgängliga spel och sparade omgångar. Har du ingen omgång inladdad öppnar startsidans knapp **Hämta en omgång** bladet åt dig.
 2. Välj ett **datum** i datumväljaren.
-3. Tillgängliga spel för det datumet laddas automatiskt och visas som knappar (t.ex. **Hämta V85**, **Hämta V75**).
+3. Tillgängliga spel för det datumet laddas automatiskt och visas som knappar med **Hämta**.
 4. Om inga spel finns för valt datum visas texten "Inga spel".
 5. Klicka på knappen för det spel du vill hämta.
 6. Om hämtningen lyckas läggs omgången till i listan och du navigeras dit automatiskt.
@@ -75,183 +75,52 @@ Innan du kan analysera en omgång måste du hämta data från ATG.
 
 ## 4. Navigera bland omgångar
 
-På huvudsidan ser du en lista med alla hämtade omgångar.
+Högst upp står omgången, till exempel **V85 · Solvalla** och datumet. Tryck på den för att byta omgång, hämta en ny från ATG eller hämta resultat.
 
-- Välj omgång via **rullgardinsmenyn** (GameSelector) längst upp.
-- Omgångens **avdelningar** visas som klickbara flikar. Klicka på en avdelning för att visa den – bytet sker direkt utan sidladdning. Flikraden rullar automatiskt så att den aktiva avdelningen alltid syns, även när bytet sker från Top 5-listan eller via en länk.
-- Hästar i aktiv avdelning visas som **en häst per rad** (ATG-stil).
-- Pågår en diskussion om omgången i något av dina sällskap visas **💬 N inlägg om omgången** i informationsraden — klicka för att gå direkt till sällskapets forum för rätt omgång.
+Under den ligger avdelningarna **1–8**. Siffran under ett nummer är hur många hästar du har valt i avdelningen, och ett guldstreck betyder att resultatet är klart.
 
-### 4.1 Top 5 – högst Composite Score
+### 4.1 Lista och tabell
 
-Högst upp visas widgeten **Top 5 — Composite Score** med de 5 hästar som har högst CS i hela omgången. Varje häst visas med avdelning, startnummer, odds och eventuell slutplacering.
+Varje avdelning kan visas som **Lista** (en rad per häst) eller **Tabell** (alla mått i kolumner). Appen kommer ihåg vad du valde.
 
-- Klicka på **▼ / ▲**-knappen för att minimera/expandera widgeten.
-- Klicka på en häst i listan för att hoppa direkt till hästkortet i rätt avdelning.
+### 4.2 Sortera och filtrera
 
-### 4.2 Sortering, filtrering och sökning
+- **Sortera** – Chans (standard), Streck, Odds, Grund, CS eller Startnummer.
+- **Filter** – bara värde, bara skräll, bara signal, dölj långskott (odds över 50) och sök på häst, kusk eller tränare. Siffran på knappen visar hur många filter som är på.
 
-Ovanför hästlistan finns en verktygsrad med kontroller:
+Strukna hästar hamnar alltid sist, nedtonade, med märket **Struken**.
 
-**Sortering** – rullgardinsmeny som styr hur hästarna i avdelningen sorteras:
+## 5. Hästraden och detaljvyn
 
-| Val | Beskrivning |
-|-----|-------------|
-| **CS — Composite Score** | Högst sammansatt poäng först (standardval) |
-| **Grundchans (högst)** | Högst Grundchans först — vinstchans utan odds och streck (se 6.2) |
-| **Startnummer** | Standard ATG-ordning |
-| **Odds (lägst)** | Lägst vinnarodds först |
-| **Streck% (högst)** | Högst streckprocent i poolen först |
+Varje häst visas på en rad:
 
-**Filtrering:**
+- **Startnumret** till vänster. Tryck på det för att lägga hästen i systemet. Efter loppet visar det placeringen (guld, silver, brons).
+- **Namn, kusk och senaste 5** i mitten, och högst ett märke: **Skräll** eller **Signal +2**.
+- **Chans** stort till höger, och under det **streck** och **odds**, som hos ATG. En grön siffra bredvid Chans, till exempel **+4,2**, betyder att hästen har spelvärde.
 
-| Knapp | Beskrivning |
-|-------|-------------|
-| **Värde** | Visar bara hästar som systemet bedömer som undervärderade (CS > 55 och kalibrerad chans över streckningen, se 6.1) |
-| **Skräll** | Visar bara skrällkandidater — lågstreckade hästar med hög klass där vinnaroddsen säger mer än strecken (se 6.1) |
-| **Signal** | Visar bara hästar med flera positiva tysta signaler (kantpoäng ≥ +2) — faktorer som inte syns i odds och streck (se 6.1) |
-| **Dölj >50x** | Döljer hästar med odds över 50 |
+Alla understrukna ord går att trycka på för en förklaring.
 
-**Sökning** – skriv namn på häst, kusk eller tränare för att filtrera.
+### 5.1 Detaljvyn
 
-Klicka på **Rensa ✕** för att återställa alla filter.
+Tryck på raden för att öppna hästen. Telefonens bakåtknapp stänger den. Detaljvyn visar i ordning:
 
----
-
-## 5. Hästarnas informationskort
-
-När en avdelning är expanderad visas ett kort per häst. Den kompakta raden innehåller:
-
-| Fält | Förklaring |
-|------|-----------|
-| **Sorteringsrank (#)** | Hästens placering i aktuell sortering (visas ej vid sortering på startnummer) |
-| **Nr** | Startnummer |
-| **Namn** | Hästens namn — en orange prick (●) intill namnet betyder skoändring inför loppet |
-| **SKRÄLL-märke** | Visas om hästen är skrällkandidat (se 6.1); håll muspekaren över för förklaring |
-| **💬 Anteckningsbubbla** | Antal anteckningar på hästen (även från tidigare omgångar) — expandera kortet och öppna **Anteckningar** för att läsa dem |
-| **Kusk** | Kuskens namn |
-| **Streck%** | Hästens andel av spelpoolen (om tillgängligt) |
-| **Odds** | Aktuellt vinnarodds |
-| **Grund** | Grundchans — vinstchans utan odds och streck (se 6.2). Under **Detaljer** visas en **Varför**-rad med de tre faktorer som påverkar mest |
-| **CS-ring** | Composite Score 0–100 som färgad ring — klicka för förklaring av poängen |
-| **Spårjustering (↑/↓)** | Visas vid banor med banspecifik konfiguration (se 6.3) |
-| **Senaste starter** | De 5 senaste starterna före loppet (hämtas automatiskt med omgången) som färgade rutor: guldgul = 1:a, silver = 2:a, orange = 3:a, grå = övriga. **0** = oplacerad, **g** efter siffran = galopp (t.ex. 5g), **d** = diskvalificerad. Håll muspekaren över en ruta för datum, bana och km-tid |
-| **Tysta signaler** | Rad med gröna/röda märken under senaste starterna: barfota-byte, toppkusk, formtrend och uppehåll (se 6.1). Hästar med kantpoäng ≥ +2 får dessutom märket **SIGNAL +N** |
-
-Hästar markerade som **Värde** får en grönaktig kantlinje på kortet.
-
-### 5.1 Expanderad detaljvy
-
-Klicka på **▼ Detaljer** på ett hästkort för att se mer information:
-
-- **Slutplacering** – visas högst upp om loppresultat hämtats.
-- **Grundfakta** – ålder/kön/färg, far (härstamning) och hemmaplan.
-- **Skosättning** – sko fram/bak med ändringsstatus ("Ny" = ändrad inför loppet) samt vagnstyp.
-- **Snabbstatistik** – LIVS (vinster-2:or-3:or och antal starter), ÅR (vinstprocent och starter i år) och REKORD (bästa tid och plats-%).
-- **Bästa tider** – tabell med hästens rekord per distans (kort/medel/lång) och startmetod (auto/volt). Dagens kombination markeras.
-- **Statistik** – starter livs/i år/föregående år, plats-%, kr/start och totalt intjänat.
-- **Odds** – vinnarodds och platsodds.
-- **Kusk & Tränare** – namn med årets vinstprocent.
-- **Senaste starter** – klicka **Hämta från ATG** för att ladda en detaljerad starttabell med datum, bana, placering och tid.
-- **Anteckningar** – se avsnitt 8.
+1. **Bedömning** – Chans, Streck, Värde, Odds, Grund (med varför), CS och Spår, med en rad förklaring var.
+2. **Signaler** – varje signal med poäng.
+3. **Senaste starter** – hämtas automatiskt från ATG.
+4. **Bästa tider** – per startmetod och distans, dagens lopp markerat.
+5. **Utrustning**, **Statistik**, **Kusk och tränare** och **Anteckningar**.
 
 ### 5.2 Composite Score (CS)
 
-**CS – Composite Score (0–100)** är systemets samlade bedömning av hästen och visas som en ring på hästkortet:
+CS rankar fältet från 0 till 100: streck 55 %, distansrekord 20 %, odds 10 %, jämnhet 10 % och form 5 %. Du hittar CS i detaljvyn och i tabellen under **Visa alla kolumner**.
 
-```
-CS = 55% × streckning
-   + 20% × distansrekord
-   + 10% × odds
-   + 10% × konsistens
-   +  5% × form
-```
+## 6. Tabellen
 
-Delkomponenterna normaliseras inom startfältet (bästa hästen i fältet får högst delpoäng). Vikterna är kalibrerade mot historiska loppresultat och omkalibreras löpande när mer data samlats in — vinstprocent, tidindex, spårfaktor, kuskform och galopprisk beräknas och visas i appen men har för närvarande vikt 0 i CS.
+### 6.1 Kolumnerna
 
-Färgkod för ringen: **grön** (≥70) = stark häst, **blå** (50–69) = medel, **grå** (<50) = svag.
+Tabellen visar **Häst, Chans, Streck, Odds, Värde, Grund** och **Märke** (på dator även **Senaste 5**). **Visa alla kolumner** lägger till **CS, Distans, Spår** och **Resultat**. Tryck på en rubrik för att se vad den betyder, på namnet för att öppna hästen och på numret för att lägga den i systemet.
 
----
-
-## 6. Analysverktyget
-
-Klicka på knappen **Visa analys** inuti en avdelning för att öppna analyspanelen — **Matematisk analys**. Panelen rankar hela fältet efter CS (eller efter Grundchans — klicka på kolumnrubriken) och visar kalibrerad chans, Grundchans, spelvärde, distanssignal, tysta signaler och eventuella skrällkandidater.
-
-### 6.1 Analystabellen
-
-| Kolumn | Förklaring |
-|--------|-----------|
-| **#** | Rank i loppet enligt CS |
-| **Häst** | Startnummer och namn, med **VÄRDE**-, **SKRÄLL**- och/eller **OENSE**-märke |
-| **CS** | Composite Score 0–100 (se 5.2) — tabellen sorteras på denna som standard |
-| **Odds** | Aktuellt vinnarodds |
-| **Chans** | Kalibrerad vinstsannolikhet (se nedan) |
-| **Grund** | Grundchans — vinstchans utan odds och streck (se 6.2). Klicka på rubriken **Grund** eller **CS** för att sortera |
-| **Strk.** | Hästens faktiska andel av spelpoolen (marknadens röst) |
-| **Distans** | Distanssignal baserat på hästens historik på aktuell distans och startmetod |
-| **Spår** | Spårfaktor med banspecifik justering — visas bara för banor med konfiguration (se 6.3) |
-| **Värde** | Spelvärde: chans minus streckning, i procentenheter |
-| **Signaler** | Tysta signaler — faktorer utanför odds och streck (se nedan) |
-| **Res.** | Slutplacering om loppet är avslutat |
-
-#### Kalibrerad vinstchans
-
-**Chans** är systemets bästa skattning av hur ofta hästen verkligen vinner. Den är en jämn blandning (50/50) av två oberoende marknadssignaler:
-
-- **Streckningen** – spelarnas kollektiva insatsfördelning i poolen.
-- **Oddsmarknaden** – vinnaroddsens implicita sannolikhet (1/odds, normaliserad över fältet).
-
-Analys av historiska lopp visar att blandningen är bättre kalibrerad än någon av signalerna ensam — sanningen ligger mitt emellan poolen och oddsmarknaden. Innan poolen öppnat (ingen streckning) används enbart oddsen; saknas odds används enbart streckningen.
-
-Eftersom **Värde = Chans − Streckning** lyfter tabellen fram hästar där den samlade marknaden (särskilt oddsen) tror mer på hästen än vad poolen streckar den för — alltså potentiellt undervärderade hästar.
-
-#### Distansfaktor-symboler
-
-| Symbol | Faktor | Innebär |
-|--------|--------|---------|
-| ↑↑ | ×1.35 | Vunnit på distansen med samma startmetod |
-| ↑ | ×1.10–1.20 | Placerat med samma startmetod, eller vunnit med annan |
-| → | ×0.95–1.05 | Placerat på distansen med annan startmetod |
-| ↓ | ×0.85–0.90 | Sprungit på distansen utan placering |
-| ↓↓ | ×0.60 | Aldrig sprungit på denna distans |
-
-#### Tolka spelvärdet
-
-- **Positiv** (chans > streckning) → hästen kan vara ett värdebet (fetstil = ≥5 pp).
-- **Negativ** → hästen är hårt streckad relativt systemets bedömning.
-- Rader med **VÄRDE**-märke (CS > 55 och positivt spelvärde) lyfts fram med grön markering.
-
-> **Obs!** Streckningsdata saknas innan poolen öppnat — då bygger chansen enbart på oddsen tills du hämtar om spelet.
-
-#### Skrällkandidater
-
-Hästar som uppfyller alla tre villkor markeras med **SKRÄLL** (på hästkortet och i analystabellen) och listas överst i analyspanelen:
-
-1. **Låg streckning** — under 15 % av spelpoolen.
-2. **Understreckad mot oddsen** — vinnaroddsens implicita sannolikhet ligger minst 5 procentenheter över streckningen. Vinnaroddsmarknaden är skarpare än V85-poolen.
-3. **Hög klass** — topp 3 i fältet på intjänade kronor per start.
-
-Signalen är testad på ett års avgjorda V-spelslopp (3 685 lopp, september 2025–september 2026), uppdelat i tre perioder. Skrällkandidaterna hade i snitt **9 % streck men vann 16 %** av loppen — ungefär 1,8 gånger så ofta som strecket sa — och fördelen höll i alla tre perioderna. Märket är sällsynt: ungefär en kandidat per 20–25 lopp, alltså i ungefär var tredje V85-omgång. Även en skrällkandidat förlorar alltså fem gånger av sex — tänk på dem som krydda i systemen, inte som spikar.
-
-> **Tips:** Signalen bygger på skillnaden mellan vinnaroddsen och strecket, och den skillnaden är mest träffsäker nära start när de stora pengarna har kommit in. Hämta gärna om omgången strax före start (eller kolla hästkorten igen) innan du lämnar in systemet.
-
-#### Tysta signaler
-
-Odds och streckning ser alla spelare direkt på ATG — de är redan inprisade i marknaden. **Tysta signaler** letar i stället efter faktorer som *inte* syns i de siffrorna men som erfarna travspelare väger in:
-
-| Signal | Poäng | Innebär |
-|--------|-------|---------|
-| **Barfota** | +2 | Skorna dras runt om inför loppet — klassisk formtoppningssignal från tränaren |
-| **Barfota fram/bak** | +1 | Skon dras fram eller bak — tränaren trimmar för fart |
-| **Skor på** | −1 | Hästen får skor på jämfört med senast — ofta en försiktighetsåtgärd |
-| **Toppkusk** | +1 | Kusken ligger topp 2 i fältet på vinstprocent i år (minst 15 %) — stallet menar allvar |
-| **Form ↑** | +1 | De två senaste starterna är klart bättre än de tidigare — hästen är på väg uppåt |
-| **Form ↓** | −1 | De två senaste starterna är klart sämre — formen pekar nedåt |
-| **Uppehåll** | −1 | Mer än 60 dagar sedan senaste start — tävlingsrytmen är en riskfaktor |
-
-Poängen summeras till en **kantpoäng** per häst. En häst med kantpoäng **≥ +2** (flera oberoende positiva signaler) markeras med **SIGNAL +N** på hästkortet, och lågstreckade sådana hästar (< 20 % streck) listas som **Tysta signaler** överst i analyspanelen. Signalerna visas som gröna (positiva) och röda (negativa) märken både på hästkorten och i analystabellens **Signaler**-kolumn — håll muspekaren över ett märke för förklaring.
-
-Kantpoängen påverkar **inte** CS eller den kalibrerade chansen — den är ett kvalitativt lager ovanpå, tänkt att peka ut var det kan finnas spelvärde som marknaden ännu inte upptäckt. Störst intresse har hästar som kombinerar positiv kantpoäng med lågt streck.
+Värde räknas som Chans minus streck. Grönt betyder att värdet är plus och att CS är över 55. Skräll och Signal förklaras i [Ordlistan](#10-ordlista).
 
 ### 6.2 Grundchans
 
@@ -266,12 +135,12 @@ Kantpoängen påverkar **inte** CS eller den kalibrerade chansen — den är ett
 Vikterna är kalibrerade mot ett års avgjorda travlopp (cirka 3 700). Grundchans för hela fältet summerar till 100 %.
 
 **Var syns den?**
-- **Analysverktyget:** kolumnen **Grund** bredvid Chans — klicka på rubriken för att sortera.
-- **Hästkortet:** "Grund X %", och under **Detaljer** en **Varför**-rad med de tre faktorer som påverkar mest (t.ex. "+ pengar/start · + barfota · − tillägg").
-- **Sorteringen** i loppvyn: "Grundchans (högst)".
+- **Tabellen:** kolumnen **Grund**.
+- **Detaljvyn:** raden **Grund** i bedömningen, med en **Varför**-rad om de tre faktorer som påverkar mest (t.ex. "+ pengar/start · + barfota · − tillägg").
+- **Sortera:** välj **Grund**.
 - **Utvärderingssidan:** hur ofta Grundchans toppval vinner.
 
-**OENSE** (grått märke) visas när Grundchans och strecket skiljer sig kraftigt (minst 1,5 gånger eller högst hälften, och minst 3 procentenheter). Det är **ingen spelsignal**: i tester på lopp modellen inte sett vann sådana hästar ungefär så ofta som *strecket* sa, inte som Grundchans sa. Exempel: hästar där Grundchans låg minst 10 procentenheter över strecket hade i snitt 14 % streck och 30 % Grundchans — och vann 13 %. Använd märket som en påminnelse om att titta närmare på hästen, inte som ett tecken på övervärde. Grundchans är totalt sett ungefär 70 % så träffsäker som marknaden.
+**Oense:** när Grundchans och strecket skiljer sig kraftigt (minst 1,5 gånger eller högst hälften, och minst 3 procentenheter) står det i detaljvyn under Grund: "Grund och streck är oense. Då har strecket oftast haft rätt." Det är **ingen spelsignal**: i tester på lopp modellen inte sett vann sådana hästar ungefär så ofta som *strecket* sa, inte som Grundchans sa. Exempel: hästar där Grundchans låg minst 10 procentenheter över strecket hade i snitt 14 % streck och 30 % Grundchans — och vann 13 %. Grundchans är totalt sett ungefär 70 % så träffsäker som marknaden.
 
 Grundchans finns även **innan spelet öppnat**, när odds och streck saknas.
 
@@ -284,7 +153,7 @@ För banor med **banspecifik konfiguration** (administreras på adminsidan) just
 - **Open stretch** (+0.12) — spår som gynnas av en extra innerfil på upploppet.
 - **Kort lopp** (−0.08) — yttre spår (5+) missgynnas extra i sprinterlopp.
 
-Justeringen syns som ↑/↓-märke på hästkortet och i analystabellens **Spår**-kolumn, och påverkar CS-beräkningen vid omgångshämtning.
+Justeringen beskrivs i detaljvyn under **Spår** och syns i tabellens **Spår**-kolumn (under **Visa alla kolumner**), och påverkar CS-beräkningen vid omgångshämtning.
 
 ---
 
@@ -365,7 +234,7 @@ Inne i ett sällskap finns fyra flikar:
 
 **Anteckningar**
 - Visar alla hästanteckningar från sällskapets medlemmar, grupperade per omgång.
-- Anteckningar skrivs direkt på hästkorten på huvudsidan (se avsnitt 8).
+- Anteckningar skrivs i hästens detaljvy på startsidan (se avsnitt 8).
 
 **Spel**
 - Visar sällskapets sparade system och utkast för vald omgång.
@@ -397,7 +266,7 @@ Anteckningar är kopplade till en specifik häst och visas för alla i de sälls
 ### Skriva en anteckning
 
 1. Öppna en avdelning och hitta hästen du vill kommentera.
-2. Klicka på **▼ Anteckningar** längst ner på hästkortet.
+2. Tryck på hästens rad för att öppna detaljvyn och gå ner till **Anteckningar**.
 3. Skriv din text i textfältet.
 4. Välj en **etikett** (färgkod) för att kategorisera din notering. Färgerna har en gemensam betydelse så att alla i sällskapet läser dem likadant:
    - 🟢 **Grön = Spik** — hästen ska med, gärna ensam.
@@ -425,7 +294,7 @@ Anteckningar är kopplade till en specifik häst och visas för alla i de sälls
 
 ## 9. Utvärdering
 
-Navigera till **Utvärdering** i menyn (fliken heter **Analys** i mobilnavigeringen) för att se hur väl systemets toppval har presterat historiskt.
+Navigera till **Utvärdering** i menyn för att se hur väl systemets toppval har presterat historiskt.
 
 Sidan visar:
 
