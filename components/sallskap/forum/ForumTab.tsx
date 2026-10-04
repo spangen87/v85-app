@@ -43,9 +43,12 @@ export function ForumTab({ groupId, gameId, initialPosts, currentUserId }: Forum
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="ta-card ta-card-pad">
-        <PostForm groupId={groupId} gameId={gameId} onAdded={handleAdded} />
-      </div>
+      {/* Formuläret visas när inläggen är hämtade, så att ett nytt inlägg inte ersätter listan */}
+      {posts !== null && (
+        <div className="ta-card ta-card-pad">
+          <PostForm groupId={groupId} gameId={gameId} onAdded={handleAdded} />
+        </div>
+      )}
       {error && <p className="ta-error" style={{ margin: 0 }}>{error}</p>}
       {posts === null ? (
         <p className="ta-text" role="status">Laddar inlägg …</p>

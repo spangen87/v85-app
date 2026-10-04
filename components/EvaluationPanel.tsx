@@ -60,7 +60,9 @@ function AccuracyCard({ overall }: { overall: Overall }) {
         </tbody>
       </table>
       <p className="ta-text">
-        {`Underlag: ${overall.games_evaluated} ${overall.games_evaluated === 1 ? "omgång" : "omgångar"} · ${overall.races_evaluated} avdelningar. `}
+        {`Underlag: ${overall.games_evaluated} ${overall.games_evaluated === 1 ? "omgång" : "omgångar"} · ${overall.races_evaluated} avdelningar`}
+        {hasGrund && overall.fundamental_races_evaluated !== overall.races_evaluated ? ` (Grund: ${overall.fundamental_races_evaluated})` : ""}
+        {". "}
         Toppval är hästen med högst värde i avdelningen. Alla startande räknas, även hästar som galopperat.
       </p>
     </section>
@@ -72,14 +74,14 @@ function GameRow({ game, first }: { game: GameEval; first: boolean }) {
   const hits = game.races.filter((r) => r.top_pick_won).length;
   return (
     <div style={{ borderTop: first ? 0 : "1px solid var(--line)" }}>
-      <button type="button" aria-expanded={open} onClick={() => setOpen((v) => !v)} className="ta-linkrow w-full text-left"
+      <button type="button" aria-expanded={open} aria-controls={`omg-${game.game_id}`} onClick={() => setOpen((v) => !v)} className="ta-linkrow w-full text-left"
         style={{ background: "none", border: 0, cursor: "pointer" }}>
         <span className="flex-1 min-w-0" style={{ font: "500 15px/20px var(--font-sans)" }}>{fmtGameLabel(game)}</span>
         <span className="ta-text-sm" style={{ whiteSpace: "nowrap" }}>{`Toppval vann ${hits} av ${game.races_evaluated}`}</span>
         <Chevron open={open} />
       </button>
       {open && (
-        <div className="overflow-x-auto" style={{ borderTop: "1px solid var(--line)" }}>
+        <div id={`omg-${game.game_id}`} className="overflow-x-auto" style={{ borderTop: "1px solid var(--line)" }}>
           <table className="ta-table">
             <thead>
               <tr>
@@ -113,7 +115,9 @@ function GameRow({ game, first }: { game: GameEval; first: boolean }) {
 export function EvaluationPanel({ overall, games, allGames, isAdmin }: Props) {
   const router = useRouter();
   const [showAllGames, setShowAllGames] = useState(false);
-  const [localGames, setLocalGames] = useState(allGames);
+  // Följer serverns lista efter router.refresh(); borttagna döljs direkt
+  const [removed, setRemoved] = useState<Set<string>>(new Set());
+  const localGames = allGames.filter((g) => !removed.has(g.game_id));
   const [confirmDelete, setConfirmDelete] = useState<GameSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const pendingGames = localGames.filter((g) => !g.has_results);
@@ -121,10 +125,10 @@ export function EvaluationPanel({ overall, games, allGames, isAdmin }: Props) {
   async function handleDeleteGame(game: GameSummary) {
     setConfirmDelete(null);
     setError(null);
-    setLocalGames((prev) => prev.filter((g) => g.game_id !== game.game_id));
+    setRemoved((prev) => new Set(prev).add(game.game_id));
     const result = await deleteGame(game.game_id);
     if (result.error) {
-      setLocalGames(allGames);
+      setRemoved((prev) => { const next = new Set(prev); next.delete(game.game_id); return next; });
       setError(`Kunde inte ta bort omgången: ${result.error}`);
     } else {
       router.refresh();

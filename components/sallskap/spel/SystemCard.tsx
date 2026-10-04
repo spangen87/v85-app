@@ -33,7 +33,9 @@ export function SystemCard({ system, currentUserId, onDeleted, winnersByRace, ga
   const [error, setError] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [copied, setCopied] = useState(false)
-  const [logged, setLogged] = useState(alreadyLogged)
+  const [loggedHere, setLogged] = useState(false)
+  // Listan över spelade system kan komma efter att kortet visats
+  const logged = alreadyLogged || loggedHere
   const [logging, setLogging] = useState(false)
 
   // Bara sparade sällskapssystem kan registreras som spel
@@ -60,7 +62,8 @@ export function SystemCard({ system, currentUserId, onDeleted, winnersByRace, ga
       const numbers = [...s.horses].sort((a, b) => a.start_number - b.start_number).map(h => h.start_number).join(' ')
       return `Avd ${s.race_number}: ${numbers}`
     })
-    navigator.clipboard.writeText([`${system.name} — ${rowsText}`, ...lines].join('\n'))
+    const write = navigator.clipboard?.writeText([`${system.name} — ${rowsText}`, ...lines].join('\n')) ?? Promise.reject()
+    write
       .then(() => {
         setCopied(true)
         setTimeout(() => setCopied(false), 2000)

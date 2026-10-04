@@ -213,3 +213,6 @@ button.ta-row-open { cursor: pointer; }
 
 /* Textflikar (sällskapet) */
 .ta-tabs-text .ta-tab { flex: 1 0 auto; padding: 0 var(--space-3); height: 40px; font: 500 14px/20px var(--font-sans); }
+
+/* Bekräftelse av något som inte går att ångra */
+.ta-btn.ta-btn-danger { background: var(--danger); color: var(--on-accent); border-color: transparent; }

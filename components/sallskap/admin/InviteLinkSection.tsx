@@ -4,13 +4,17 @@ import { useState } from "react";
 import { Button } from "@/components/ui";
 
 function CopyButton({ text, label }: { text: () => string; label: string }) {
-  const [copied, setCopied] = useState(false);
+  const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
   async function handleCopy() {
-    await navigator.clipboard.writeText(text());
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(text());
+      setState("copied");
+    } catch {
+      setState("failed");
+    }
+    setTimeout(() => setState("idle"), 2500);
   }
-  return <Button size="sm" onClick={handleCopy}>{copied ? "Kopierat" : label}</Button>;
+  return <Button size="sm" onClick={handleCopy}>{state === "copied" ? "Kopierat" : state === "failed" ? "Gick inte att kopiera" : label}</Button>;
 }
 
 export function InviteLinkSection({ inviteCode }: { inviteCode: string }) {

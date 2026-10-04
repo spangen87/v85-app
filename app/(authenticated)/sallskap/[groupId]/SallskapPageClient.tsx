@@ -31,15 +31,19 @@ export function SallskapPageClient({
   const [activeTab, setActiveTab] = useState<SallskapTab>("forum");
   // Omgången är gemensam för Forum, Anteckningar och Spel
   const [gameId, setGameId] = useState<string | null>(defaultGameId);
-  const isDefault = gameId === defaultGameId;
+  // Serverns data gäller bara tills man byter omgång; därefter hämtas allt färskt
+  const [switched, setSwitched] = useState(false);
+  const [groupName, setGroupName] = useState(group.name);
+  const isDefault = !switched && gameId === defaultGameId;
+  const changeGame = (id: string) => { setSwitched(true); setGameId(id); };
   const panel = (key: SallskapTab) => ({
-    role: "tabpanel" as const, id: panelId(key), "aria-labelledby": tabId(key), hidden: activeTab !== key,
+    role: "tabpanel" as const, id: panelId(key), "aria-labelledby": tabId(key), hidden: activeTab !== key, tabIndex: 0,
   });
 
   return (
     <main className="min-h-screen" style={{ background: "var(--bg)", color: "var(--ink)" }}>
       <PageHeader
-        title={group.name}
+        title={groupName}
         sub={`${members.length} ${members.length === 1 ? "medlem" : "medlemmar"}`}
         backHref="/sallskap"
         backLabel="Tillbaka till Sällskap"
@@ -49,7 +53,7 @@ export function SallskapPageClient({
         <TabBar activeTab={activeTab} onChange={setActiveTab} />
 
         {activeTab !== "sallskap" && games.length > 0 && (
-          <GameSelect games={games} value={gameId} onChange={setGameId} />
+          <GameSelect games={games} value={gameId} onChange={changeGame} />
         )}
         {activeTab !== "sallskap" && games.length === 0 && (
           <p className="ta-text">Ingen omgång inladdad ännu. Hämta en omgång i loppvyn först.</p>
@@ -70,7 +74,7 @@ export function SallskapPageClient({
           )}
         </div>
         <div {...panel("sallskap")}>
-          <AdminTab group={group} members={members} currentUserId={currentUserId} />
+          <AdminTab group={group} members={members} currentUserId={currentUserId} onRenamed={setGroupName} />
         </div>
       </div>
     </main>

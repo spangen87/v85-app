@@ -8,13 +8,17 @@ import { Badge, Button } from "@/components/ui";
 import type { Group } from "@/lib/types";
 
 function CopyButton({ text, label }: { text: () => string; label: string }) {
-  const [copied, setCopied] = useState(false);
+  const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
   async function handleCopy() {
-    await navigator.clipboard.writeText(text());
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(text());
+      setState("copied");
+    } catch {
+      setState("failed");
+    }
+    setTimeout(() => setState("idle"), 2500);
   }
-  return <Button size="sm" variant="quiet" onClick={handleCopy}>{copied ? "Kopierat" : label}</Button>;
+  return <Button size="sm" variant="quiet" onClick={handleCopy}>{state === "copied" ? "Kopierat" : state === "failed" ? "Gick inte att kopiera" : label}</Button>;
 }
 
 export function GroupList({

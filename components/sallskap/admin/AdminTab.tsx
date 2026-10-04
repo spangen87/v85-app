@@ -15,9 +15,11 @@ interface AdminTabProps {
   group: Group;
   members: GroupMember[];
   currentUserId: string;
+  /** Nytt namn sparat, så att sidhuvudet kan följa med */
+  onRenamed?: (name: string) => void;
 }
 
-export function AdminTab({ group, members, currentUserId }: AdminTabProps) {
+export function AdminTab({ group, members, currentUserId, onRenamed }: AdminTabProps) {
   const router = useRouter();
   const isCreator = group.created_by === currentUserId;
   const [groupName, setGroupName] = useState(group.name);
@@ -45,7 +47,7 @@ export function AdminTab({ group, members, currentUserId }: AdminTabProps) {
         <h2 className="ta-section-title">Namn</h2>
         <div className="ta-card ta-card-pad">
           {isCreator ? (
-            <GroupNameForm groupId={group.id} initialName={groupName} onUpdated={setGroupName} />
+            <GroupNameForm groupId={group.id} initialName={groupName} onUpdated={(n) => { setGroupName(n); onRenamed?.(n); }} />
           ) : (
             <p style={{ margin: 0, font: "500 15px/20px var(--font-sans)", color: "var(--ink)" }}>{groupName}</p>
           )}
