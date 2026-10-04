@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { Button, HorseList, HorseRow, RaceTabs } from "@/components/ui";
 import { RaceToolbar, type RaceView } from "./RaceToolbar";
 import { StartCountdown } from "./StartCountdown";
@@ -39,6 +39,7 @@ export function RaceList({
   const [sort, setSort] = usePref("travappen.sort", SORT_KEYS, "chans");
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [detail, setDetail] = useState<number | null>(initialDetail);
+  const panelId = useId();
 
   // Bakåtknappen: ?hast= styr om detaljvyn är öppen
   useEffect(() => {
@@ -82,7 +83,9 @@ export function RaceList({
 
   return (
     <div className="flex flex-col gap-3">
-      <RaceTabs races={raceTabsInfo(races, systemSelections)} active={race.race_number} onSelect={onSelectRace} />
+      <RaceTabs races={raceTabsInfo(races, systemSelections)} active={race.race_number} onSelect={onSelectRace} panelId={panelId} />
+
+      <div role="tabpanel" id={panelId} aria-labelledby={`${panelId}-tab-${race.race_number}`} className="flex flex-col gap-3">
 
       <div className="flex items-end justify-between gap-3">
         <div className="min-w-0">
@@ -135,6 +138,7 @@ export function RaceList({
       ) : (
         <RaceTable race={race} rows={rows} trackConfig={trackConfig} canSelect={canSelect} onToggle={toggle} onOpen={openDetail} />
       )}
+      </div>
 
       {detailRow && (
         <HorseDetail

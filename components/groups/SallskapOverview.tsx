@@ -1,6 +1,6 @@
 "use client";
 
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { ThemeChoiceControl } from "@/components/ThemeToggle";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -97,12 +97,12 @@ export function SallskapOverview({ profile, initialGroups, userEmail, unseenByGr
         <ProfileForm initialName={profile?.display_name ?? ""} />
       </section>
 
-      <section className="flex items-center justify-between gap-3">
+      <section className="flex flex-col gap-2">
         <div>
           <p className="text-sm font-medium" style={{ color: "var(--ink)" }}>Utseende</p>
-          <p className="text-xs" style={{ color: "var(--ink-muted)" }}>Ljust eller mörkt tema. Utan eget val följer appen telefonen.</p>
+          <p className="text-xs" style={{ color: "var(--ink-muted)" }}>Som enheten följer telefonens eller datorns inställning.</p>
         </div>
-        <ThemeToggle />
+        <ThemeChoiceControl />
       </section>
 
       <section>

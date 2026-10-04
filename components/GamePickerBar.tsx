@@ -94,18 +94,22 @@ export function GamePickerBar({ savedGames, selectedId, firstStartTime = null }:
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} aria-label="Byt omgång"
-        className="flex flex-col items-start min-w-0 text-left" style={{ background: "none", border: 0, padding: 0, cursor: "pointer", color: "var(--ink)" }}>
-        <span className="flex items-center gap-1.5" style={{ font: "600 17px/22px var(--font-sans)" }}>
-          {selectedGame ? `${selectedGame.game_type} · ${selectedGame.track ?? ""}` : "Välj omgång"}
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
-        </span>
-        {selectedGame && (
-          <span style={{ font: "400 13px/18px var(--font-sans)", color: "var(--ink-muted)" }}>
-            {fmtGameDate(selectedGame.date)}{firstStartTime ? ` · första start ${fmtClock(firstStartTime)}` : ""}
+      {/* Omgångens namn är sidans rubrik; knappens namn börjar med den synliga texten */}
+      <h1 style={{ margin: 0, minWidth: 0 }}>
+        <button type="button" onClick={() => setOpen(true)} aria-haspopup="dialog"
+          className="flex flex-col items-start min-w-0 text-left" style={{ background: "none", border: 0, padding: 0, cursor: "pointer", color: "var(--ink)" }}>
+          <span className="flex items-center gap-1.5" style={{ font: "600 17px/22px var(--font-sans)" }}>
+            {selectedGame ? `${selectedGame.game_type} · ${selectedGame.track ?? ""}` : "Välj omgång"}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
           </span>
-        )}
-      </button>
+          {selectedGame && (
+            <span style={{ font: "400 13px/18px var(--font-sans)", color: "var(--ink-muted)" }}>
+              {fmtGameDate(selectedGame.date)}{firstStartTime ? ` · första start ${fmtClock(firstStartTime)}` : ""}
+            </span>
+          )}
+          {selectedGame && <span className="sr-only">, byt omgång</span>}
+        </button>
+      </h1>
 
       <Sheet open={open} onClose={() => setOpen(false)} title="Omgång">
         {selectedGame && (

@@ -1,6 +1,19 @@
 "use client";
 
-import { useTheme } from "./ThemeProvider";
+import { SegmentedControl } from "@/components/ui";
+import { useTheme, type ThemeSetting } from "./ThemeProvider";
+
+const CHOICES: { value: ThemeSetting; label: string }[] = [
+  { value: "system", label: "Som enheten" },
+  { value: "light", label: "Ljust" },
+  { value: "dark", label: "Mörkt" },
+];
+
+/** Tre lägen under Utseende: följ enheten, alltid ljust eller alltid mörkt. */
+export function ThemeChoiceControl() {
+  const { choice, setChoice } = useTheme();
+  return <SegmentedControl label="Tema" value={choice} options={CHOICES} onChange={setChoice} />;
+}
 
 export function ThemeToggle() {
   const { theme, toggle } = useTheme();

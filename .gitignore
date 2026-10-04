@@ -48,3 +48,6 @@ next-env.d.ts
 
 # ATG-cache för träning av Grundchans
 .cache/
+
+# Claude Code: lokala inställningar och agenternas worktrees
+.claude/
