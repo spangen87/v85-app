@@ -115,9 +115,8 @@ export function buildRowModels(race: Race, maps: RaceMaps, selected: Set<number>
     const isEdge = !scratched && (edge?.isEdge ?? false);
     const badge: RowBadge = scratched ? "scratched" : maps.skrall[n]?.isCandidate ? "skrall" : isEdge ? "signal" : null;
     const grundPct = grund.get(n) ?? null;
-    const numberState: NumberState = results
-      ? finishState(s.finish_position)
-      : !scratched && selected.has(n) ? "selected" : "idle";
+    // En struken häst som redan ligger i systemet visas som vald och går att ta bort, men inte att lägga till
+    const numberState: NumberState = results ? finishState(s.finish_position) : selected.has(n) ? "selected" : "idle";
     return {
       starter: s,
       n,
@@ -140,7 +139,7 @@ export function buildRowModels(race: Race, maps: RaceMaps, selected: Set<number>
       form: (s.last_5_results ?? []).map((r) => r.place),
       scratched,
       numberState,
-      selectable: !results && !scratched,
+      selectable: !results && (!scratched || selected.has(n)),
     };
   });
 }

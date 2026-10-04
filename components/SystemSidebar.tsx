@@ -26,7 +26,7 @@ export function SystemSidebar({ races, selections, onSave, onClear, summary, dra
 }) {
   const empty = selections.length === 0;
   return (
-    <aside aria-label="Ditt system" className="ta-card hidden md:flex flex-col" style={{ flex: "1 1 300px", maxWidth: 360, minWidth: 0, position: "sticky", top: 80 }}>
+    <aside aria-label="Ditt system" className="ta-card hidden lg:flex flex-col" style={{ flex: "1 1 300px", maxWidth: 360, minWidth: 0, position: "sticky", top: 80 }}>
       <div className="flex flex-col gap-0.5" style={{ padding: "16px 16px 8px" }}>
         <h2 className="ta-section-title">Ditt system</h2>
         <span style={{ font: "400 13px/18px var(--font-sans)", color: draftStatus === "error" ? "var(--danger)" : "var(--ink-muted)" }}>

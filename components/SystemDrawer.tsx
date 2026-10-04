@@ -2,14 +2,14 @@
 
 import { Badge, Button, Sheet, StartNumber } from "@/components/ui";
 import type { GameSystem, SystemHorse, SystemSelection } from "@/lib/types";
-import type { SystemSummary } from "@/lib/systemSummary";
+import { lockedStarts, type SystemSummary } from "@/lib/systemSummary";
 
 interface RaceInfo {
   id: string;
   race_number: number;
   distance: number;
   start_method: string | null;
-  starters: { horse_id: string; start_number: number; horses: { name: string } | null }[];
+  starters: { horse_id: string; start_number: number; horses: { name: string } | null; odds?: number | null; finish_position?: number | null }[];
 }
 
 const STATUS = { idle: "", saving: "Sparar utkast …", saved: "Utkastet sparas automatiskt", error: "Kunde inte spara utkastet" } as const;
@@ -48,6 +48,7 @@ export function SystemDrawer({
         {races.map((r, i) => {
           const picked = selections.find((s) => s.race_number === r.race_number)?.horses ?? [];
           const isPicked = (id: string) => picked.some((h) => h.horse_id === id);
+          const locked = lockedStarts(r);
           return (
             <div key={r.id} className="flex flex-col gap-2.5" style={{ padding: "12px 16px", borderTop: i === 0 ? 0 : "1px solid var(--line)" }}>
               <div className="flex items-center justify-between gap-2">
@@ -62,8 +63,11 @@ export function SystemDrawer({
               <div className="flex flex-wrap gap-1.5">
                 {[...r.starters].sort((a, b) => a.start_number - b.start_number).map((s) => (
                   <StartNumber key={s.horse_id} number={s.start_number} state={isPicked(s.horse_id) ? "selected" : "idle"}
-                    label={`${isPicked(s.horse_id) ? "Ta bort" : "Lägg till"} nr ${s.start_number} ${s.horses?.name ?? ""} i avdelning ${r.race_number}`}
-                    onClick={() => onToggleHorse(r.race_number, { horse_id: s.horse_id, start_number: s.start_number, horse_name: s.horses?.name ?? "" })} />
+                    label={locked.has(s.start_number) && !isPicked(s.horse_id)
+                      ? `Nr ${s.start_number} ${s.horses?.name ?? ""} går inte att välja`
+                      : `${isPicked(s.horse_id) ? "Ta bort" : "Lägg till"} nr ${s.start_number} ${s.horses?.name ?? ""} i avdelning ${r.race_number}`}
+                    onClick={locked.has(s.start_number) && !isPicked(s.horse_id) ? undefined
+                      : () => onToggleHorse(r.race_number, { horse_id: s.horse_id, start_number: s.start_number, horse_name: s.horses?.name ?? "" })} />
                 ))}
               </div>
             </div>

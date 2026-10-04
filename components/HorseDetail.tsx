@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Assessment, Badge, Button, FormStrip, StartNumber, Term, ValueDelta } from "@/components/ui";
 import { HorseNotes } from "./notes/HorseNotes";
+import { useModalLayer } from "@/lib/modalLayer";
 import { fmtKmTime, fmtKr, fmtNum, fmtOrdinal, fmtPct } from "@/lib/format";
 import { chansNote, distanceCategory, grundNote, placementLine, rankNote, trackNote } from "@/lib/horseDetail";
 import type { RowModel } from "@/lib/raceView";
@@ -78,19 +79,7 @@ export function HorseDetail({ race, row, reasons, signals, trackConfig, userGrou
   }, [race.id, row.n, s.horse_id, attempt]);
 
   const panelRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const previous = document.activeElement as HTMLElement | null;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    panelRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", onKey);
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prevOverflow;
-      previous?.focus?.();
-    };
-  }, [onClose]);
+  useModalLayer(true, onClose, panelRef);
 
   const results = row.numberState !== "idle" && row.numberState !== "selected";
   const inSystem = row.numberState === "selected";

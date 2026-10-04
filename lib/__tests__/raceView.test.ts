@@ -64,11 +64,12 @@ describe("buildRowModels", () => {
     expect(raceLacksMarket(rows)).toBe(true);
   });
 
-  it("struken häst i utkast: viloläge och går inte att välja", () => {
-    const r = race([starter(1), starter(2, { odds: 0 })]);
-    const rows = buildRowModels(r, maps({ prob: { 1: prob(1) }, scratched: new Set([2]) }), new Set([1, 2]));
+  it("struken häst i utkast: syns som vald och går att ta bort, men inte att lägga till", () => {
+    const r = race([starter(1), starter(2, { odds: 0 }), starter(3, { odds: 0 })]);
+    const rows = buildRowModels(r, maps({ prob: { 1: prob(1) }, scratched: new Set([2, 3]) }), new Set([1, 2]));
     expect(rows[0].numberState).toBe("selected");
-    expect(rows[1]).toMatchObject({ numberState: "idle", selectable: false, chansPct: null, scratched: true });
+    expect(rows[1]).toMatchObject({ numberState: "selected", selectable: true, chansPct: null, scratched: true });
+    expect(rows[2]).toMatchObject({ numberState: "idle", selectable: false, scratched: true });
   });
 
   it("efter resultat visar numret placeringen och går inte att välja", () => {

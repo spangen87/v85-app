@@ -113,8 +113,9 @@ export default async function HomePage({
       ? avdParam
       : (races[0]?.race_number ?? 1);
 
+  // key per omgång: system, utkast och flikar får inte följa med till nästa omgång
   return (
-    <RaceTabProvider initialRaceNumber={activeRaceNumber}>
+    <RaceTabProvider key={selectedId ?? "none"} initialRaceNumber={activeRaceNumber}>
     <main className="min-h-screen" style={{ background: "var(--bg)", color: "var(--ink)" }}>
       <header className="sticky top-0 z-30 md:static" style={{ background: "var(--surface)", borderBottom: "1px solid var(--line)" }}>
         <div className="flex items-center gap-3 px-4 py-3 md:px-8 md:py-5">

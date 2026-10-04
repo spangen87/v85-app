@@ -30,3 +30,10 @@ describe("SystemSidebar", () => {
     expect(out).toContain("disabled");
   });
 });
+
+describe("surfplatta", () => {
+  it("systemfältet syns under lg och sidopanelen från lg", () => {
+    expect(html(<SystemBar summary={summarizeSystem(selections, 2, "V85")} draftStatus="idle" onOpen={() => {}} />)).toContain("lg:hidden");
+    expect(html(<SystemSidebar races={races} selections={[]} onSave={() => {}} onClear={() => {}} summary={summarizeSystem([], 2, "V85")} draftName="Utkast" draftStatus="idle" />)).toContain("lg:flex");
+  });
+});

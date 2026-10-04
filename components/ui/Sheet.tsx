@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useId, useRef, type ReactNode } from "react";
+import { useId, useRef, type ReactNode } from "react";
+import { useModalLayer } from "@/lib/modalLayer";
 import { createPortal } from "react-dom";
 import { cx } from "./cx";
 
@@ -19,20 +20,7 @@ export function Sheet({ open, onClose, title, children, footer, wide = false }: 
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    const previous = document.activeElement as HTMLElement | null;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    panelRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", onKey);
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prevOverflow;
-      previous?.focus?.();
-    };
-  }, [open, onClose]);
+  useModalLayer(open, onClose, panelRef);
 
   if (!open || typeof document === "undefined") return null;
 

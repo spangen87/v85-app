@@ -12,7 +12,7 @@ import type { SystemSelection, SystemHorse, Group, GameSystem, TrackConfig } fro
 import { createSystem, deleteSystem, updateDraft, getUserDraftsForGame } from '@/lib/actions/systems'
 import { useRaceTab } from '@/components/RaceTabContext'
 import { openGamePicker } from '@/lib/uiEvents'
-import { summarizeSystem } from '@/lib/systemSummary'
+import { planDraftSync, summarizeSystem } from '@/lib/systemSummary'
 import type { Race } from '@/lib/raceTypes'
 
 interface MainPageClientProps {
@@ -57,26 +57,34 @@ export function MainPageClient({
   const draftTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isFirstRender = useRef(true)
 
-  // Utkastet sparas automatiskt några sekunder efter senaste ändringen
+  // Gör utkastet likt det som syns: skapa, uppdatera eller ta bort (tom kupong)
+  const syncDraft = useCallback(async (selections: SystemSelection[]) => {
+    if (!gameId) return
+    const action = planDraftSync(selections, activeDraftId)
+    if (action === 'none') return
+    setDraftSaveStatus('saving')
+    try {
+      const totalRows = summarizeSystem(selections, races.length, gameType).rows
+      if (action === 'update') await updateDraft(activeDraftId!, selections, totalRows)
+      if (action === 'create') {
+        const draft = await createSystem(initialGroupId, gameId, draftName, selections, totalRows, true)
+        setActiveDraftId(draft.id)
+      }
+      if (action === 'delete') {
+        await deleteSystem(activeDraftId!)
+        setActiveDraftId(null)
+      }
+      setDraftSaveStatus(action === 'delete' ? 'idle' : 'saved')
+    } catch {
+      setDraftSaveStatus('error')
+    }
+  }, [gameId, activeDraftId, races.length, gameType, initialGroupId, draftName])
+
+  // Sparas automatiskt några sekunder efter senaste ändringen
   useEffect(() => {
     if (isFirstRender.current) { isFirstRender.current = false; return }
-    if (!gameId || systemSelections.length === 0) return
     if (draftTimerRef.current) clearTimeout(draftTimerRef.current)
-    draftTimerRef.current = setTimeout(async () => {
-      setDraftSaveStatus('saving')
-      try {
-        const totalRows = summarizeSystem(systemSelections, races.length, gameType).rows
-        if (activeDraftId) {
-          await updateDraft(activeDraftId, systemSelections, totalRows)
-        } else {
-          const draft = await createSystem(initialGroupId, gameId, draftName, systemSelections, totalRows, true)
-          setActiveDraftId(draft.id)
-        }
-        setDraftSaveStatus('saved')
-      } catch {
-        setDraftSaveStatus('error')
-      }
-    }, 3000)
+    draftTimerRef.current = setTimeout(() => { void syncDraft(systemSelections) }, 3000)
     return () => { if (draftTimerRef.current) clearTimeout(draftTimerRef.current) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [systemSelections])
@@ -135,10 +143,13 @@ export function MainPageClient({
     setConfirmClear(true)
   }, [systemSelections.length])
 
-  const handleOpenSaveDialog = useCallback(() => {
+  // Spara det som syns innan systemet publiceras — annars kan de senaste sekundernas ändringar saknas
+  const handleOpenSaveDialog = useCallback(async () => {
     setShowDrawer(false)
+    if (draftTimerRef.current) clearTimeout(draftTimerRef.current)
+    if (activeDraftId) await syncDraft(systemSelections)
     setShowSaveDialog(true)
-  }, [])
+  }, [activeDraftId, syncDraft, systemSelections])
 
   const summary = summarizeSystem(systemSelections, races.length, gameType)
   const hasSystem = systemSelections.length > 0

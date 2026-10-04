@@ -9,8 +9,8 @@ export function SystemBar({ summary, draftStatus, onOpen }: {
   onOpen: () => void;
 }) {
   return (
-    <div className="fixed left-3 right-3 z-50 md:hidden flex items-center gap-3"
-      style={{ bottom: "calc(66px + max(16px, env(safe-area-inset-bottom)))", padding: "10px 10px 10px 16px",
+    <div className="fixed left-3 right-3 z-50 lg:hidden flex items-center gap-3 bottom-[calc(66px+max(16px,env(safe-area-inset-bottom)))] md:bottom-4 md:left-auto md:w-[420px]"
+      style={{ padding: "10px 10px 10px 16px",
         background: "var(--ink)", color: "var(--bg)", borderRadius: "var(--radius-lg)" }}>
       <div className="flex-1 min-w-0 flex flex-col">
         <span style={{ font: "600 15px/20px var(--font-sans)" }}>{`Ditt system · ${summary.headline}`}</span>

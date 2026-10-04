@@ -1,12 +1,17 @@
 /** Små inställningar per enhet (vy, sortering). Tål att localStorage saknas eller kastar. */
+/** Läser localStorage — själva åtkomsten kan kasta (blockerad webbplatsdata). */
+function defaultStorage(): Storage | undefined {
+  return typeof window !== "undefined" ? window.localStorage : undefined;
+}
+
 export function readPref<T extends string>(
   key: string,
   allowed: readonly T[],
   fallback: T,
-  storage: Pick<Storage, "getItem"> | undefined = typeof window !== "undefined" ? window.localStorage : undefined
+  storage?: Pick<Storage, "getItem">
 ): T {
   try {
-    const v = storage?.getItem(key);
+    const v = (storage ?? defaultStorage())?.getItem(key);
     return v != null && (allowed as readonly string[]).includes(v) ? (v as T) : fallback;
   } catch {
     return fallback;
@@ -16,10 +21,10 @@ export function readPref<T extends string>(
 export function writePref(
   key: string,
   value: string,
-  storage: Pick<Storage, "setItem"> | undefined = typeof window !== "undefined" ? window.localStorage : undefined
+  storage?: Pick<Storage, "setItem">
 ): void {
   try {
-    storage?.setItem(key, value);
+    (storage ?? defaultStorage())?.setItem(key, value);
   } catch {
     // privat läge eller full lagring — inställningen gäller bara nu
   }
@@ -41,5 +46,5 @@ export function prefSnapshot<T extends string>(
 ): T {
   const remembered = memory.get(key);
   if (remembered !== undefined) return (allowed as readonly string[]).includes(remembered) ? (remembered as T) : fallback;
-  return storage ? readPref(key, allowed, fallback, storage) : readPref(key, allowed, fallback);
+  return readPref(key, allowed, fallback, storage);
 }
