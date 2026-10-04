@@ -1,5 +1,6 @@
 import {
   CALIBRATED_FLOOR,
+  CALIBRATED_MODEL,
   calibratedForRace,
   chooseMode,
   computeCalibratedChance,
@@ -145,5 +146,38 @@ describe("calibratedForRace", () => {
       { model: MODEL, fundamental: { 1: { start_number: 1, p: 0.8, contributions: [] }, 2: { start_number: 2, p: 0.2, contributions: [] } } }
     );
     expect(out[1]).toBeCloseTo(0.8, 10);
+  });
+});
+
+describe("temperatur", () => {
+  const field = [
+    { start_number: 1, streck: 50, odds: 1.8, grund: 0.4 },
+    { start_number: 2, streck: 30, odds: 3.5, grund: 0.35 },
+    { start_number: 3, streck: 20, odds: 6, grund: 0.25 },
+  ];
+  const base = { version: "t", floor: 0.001, modes: { ...CALIBRATED_MODEL.modes } };
+  it("utan temperatur är den 1", () => {
+    expect(computeCalibratedChance(field, base).p).toEqual(computeCalibratedChance(field, { ...base, temperature: 1 }).p);
+  });
+  it("under 1 krymper favoriten och summan är fortfarande 1", () => {
+    const hot = computeCalibratedChance(field, { ...base, temperature: 0.9 }).p;
+    const raw = computeCalibratedChance(field, base).p;
+    expect(hot[0]).toBeLessThan(raw[0]);
+    expect(hot[2]).toBeGreaterThan(raw[2]);
+    expect(hot.reduce((a, b) => a + b, 0)).toBeCloseTo(1, 10);
+  });
+  it("motsvarar p upphöjt till τ, normaliserat", () => {
+    const raw = computeCalibratedChance(field, base).p;
+    const q = raw.map((x) => x ** 0.95);
+    const s = q.reduce((a, b) => a + b, 0);
+    computeCalibratedChance(field, { ...base, temperature: 0.95 }).p.forEach((x, i) => expect(x).toBeCloseTo(q[i] / s, 10));
+  });
+});
+
+describe("modellfilen", () => {
+  it("kalibreringen av täckningen hör till modellens vikter", () => {
+    // Skattas om med `npm run backtest-optimizer -- --write-coverage` efter `fit-calibrated --write`
+    expect(CALIBRATED_MODEL.coverage).toBeDefined();
+    expect(CALIBRATED_MODEL.coverage!.weights_version).toBe(CALIBRATED_MODEL.version);
   });
 });

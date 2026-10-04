@@ -19,7 +19,7 @@
  * görs som dynamisk programmering över (rader, spikar) — exakt och snabb
  * eftersom antalet rader begränsas av budgeten.
  */
-import { calibratedForRace, type CalibratedModel } from "./calibrated";
+import { CALIBRATED_MODEL, calibratedForRace, type CalibratedModel, type CoverageCalibration } from "./calibrated";
 import { scratchedMask, type FundamentalResult } from "./fundamental";
 import type { Race } from "./raceTypes";
 import type { SystemSelection } from "./types";
@@ -78,8 +78,10 @@ export interface RaceCoverage {
   /** Antal valda hästar */
   horses: number;
   spike: boolean;
-  /** Summa kalibrerad chans för de valda (0–1) */
+  /** Chansen att avdelningen går in (0–1), efter kalibrering av täckningen */
   chans: number;
+  /** Summa kalibrerad chans för de valda, före kalibrering av täckningen */
+  chansRaw: number;
   /** Summa streck för de valda (0–1), null om avdelningen saknar streck */
   streck: number | null;
   /** Medel av r = chans/streck för de valda (1 när streck saknas) */
@@ -123,6 +125,18 @@ export interface MetricsOptions {
   /** Värdevikten som bestämmer "nästa häst" i spikavvägningen (standard 0) */
   lambda?: number;
   overrides?: ChanceOverride[];
+  /** Kalibrering av täckningen; utelämnad = ingen (ren matematik) */
+  coverageCalibration?: CoverageCalibration | null;
+}
+
+/** Kalibreringen som appen använder (från lib/data/calibrated-model.json) */
+export const APP_COVERAGE_CALIBRATION: CoverageCalibration | null = CALIBRATED_MODEL.coverage ?? null;
+
+/** Kalibrerad täckning: logit(c′) = alpha + beta·logit(c). 0 och 1 behålls. */
+export function adjustCoverage(c: number, cal?: CoverageCalibration | null): number {
+  if (!cal || c <= 0 || c >= 1) return c;
+  const x = cal.alpha + cal.beta * Math.log(c / (1 - c));
+  return 1 / (1 + Math.exp(-x));
 }
 
 export interface OptimizeInput {
@@ -135,6 +149,13 @@ export interface OptimizeInput {
   lambda: number;
   locks?: OptimizerLock[];
   overrides?: ChanceOverride[];
+  /** Kalibrering av täckningen i de förutsagda måtten; utelämnad = ingen */
+  coverageCalibration?: CoverageCalibration | null;
+  /**
+   * Använd kalibreringen även i målet (påverkar vilka hästar som väljs).
+   * Av som standard: i backtesten gav det ingen förbättring (rapporten).
+   */
+  calibrateObjective?: boolean;
 }
 
 export interface OptimizedSystem {
@@ -262,7 +283,8 @@ function hitProbabilities(coverage: number[]): { all: number; allButOne: number 
 
 // ── Mått för ett system ───────────────────────────────────────────────────
 
-function metricsFor(prepared: PreparedRace[], selection: SystemSelection[], lambda: number): SystemMetrics {
+function metricsFor(prepared: PreparedRace[], selection: SystemSelection[], lambda: number, cal: CoverageCalibration | null = null): SystemMetrics {
+  const adj = (c: number) => adjustCoverage(c, cal);
   const coverage: RaceCoverage[] = [];
   const chosen: PreparedHorse[][] = [];
   for (const race of prepared) {
@@ -273,7 +295,8 @@ function metricsFor(prepared: PreparedRace[], selection: SystemSelection[], lamb
       race_number: race.race_number,
       horses: horses.length,
       spike: horses.length === 1,
-      chans: horses.reduce((a, h) => a + h.p, 0),
+      chans: adj(horses.reduce((a, h) => a + h.p, 0)),
+      chansRaw: horses.reduce((a, h) => a + h.p, 0),
       streck: race.streckMissing ? null : horses.reduce((a, h) => a + h.s, 0),
       value: mean(horses.map((h) => h.r)),
       streckMissing: race.streckMissing,
@@ -291,7 +314,7 @@ function metricsFor(prepared: PreparedRace[], selection: SystemSelection[], lamb
     const spike = chosen[i][0];
     const next = order(race.horses, lambda).find((h) => h.start_number !== spike.start_number);
     if (!next) return;
-    const withNext = cov.chans + next.p;
+    const withNext = adj(cov.chansRaw + next.p);
     const valueWith = (spike.r + next.r) / 2;
     spikeTradeoffs.push({
       race_number: race.race_number,
@@ -319,7 +342,7 @@ function metricsFor(prepared: PreparedRace[], selection: SystemSelection[], lamb
 
 /** P(alla rätt), P(alla utom en), värdeindex, täckning och spikavvägningar för ett system */
 export function systemMetrics(races: OptimizerRace[], selection: SystemSelection[], opts: MetricsOptions = {}): SystemMetrics {
-  return metricsFor(prepare(applyOverrides(races, opts.overrides)), selection, opts.lambda ?? 0);
+  return metricsFor(prepare(applyOverrides(races, opts.overrides)), selection, opts.lambda ?? 0, opts.coverageCalibration ?? null);
 }
 
 // ── Optimering ────────────────────────────────────────────────────────────
@@ -385,7 +408,7 @@ export function optimizeSystem(input: OptimizeInput): OptimizeResult {
     if (race.streckMissing) notes.push(`Avd ${race.race_number} saknar streck – chansen används som streck (värde 1).`);
 
     const scoreOf = (horses: PreparedHorse[]) =>
-      Math.log(Math.max(horses.reduce((a, h) => a + h.p, 0), 1e-12)) +
+      Math.log(Math.max(adjustCoverage(horses.reduce((a, h) => a + h.p, 0), input.calibrateObjective ? input.coverageCalibration : null), 1e-12)) +
       lambda * Math.log(Math.max(mean(horses.map((h) => h.r)), 1e-12));
 
     if (spikeLocks.length === 1) {
@@ -460,7 +483,7 @@ export function optimizeSystem(input: OptimizeInput): OptimizeResult {
       .sort((a, b) => a.start_number - b.start_number)
       .map((h) => ({ horse_id: h.horse_id, start_number: h.start_number, horse_name: h.horse_name })),
   }));
-  const metrics = metricsFor(prepared, selection, lambda);
+  const metrics = metricsFor(prepared, selection, lambda, input.coverageCalibration ?? null);
   return {
     ok: true,
     system: {

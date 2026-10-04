@@ -35,14 +35,22 @@ describe("SystemInsights", () => {
 });
 
 describe("ProposeSheet", () => {
-  it("tre förslag; Använd förslaget lägger in systemet", () => {
+  const buttons = (text: string) => Array.from(document.querySelectorAll("button")).filter((b) => b.textContent === text);
+
+  it("Max chans först; Balans och Värde bakom Visa fler förslag", () => {
     const onApply = jest.fn();
     act(() => root.render(<ProposeSheet open onClose={() => {}} races={races} gameType="V85" rowPrice={0.5} selections={[]} onApply={onApply} />));
-    const propose = Array.from(document.querySelectorAll("button")).find((b) => b.textContent === "Föreslå")!;
-    act(() => propose.click());
-    const use = Array.from(document.querySelectorAll("button")).filter((b) => b.textContent === "Använd förslaget");
-    expect(use).toHaveLength(3);
+    const spikes = document.getElementById("opt-spikes") as HTMLSelectElement;
+    expect(spikes.value).toBe("auto");
+    expect(spikes.options[spikes.selectedIndex].text).toBe("Låt optimeraren välja");
+    act(() => buttons("Föreslå")[0].click());
+    expect(buttons("Använd förslaget")).toHaveLength(1);
     expect(document.body.textContent).toContain("Max chans");
+    expect(document.body.textContent).not.toContain("Balans");
+    act(() => buttons("Visa fler förslag")[0].click());
+    expect(document.body.textContent).toContain("inte gett högre avkastning");
+    const use = buttons("Använd förslaget");
+    expect(use).toHaveLength(3);
     expect(document.body.textContent).toContain("Balans");
     act(() => use[0].click());
     expect(onApply).toHaveBeenCalledTimes(1);
@@ -50,6 +58,7 @@ describe("ProposeSheet", () => {
   });
 
   it("för låg budget ger en förklaring i stället för förslag", () => {
+    const buttons = (text: string) => Array.from(document.querySelectorAll("button")).filter((b) => b.textContent === text);
     act(() => root.render(<ProposeSheet open onClose={() => {}} races={races} gameType="V85" rowPrice={0.5} selections={[]} onApply={() => {}} />));
     const budget = document.getElementById("opt-budget") as HTMLInputElement;
     act(() => {
@@ -57,7 +66,7 @@ describe("ProposeSheet", () => {
       budget.dispatchEvent(new Event("input", { bubbles: true }));
     });
     act(() => Array.from(document.querySelectorAll("button")).find((b) => b.textContent === "Föreslå")!.click());
-    expect(Array.from(document.querySelectorAll("button")).filter((b) => b.textContent === "Använd förslaget")).toHaveLength(0);
-    expect(document.querySelectorAll(".ta-proposal-reason").length).toBe(3);
+    expect(buttons("Använd förslaget")).toHaveLength(0);
+    expect(document.querySelectorAll(".ta-proposal-reason").length).toBe(1);
   });
 });

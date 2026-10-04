@@ -21,7 +21,8 @@
  */
 import fs from "node:fs";
 import { getRowPrice } from "../lib/atg";
-import { computeCalibratedChance, type CalibratedModel } from "../lib/calibrated";
+import { CALIBRATED_MODEL, computeCalibratedChance, type CalibratedModel, type CoverageCalibration } from "../lib/calibrated";
+import { fitCoverageCalibration } from "./shared/coverage";
 import { optimizeSystem, systemMetrics, type OptimizedSystem, type OptimizerRace } from "../lib/optimizer";
 import type { SystemSelection } from "../lib/types";
 import type { CachedGame } from "./shared/atgCache";
@@ -31,6 +32,7 @@ const TYPES = ["V85", "V86", "V75", "GS75", "V64", "V65"];
 const BUDGET_KR: Record<string, number> = { V85: 385, V86: 385, V75: 385, GS75: 385, V64: 200, V65: 200 };
 const LAMBDAS = [0, 0.3, 0.6];
 const spikeSettings = (legs: number) => (legs >= 7 ? [2, 3, 4] : [1, 2, 3]);
+const AUTO = "λ=0, valfria spikar";
 const BOOTSTRAP = 2000;
 
 type Period = "träning" | "validering";
@@ -48,6 +50,15 @@ const PRICE_OVERRIDE: Record<string, number> = Object.fromEntries(
   })
 );
 const rowPriceFor = (type: string) => PRICE_OVERRIDE[type] ?? getRowPrice(type);
+// --temperature 0.95: samma krympning som i appen (standard: modellfilens värde)
+const TEMPERATURE = Number(arg("--temperature") ?? CALIBRATED_MODEL.temperature ?? 1);
+// Kalibrering av täckningen: skattas på träningsperiodens system (pass 1) om inte --no-coverage
+const USE_COVERAGE = !process.argv.includes("--no-coverage");
+// --write-coverage: skatta på alla omgångar med appens modell och skriv till modellfilen
+const WRITE_COVERAGE = process.argv.includes("--write-coverage");
+let COVERAGE: CoverageCalibration | null = null;
+// Som i appen används kalibreringen bara i måtten; --coverage-objective använder den även i målet
+const IN_OBJECTIVE = process.argv.includes("--coverage-objective");
 
 // ── Indata per omgång ─────────────────────────────────────────────────────
 
@@ -172,7 +183,7 @@ function record(g: BtGame, spikes: number, kind: string, selection: SystemSelect
   // Kontroll: varje system ska hålla budgeten
   if (o.stake > BUDGET_KR[g.game.type] + 1e-9) throw new Error(`${kind} ${g.game.id}: ${o.stake} kr över budget`);
   systemsBuilt++;
-  const m = systemMetrics(races, selection);
+  const m = systemMetrics(races, selection, { coverageCalibration: COVERAGE });
   push(key(g.game.type, g.period, spikes, kind), {
     gameId: g.game.id, stake: o.stake, payout: o.payout, soloPayout: o.soloPayout,
     hitAll: o.correct === g.legs, hitAllButOne: o.correct === g.legs - 1,
@@ -291,7 +302,7 @@ function main() {
   console.error("Läser cachen och tränar Grundchans framåtrullande …");
   const data = prepareCalibration((m) => console.error(m));
   const trainRaces = data.races.filter((r) => r.date < data.trainEnd);
-  const model: CalibratedModel = fitAllModes(trainRaces, "backtest-train");
+  const model: CalibratedModel = { ...fitAllModes(trainRaces, "backtest-train"), temperature: TEMPERATURE };
   const calibById = new Map(data.races.map((r) => [r.id, r]));
 
   // Omgångar där alla avdelningar är travlopp med Grundchans utan läckage
@@ -322,14 +333,47 @@ function main() {
     });
   }
 
-  // Kör optimeraren och referenssystemen
-  const raceLevel = new Map<string, [number, boolean, Period]>();
-  const spikeLevel = new Map<string, [number, boolean, Period]>();
+  // Pass 1: optimerarens system utan kalibrering → (täckning, gick in) per unik avdelning och urval
+  const coveragePoints = (gs: BtGame[], racesOf: (g: BtGame) => OptimizerRace[]) => {
+    const pts = new Map<string, [number, boolean]>();
+    for (const g of gs) {
+      for (const spikes of spikeSettings(g.legs)) {
+        for (const lambda of LAMBDAS) {
+          const res = optimizeSystem({ races: racesOf(g), budgetKr: BUDGET_KR[g.game.type], rowPrice: g.rowPrice, spikes, lambda });
+          if (!res.ok) continue;
+          res.system.selection.forEach((s, i) => {
+            const id = `${g.calib[i].id}|${s.horses.map((h) => h.start_number).join(",")}`;
+            pts.set(id, [res.system.metrics.coverage[i].chansRaw, s.horses.some((h) => g.winners[i].has(h.start_number))]);
+          });
+        }
+      }
+    }
+    return [...pts.values()];
+  };
+
+  if (WRITE_COVERAGE) {
+    // Appens modell (vikter från fit-calibrated) på alla omgångar
+    const prod = (g: BtGame) => g.calib.map((c, i) =>
+      toOptimizerRace(c, i + 1, computeCalibratedChance(c.field, CALIBRATED_MODEL).p, new Map(g.game.races[i].starts.map((s) => [s.number, { id: s.horseId, name: s.horseName }]))));
+    const fit = fitCoverageCalibration(coveragePoints(games, prod));
+    const file = "lib/data/calibrated-model.json";
+    const json = JSON.parse(fs.readFileSync(file, "utf8"));
+    json.coverage = { ...fit, weights_version: json.version };
+    fs.writeFileSync(file, JSON.stringify(json, null, 2) + "\n");
+    console.error(`Skrev täckningskalibrering till ${file}: alpha ${fit.alpha}, beta ${fit.beta}, n ${fit.n}`);
+    return;
+  }
+
+  if (USE_COVERAGE) COVERAGE = fitCoverageCalibration(coveragePoints(games.filter((g) => g.period === "träning"), (g) => g.races));
+
+  // Pass 2: optimeraren (med kalibrerad täckning) och referenssystemen
+  const raceLevel = new Map<string, [number, boolean, Period, number]>();
+  const spikeLevel = new Map<string, [number, boolean, Period, number]>();
   for (const g of games) {
     const budgetKr = BUDGET_KR[g.game.type];
     for (const spikes of spikeSettings(g.legs)) {
       for (const lambda of LAMBDAS) {
-        const res = optimizeSystem({ races: g.races, budgetKr, rowPrice: g.rowPrice, spikes, lambda });
+        const res = optimizeSystem({ races: g.races, budgetKr, rowPrice: g.rowPrice, spikes, lambda, coverageCalibration: COVERAGE, calibrateObjective: IN_OBJECTIVE });
         if (!res.ok) {
           const k = key(g.game.type, g.period, spikes, lamText(lambda));
           skipped.set(k, (skipped.get(k) ?? 0) + 1);
@@ -340,14 +384,18 @@ function main() {
         res.system.selection.forEach((s, i) => {
           const id = `${g.calib[i].id}|${s.horses.map((h) => h.start_number).join(",")}`;
           const hit = s.horses.some((h) => g.winners[i].has(h.start_number));
-          raceLevel.set(id, [m.coverage[i].chans, hit, g.period]);
-          if (s.horses.length === 1) spikeLevel.set(id, [m.coverage[i].chans, hit, g.period]);
+          raceLevel.set(id, [m.coverage[i].chans, hit, g.period, m.coverage[i].chansRaw]);
+          if (s.horses.length === 1) spikeLevel.set(id, [m.coverage[i].chans, hit, g.period, m.coverage[i].chansRaw]);
         });
       }
       const refB = optimizeSystem({ races: g.streckRaces, budgetKr, rowPrice: g.rowPrice, spikes, lambda: 0 });
       if (refB.ok) record(g, spikes, "Ref B", refB.system.selection, g.races);
       else skipped.set(key(g.game.type, g.period, spikes, "Ref B"), (skipped.get(key(g.game.type, g.period, spikes, "Ref B")) ?? 0) + 1);
     }
+    // Appens standard: optimeraren väljer själv antalet spikar (0 till högsta inställningen)
+    const maxSpikes = Math.max(...spikeSettings(g.legs));
+    const auto = optimizeSystem({ races: g.races, budgetKr, rowPrice: g.rowPrice, spikes: { min: 0, max: maxSpikes }, lambda: 0, coverageCalibration: COVERAGE, calibrateObjective: IN_OBJECTIVE });
+    if (auto.ok) record(g, 0, AUTO, auto.system.selection, g.races);
   }
 
   const get = (type: string | null, period: Period, spikes: number | null, kind: string): Rec[] => {
@@ -362,8 +410,11 @@ function main() {
   // ── Rapport ──
   emit(`## Underlag`);
   emit();
-  emit(`Kalibrerade vikter (träningsperioden, läge full): a = ${num(model.modes.full.streck, 3)}, b = ${num(model.modes.full.odds, 3)}, c = ${num(model.modes.full.grund, 3)}.`);
+  emit(`Kalibrerade vikter (träningsperioden, läge full): a = ${num(model.modes.full.streck, 3)}, b = ${num(model.modes.full.odds, 3)}, c = ${num(model.modes.full.grund, 3)}. Temperatur τ = ${num(TEMPERATURE, 2)}.`);
   emit(`Träningsperiod ${data.start} – ${data.trainEnd}, valideringsperiod ${data.trainEnd} – ${data.end}.`);
+  emit(COVERAGE
+    ? `Kalibrering av täckningen (skattad på träningsperiodens system): logit(c′) = ${num(COVERAGE.alpha, 3)} + ${num(COVERAGE.beta, 3)}·logit(c), n = ${COVERAGE.n}. ${IN_OBJECTIVE ? "Används både i optimerarens mål och i de förutsagda måtten (--coverage-objective)." : "Används i alla förutsagda träffar nedan men inte i optimerarens mål (som i appen)."}`
+    : "Ingen kalibrering av täckningen (--no-coverage).");
   emit(`${systemsBuilt} system byggda (optimerare och referenser); alla höll budgeten.`);
   emit();
   table(
@@ -531,13 +582,13 @@ function main() {
   }
   table(["Period", "λ", "Spikar", "Omg", "Alla rätt faktiskt / förutsagt", "z", "Alla−1 faktiskt / förutsagt", "z", "Alla spikar höll faktiskt / förutsagt"], calRows);
 
-  const calTable = (title: string, level: Map<string, [number, boolean, Period]>, bins: number[][]) => {
+  const calTable = (title: string, level: Map<string, [number, boolean, Period, number]>, bins: number[][], raw = false) => {
     emit(title);
     emit();
     const rows: (string | number)[][] = [];
     for (const period of ["träning", "validering"] as Period[]) {
       for (const [lo, hi] of bins) {
-        const v = [...level.values()].filter(([c, , p]) => p === period && c >= lo && c < hi);
+        const v = [...level.values()].map(([c, h, p, r]) => [raw ? r : c, h, p] as [number, boolean, Period]).filter(([c, , p]) => p === period && c >= lo && c < hi);
         if (!v.length) continue;
         const pred = v.reduce((a, [c]) => a + c, 0);
         const act = v.filter(([, h]) => h).length;
@@ -552,13 +603,64 @@ function main() {
     raceLevel,
     [[0, 0.5], [0.5, 0.6], [0.6, 0.7], [0.7, 0.8], [0.8, 0.9], [0.9, 1.01]]
   );
-  calTable(
-    "Spikar (unika spikhästar i optimerarens system) — kontroll av kravet på 35 % chans:",
-    spikeLevel,
-    [[0.35, 0.45], [0.45, 0.55], [0.55, 0.7], [0.7, 1.01]]
-  );
+  if (COVERAGE) {
+    calTable(
+      "Samma system före kalibreringen av täckningen (summa kalibrerad chans för urvalet):",
+      raceLevel,
+      [[0, 0.5], [0.5, 0.6], [0.6, 0.7], [0.7, 0.8], [0.8, 0.9], [0.9, 1.01]],
+      true
+    );
+  }
+  emit("Spikar (unika spikhästar i optimerarens system), fack efter hästens råa kalibrerade chans (kravet är minst 35 %):");
+  emit();
+  const spikeRows: (string | number)[][] = [];
+  for (const period of ["träning", "validering"] as Period[]) {
+    for (const [lo, hi] of [[0.35, 0.45], [0.45, 0.55], [0.55, 0.7], [0.7, 1.01]]) {
+      const v = [...spikeLevel.values()].filter(([, , p, r]) => p === period && r >= lo && r < hi);
+      if (!v.length) continue;
+      const pred = v.reduce((a, [c]) => a + c, 0);
+      const raw = v.reduce((a, [, , , r]) => a + r, 0);
+      const act = v.filter(([, h]) => h).length;
+      const variance = v.reduce((a, [c]) => a + c * (1 - c), 0);
+      spikeRows.push([period, `${pct(lo, 0)}–${pct(Math.min(hi, 1), 0)}`, v.length, pct(raw / v.length), pct(pred / v.length), pct(act / v.length), num(z(act, pred, variance))]);
+    }
+  }
+  table(["Period", "Rå chans", "n", "Förutsagt rå", "Förutsagt kalibrerad", "Faktiskt", "z (kalibrerad)"], spikeRows);
 
   // Märkena Understreckad / Överstreckad
+  emit(`## Valfritt antal spikar (Max chans)`);
+  emit();
+  emit("Optimeraren väljer själv mellan 0 och 4 spikar (sexloppsspel 0–3) inom samma budget, jämfört med ett fast antal. Spikar = genomsnittligt antal i de byggda systemen.");
+  emit();
+  const autoRows: (string | number)[][] = [];
+  for (const period of ["träning", "validering"] as Period[]) {
+    for (const spikes of [null, ...[1, 2, 3, 4]]) {
+      const recs = spikes == null ? TYPES.flatMap((t) => get(t, period, 0, AUTO)) : TYPES.flatMap((t) => get(t, period, spikes, lamText(0)));
+      if (!recs.length) continue;
+      const s = summarize(recs);
+      autoRows.push([period, spikes == null ? "valfritt" : String(spikes), s.games, num(recs.reduce((a, r) => a + r.spikes, 0) / recs.length, 1),
+        `${s.hitAll} / ${num(s.p8, 1)}`, `${s.hitAllButOne} / ${num(s.p7, 1)}`, num(s.payout / s.stake)]);
+    }
+  }
+  table(["Period", "Spikar (inställning)", "Omg", "Spikar i snitt", "Alla rätt faktiskt / förutsagt", "Alla−1 faktiskt / förutsagt", "Avk./kr"], autoRows);
+  emit("Parad jämförelse på samma omgångar (spel med 7–8 avdelningar), valfritt minus exakt antal:");
+  emit();
+  const pairRows: (string | number)[][] = [];
+  for (const period of ["träning", "validering"] as Period[]) {
+    const auto = TYPES.flatMap((t) => get(t, period, 0, AUTO)).filter((r) => r.legs >= 7);
+    for (const spikes of [2, 3, 4]) {
+      const exact = TYPES.flatMap((t) => get(t, period, spikes, lamText(0))).filter((r) => r.legs >= 7);
+      const ids = new Set(exact.map((r) => r.gameId));
+      const a = auto.filter((r) => ids.has(r.gameId));
+      const ex = new Map(exact.map((r) => [r.gameId, r]));
+      const b = a.map((r) => ex.get(r.gameId)!);
+      const d = bootstrapDiff(a, b, 7 + spikes);
+      pairRows.push([period, `valfritt − ${spikes}`, a.length, `${a.filter((r) => r.hitAll).length} / ${b.filter((r) => r.hitAll).length}`,
+        `${a.filter((r) => r.hitAllButOne).length} / ${b.filter((r) => r.hitAllButOne).length}`, `${num(d.diff)} [${num(d.lo)}; ${num(d.hi)}]`]);
+    }
+  }
+  table(["Period", "Jämförelse", "Omg", "Alla rätt valfritt / exakt", "Alla−1 valfritt / exakt", "Skillnad avk./kr [90 %]"], pairRows);
+
   emit(`## Märkena Understreckad och Överstreckad`);
   emit();
   emit("Understreckad: r = chans/streck > 1,5 och chans ≥ 5 %. Överstreckad: r < 0,75 och streck ≥ 10 %. Alla travlopp med Grundchans (även omgångar som inte backtestades). Avkastning = vinnarspel 1 kr på slutoddset.");
