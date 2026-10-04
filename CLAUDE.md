@@ -35,6 +35,8 @@ npm run recompute-formscore  # Räkna om lagrad CS och Grundchans för alla omg�
 npm run backfill-history     # Fyll i hästhistorik + resultat (km-tid) i efterhand för alla omgångar (kräver Supabase-env)
                              # --dry = torrkörning, --game <id> = en omgång. Kör recompute-formscore efteråt.
 npm run fit-fundamental      # Tränar Grundchans på ett års ATG-data (cache i .cache/atg/). --write skriver lib/data/fundamental-model.json
+npm run fit-calibrated       # Skattar vikterna för kalibrerad chans (streck/odds/Grundchans) på cachen, kronologiskt. --write skriver lib/data/calibrated-model.json
+npm run backtest-optimizer   # Backtest av systemoptimeraren på cachen (träff, utdelning, kalibrering, märken). --out fil.md, --row-price V65=1
 ```
 
 ---
@@ -124,6 +126,10 @@ scripts/
   backtest-weights.ts       # Grid-söker CS-vikter mot lopp med facit, train/test + log-loss (npm run backtest)
   backfill-history.ts       # Efterkonstruerar historik + resultat för sparade omgångar (npm run backfill-history)
   fit-fundamental.ts        # Tränar Grundchans-modellen (npm run fit-fundamental)
+  fit-calibrated.ts         # Skattar vikterna för kalibrerad chans (npm run fit-calibrated)
+  backtest-optimizer.ts     # Validerar systemoptimeraren (npm run backtest-optimizer)
+  shared/atgCache.ts        # Inläsning av .cache/atg + framåtrullande Grundchans (delas av skripten)
+  shared/calibration.ts     # Kronologisk uppdelning och skattning av kalibrerad chans
   recompute-formscore.ts    # Räknar om lagrad CS med aktuella vikter (npm run recompute-formscore)
 
 lib/
@@ -141,7 +147,10 @@ lib/
   formscore.ts              # Composite Score: computeComponents + CS_WEIGHTS
   skrall.ts                 # Skrällkandidat-signal (låg streck + odds/streck-diskrepans + klass)
   edge.ts                   # Tysta signaler/kantpoäng (barfota-byte, toppkusk, formtrend, uppehåll)
-  probability.ts            # Kalibrerad vinstsannolikhet (50% streck + 50% odds, BLEND_ALPHA)
+  probability.ts            # Kalibrerad vinstsannolikhet (50% streck + 50% odds, BLEND_ALPHA) — Chans i loppvyn
+  calibrated.ts             # Kalibrerad chans för optimeraren: softmax(a·log streck + b·log oddsP + c·log grund), läge per lopp
+  optimizer.ts              # Systemoptimerare: systemMetrics, optimizeSystem, proposeSystems (rena funktioner)
+  oddsSnapshots.ts          # Ögonblicksbilder av odds/streck vid hämtning (fel stoppar aldrig hämtningen)
   push.ts                   # Web push-utskick (sendPushToUsers, no-op utan VAPID-env)
   systems.ts                # gradeSystemsForGame (rättar system, returnerar notifierbara sällskap)
   results.ts                # fetchAndStoreResults (resultat → starters, rättning, notis) — knapp + cron
@@ -154,6 +163,7 @@ lib/
     dbAdapter.ts            # DB-rader → indata, strukna hästar, computeFundamentalForRows
     recompute.ts            # vilka rader behöver nytt fundamental_p
   data/fundamental-model.json  # tränad modell (genereras av fit-fundamental)
+  data/calibrated-model.json   # vikter för kalibrerad chans per läge (genereras av fit-calibrated)
   atg.ts                    # Typer för ATG-data (AvailableGame m.m.)
   types.ts                  # Delade TS-typer (Group, GroupMember, HorseNote, m.m.)
   supabase/                 # Supabase-klienter (server/browser)
@@ -194,6 +204,7 @@ supabase/
 **track_configs** – banspecifik konfiguration (open_stretch, short_race_threshold)
 **group_last_seen** – när användare senast besökte ett sällskap (aktivitetsbadges)
 **push_subscriptions** – web push-prenumerationer per enhet (endpoint, p256dh, auth)
+**odds_snapshots** – odds och streck per start vid varje hämtning (game_id, race_id, race_number, start_number, horse_id, odds, bet_distribution, captured_at); ingen FK mot races
 
 ---
 
@@ -227,6 +238,23 @@ normaliserad så fältet summerar till 1. Backtest mot 221 lopp (2026-06-13) gav
 lägst log-loss vid α≈0.5 (1.58 mot 1.62 för rent streck/odds). Faller tillbaka
 på enbart streck (innan pool öppnat: enbart odds). Beräknas i `lib/raceView.ts` (strukna hästar
 exkluderas) och visas som Chans; Värde = chans − streck.
+
+### Kalibrerad chans (optimeraren) – `lib/calibrated.ts → computeCalibratedChance()`
+Benters tvåsteg: `p_i = softmax(a·log streck_i + b·log oddsP_i + c·log grund_i)`, där varje
+signal normaliseras inom fältet och golvas (0,001). Läget väljs per lopp efter vilka data som
+finns (`full`, `noOdds` före vinnarpoolen, `grundOnly` före V-poolen m.fl.), med egna vikter
+per läge i `lib/data/calibrated-model.json` (full ≈ 0,18/0,85/0,09). Skattas med
+`npm run fit-calibrated` (kronologiskt, framåtrullande Grundchans). `calibratedForRace(race)`
+räknar strukna hästar och Grundchans som loppvyn. Påverkar inte Chans i loppvyn.
+
+### Systemoptimerare – `lib/optimizer.ts`
+`systemMetrics` ger P(alla rätt) (`p8`), P(alla utom en) (`p7`), värdeindex
+Π medel(chans/streck), täckning per avdelning, chansen att alla spikar håller och avvägningen
+per spik. `optimizeSystem` ordnar hästarna efter `p·r^λ`, prövar prefix topp 1–8 och söker
+exakt (dynamisk programmering över rader och spikar) maximum av `log P + λ·log värdeindex`
+inom budget och spikvillkor (spik kräver `MIN_SPIKE_CHANCE` = 35 %, låst spik undantagen).
+Stöder lås (in/ut/spik) och egna bedömningar. `proposeSystems` ger Max chans / Balans / Värde
+(λ = 0 / 0,3 / 0,6). Backtest: `docs/superpowers/reports/2026-10-04-backtest-optimerare.md`.
 
 ### Tabellvyn – `components/RaceTable.tsx`
 Loppvyn växlar mellan Lista (hästrader) och Tabell. Tabellen visar Häst, Chans, Streck,
