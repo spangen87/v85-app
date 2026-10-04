@@ -78,7 +78,8 @@ export async function getDraftForGame(gameId: string): Promise<GameSystem | null
 export async function updateDraft(
   draftId: string,
   selections: SystemSelection[],
-  totalRows: number
+  totalRows: number,
+  name?: string
 ): Promise<void> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -86,7 +87,7 @@ export async function updateDraft(
 
   const { error } = await supabase
     .from('game_systems')
-    .update({ selections, total_rows: totalRows })
+    .update({ selections, total_rows: totalRows, ...(name ? { name } : {}) })
     .eq('id', draftId)
     .eq('user_id', user.id)
     .eq('is_draft', true)

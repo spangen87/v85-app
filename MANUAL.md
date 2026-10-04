@@ -34,7 +34,7 @@
 
 Menyn har fyra delar: **Lopp** (omgången och hästarna), **System** (dina sparade system), **Utvärdering** (hur träffsäkra måtten har varit) och **Sällskap** (dina sällskap, din profil och utseendet). Manualen når du från **?** högst upp, och varje understruket ord i appen går att trycka på för en kort förklaring.
 
-Appen följer telefonens ljusa eller mörka läge. Under **Sällskap → Utseende** kan du välja själv.
+Appen följer telefonens ljusa eller mörka läge. Under **Sällskap → Utseende** väljer du **Som enheten**, **Ljust** eller **Mörkt**.
 
 Appen är byggd för att ge dig ett bättre beslutsunderlag – den ersätter inte din egen bedömning, men hjälper dig hitta hästar vars oddsvärde kan vara bättre än marknadens.
 
@@ -164,7 +164,7 @@ Du behöver inte starta något läge. Tryck på ett **startnummer** i listan, ta
 - **På telefonen** visas ett fält ovanför menyn: **Ditt system · 144 rader · 72 kr**, eller hur många avdelningar som är klara. Tryck på **Visa** för kupongen, där du ser alla avdelningar, kan trycka på nummer, namnge systemet och öppna tidigare utkast. En avdelning med bara en häst får märket **Spik**.
 - **På datorn** ligger systemet alltid i en panel till höger.
 
-Systemet sparas automatiskt som utkast medan du bygger. **Spara system** går att trycka på när alla avdelningar har minst en häst. **Rensa** tömmer systemet efter att du bekräftat.
+Systemet sparas automatiskt som utkast, med namnet du gett det, några sekunder efter varje ändring och direkt om du lämnar sidan. **Spara system** går att trycka på när alla avdelningar har minst en häst. **Rensa** tömmer systemet och tar bort utkastet efter att du bekräftat.
 
 #### Se dina system
 

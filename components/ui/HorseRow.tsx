@@ -1,6 +1,6 @@
 "use client";
 
-import type { KeyboardEvent, ReactNode } from "react";
+import type { ReactNode } from "react";
 import { fmtNum, fmtPct } from "@/lib/format";
 import type { RowBadge } from "@/lib/raceView";
 import { Badge } from "./Badge";
@@ -34,46 +34,44 @@ export function HorseRow({
   badge?: RowBadge; signalScore?: number; valueDelta?: number | null; isValue?: boolean;
   state?: NumberState; onToggleSystem?: () => void; onOpen?: () => void; noteCount?: number; dimmed?: boolean;
 }) {
-  const onKey = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (!onOpen || e.target !== e.currentTarget) return;
-    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen(); }
-  };
-  return (
-    <div
-      className={cx("ta-row", dimmed && "ta-row-scratched")}
-      onClick={onOpen}
-      onKeyDown={onKey}
-      role={onOpen ? "button" : undefined}
-      tabIndex={onOpen ? 0 : undefined}
-      aria-label={onOpen ? `Öppna ${name}` : undefined}
-      data-start={number}
-    >
-      <StartNumber
-        number={number}
-        state={state}
-        onClick={onToggleSystem ? (e) => { e.stopPropagation(); onToggleSystem(); } : undefined}
-      />
-      <div className="ta-row-main">
-        <div className="ta-row-name">{name}</div>
-        <div className="ta-row-driver">{driver}</div>
-        <div className="ta-row-meta">
+  const content = (
+    <>
+      <span className="ta-row-main">
+        <span className="ta-row-name">{name}</span>
+        <span className="ta-row-driver">{driver}</span>
+        <span className="ta-row-meta">
           <FormStrip results={form} />
           {badge === "skrall" && <Badge tone="skrall">Skräll</Badge>}
           {badge === "signal" && <Badge tone="signal">{`Signal +${signalScore}`}</Badge>}
           {badge === "scratched" && <Badge>Struken</Badge>}
           {noteCount > 0 && <span className="ta-row-notes">{noteCount} ant.</span>}
-        </div>
-      </div>
-      <div className="ta-row-side">
-        <div className="ta-row-chans">
+        </span>
+      </span>
+      <span className="ta-row-side">
+        <span className="ta-row-chans">
           {isValue && valueDelta != null && <ValueDelta delta={valueDelta} highlight />}
           <span className="ta-row-chans-val">{fmtPct(chans)}</span>
-        </div>
-        <div className="ta-row-sub">
+        </span>
+        <span className="ta-row-sub">
           {streck != null && <span>Streck {fmtPct(streck)}</span>}
           {odds != null && <span>Odds {fmtNum(odds)}</span>}
-        </div>
-      </div>
+        </span>
+      </span>
+    </>
+  );
+  // Startnumret och "öppna" är två syskonknappar — aldrig en knapp i en knapp
+  return (
+    <div className={cx("ta-row", dimmed && "ta-row-scratched")} data-start={number}>
+      <StartNumber
+        number={number}
+        state={state}
+        onClick={onToggleSystem ? () => onToggleSystem() : undefined}
+      />
+      {onOpen ? (
+        <button type="button" className="ta-row-open" onClick={onOpen}>{content}</button>
+      ) : (
+        <span className="ta-row-open">{content}</span>
+      )}
     </div>
   );
 }

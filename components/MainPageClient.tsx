@@ -12,7 +12,8 @@ import type { SystemSelection, SystemHorse, Group, GameSystem, TrackConfig } fro
 import { createSystem, deleteSystem, updateDraft, getUserDraftsForGame } from '@/lib/actions/systems'
 import { useRaceTab } from '@/components/RaceTabContext'
 import { openGamePicker } from '@/lib/uiEvents'
-import { planDraftSync, summarizeSystem } from '@/lib/systemSummary'
+import { summarizeSystem } from '@/lib/systemSummary'
+import { createDraftAutosave, type DraftStatus } from '@/lib/draftAutosave'
 import type { Race } from '@/lib/raceTypes'
 
 interface MainPageClientProps {
@@ -23,6 +24,8 @@ interface MainPageClientProps {
   gameId: string | null
   gameType: string | null
   draftId?: string | null
+  /** Namnet på utkastet som läses in */
+  draftName?: string | null
   initialSelections?: SystemSelection[]
   trackConfig?: TrackConfig | null
   /** Antal anteckningar per häst-id */
@@ -39,6 +42,7 @@ export function MainPageClient({
   gameId,
   gameType,
   draftId = null,
+  draftName: initialDraftName = null,
   initialSelections = [],
   trackConfig = null,
   noteCounts = {},
@@ -50,44 +54,41 @@ export function MainPageClient({
   const [showDrawer, setShowDrawer] = useState(false)
   const [confirmClear, setConfirmClear] = useState(false)
   const [activeDraftId, setActiveDraftId] = useState<string | null>(draftId)
-  const [draftSaveStatus, setDraftSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
-  const [draftName, setDraftName] = useState('Utkast')
+  const [draftSaveStatus, setDraftSaveStatus] = useState<DraftStatus>('idle')
+  const [draftName, setDraftName] = useState(initialDraftName ?? 'Utkast')
   const [savedDrafts, setSavedDrafts] = useState<GameSystem[]>([])
 
-  const draftTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const isFirstRender = useRef(true)
+  // Autosparning som utkast; skapas en gång per omgång (komponenten får ny key per omgång)
+  const [autosave] = useState(() => createDraftAutosave(
+    {
+      create: async (selections, name) =>
+        (await createSystem(initialGroupId, gameId!, name, selections, summarizeSystem(selections, races.length, gameType).rows, true)).id,
+      update: (id, selections, name) => updateDraft(id, selections, summarizeSystem(selections, races.length, gameType).rows, name),
+      remove: deleteSystem,
+    },
+    { onDraftId: setActiveDraftId, onStatus: setDraftSaveStatus },
+    draftId,
+  ))
+  const skipNextSave = useRef(true)
 
-  // Gör utkastet likt det som syns: skapa, uppdatera eller ta bort (tom kupong)
-  const syncDraft = useCallback(async (selections: SystemSelection[]) => {
-    if (!gameId) return
-    const action = planDraftSync(selections, activeDraftId)
-    if (action === 'none') return
-    setDraftSaveStatus('saving')
-    try {
-      const totalRows = summarizeSystem(selections, races.length, gameType).rows
-      if (action === 'update') await updateDraft(activeDraftId!, selections, totalRows)
-      if (action === 'create') {
-        const draft = await createSystem(initialGroupId, gameId, draftName, selections, totalRows, true)
-        setActiveDraftId(draft.id)
-      }
-      if (action === 'delete') {
-        await deleteSystem(activeDraftId!)
-        setActiveDraftId(null)
-      }
-      setDraftSaveStatus(action === 'delete' ? 'idle' : 'saved')
-    } catch {
-      setDraftSaveStatus('error')
-    }
-  }, [gameId, activeDraftId, races.length, gameType, initialGroupId, draftName])
-
-  // Sparas automatiskt några sekunder efter senaste ändringen
+  // Sparas automatiskt några sekunder efter senaste ändringen (även namnbyte)
   useEffect(() => {
-    if (isFirstRender.current) { isFirstRender.current = false; return }
-    if (draftTimerRef.current) clearTimeout(draftTimerRef.current)
-    draftTimerRef.current = setTimeout(() => { void syncDraft(systemSelections) }, 3000)
-    return () => { if (draftTimerRef.current) clearTimeout(draftTimerRef.current) }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [systemSelections])
+    if (skipNextSave.current) { skipNextSave.current = false; return }
+    if (gameId) autosave.schedule(systemSelections, draftName)
+  }, [systemSelections, draftName, gameId, autosave])
+
+  // Lämnar man sidan eller appen inom fördröjningen sparas det direkt
+  useEffect(() => {
+    const flush = () => { void autosave.flush() }
+    const onHidden = () => { if (document.visibilityState === 'hidden') flush() }
+    window.addEventListener('pagehide', flush)
+    document.addEventListener('visibilitychange', onHidden)
+    return () => {
+      window.removeEventListener('pagehide', flush)
+      document.removeEventListener('visibilitychange', onHidden)
+      flush()
+    }
+  }, [autosave])
 
   // Tidigare utkast för omgången (utom det som redan är inläst)
   useEffect(() => {
@@ -113,28 +114,24 @@ export function MainPageClient({
     })
   }, [])
 
-  const handleLoadDraft = useCallback((draft: GameSystem) => {
+  const handleLoadDraft = useCallback(async (draft: GameSystem) => {
+    // Det som väntar sparas i det nuvarande utkastet innan bytet
+    await autosave.adopt(draft.id)
+    skipNextSave.current = true
     setSystemSelections(draft.selections ?? [])
     setActiveDraftId(draft.id)
     setDraftName(draft.name)
-    isFirstRender.current = true
     setSavedDrafts(prev => prev.filter(d => d.id !== draft.id))
-  }, [])
+  }, [autosave])
 
   // Rensa tar även bort utkastet — annars läses det in igen nästa gång sidan öppnas
-  const clearSystem = useCallback(async () => {
-    const id = activeDraftId
-    if (draftTimerRef.current) clearTimeout(draftTimerRef.current)
-    isFirstRender.current = true
+  const clearSystem = useCallback(() => {
+    skipNextSave.current = true
     setSystemSelections([])
-    setActiveDraftId(null)
     setShowDrawer(false)
     setConfirmClear(false)
-    setDraftSaveStatus('idle')
-    if (id) {
-      try { await deleteSystem(id) } catch { /* utkastet ligger kvar under Mina utkast */ }
-    }
-  }, [activeDraftId])
+    void autosave.discard()
+  }, [autosave])
 
   // En påbörjad kupong ska inte kunna kastas med ett enda tryck
   const handleClear = useCallback(() => {
@@ -146,10 +143,9 @@ export function MainPageClient({
   // Spara det som syns innan systemet publiceras — annars kan de senaste sekundernas ändringar saknas
   const handleOpenSaveDialog = useCallback(async () => {
     setShowDrawer(false)
-    if (draftTimerRef.current) clearTimeout(draftTimerRef.current)
-    if (activeDraftId) await syncDraft(systemSelections)
+    await autosave.flush()
     setShowSaveDialog(true)
-  }, [activeDraftId, syncDraft, systemSelections])
+  }, [autosave])
 
   const summary = summarizeSystem(systemSelections, races.length, gameType)
   const hasSystem = systemSelections.length > 0
@@ -229,10 +225,9 @@ export function MainPageClient({
         onClose={() => setShowSaveDialog(false)}
         onSaved={() => {
           setShowSaveDialog(false)
-          isFirstRender.current = true
+          skipNextSave.current = true
           setSystemSelections([])
-          setActiveDraftId(null)
-          setDraftSaveStatus('idle')
+          autosave.forget()
         }}
         gameId={gameId}
         gameType={gameType}

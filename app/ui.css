@@ -1,7 +1,7 @@
 /* Travappen grundkomponenter — porterat från designsystemets bundle.css. */
 
 .ta-btn:focus-visible, .ta-num:focus-visible, .ta-term:focus-visible, .ta-tab:focus-visible,
-.ta-nav-item:focus-visible, .ta-row:focus-visible, .ta-link:focus-visible, .ta-chip:focus-visible,
+.ta-nav-item:focus-visible, .ta-row-open:focus-visible, .ta-link:focus-visible, .ta-chip:focus-visible,
 .ta-seg button:focus-visible, .ta-sheet:focus-visible {
   outline: 2px solid var(--focus); outline-offset: 2px;
 }
@@ -104,11 +104,15 @@ button.ta-num { cursor: pointer; }
 .ta-list { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); overflow: hidden; }
 .ta-list-head { display: flex; justify-content: space-between; gap: var(--space-3); padding: var(--space-2) var(--space-4);
   background: var(--surface-sunken); font: 500 12px/16px var(--font-sans); color: var(--ink-muted); }
-.ta-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--space-3); align-items: start;
-  padding: var(--space-3) var(--space-4); background: var(--surface); cursor: pointer; }
+.ta-row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-3); align-items: start;
+  padding: var(--space-3) var(--space-4); background: var(--surface); }
+.ta-row-open { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-3); align-items: start; min-width: 0;
+  margin: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; border-radius: var(--radius-sm); }
+button.ta-row-open { cursor: pointer; }
 .ta-row + .ta-row { border-top: 1px solid var(--line); }
 .ta-row-scratched { opacity: .55; }
-.ta-row-main { min-width: 0; }
+.ta-row-main { min-width: 0; display: block; }
+.ta-row-name, .ta-row-driver { display: block; }
 .ta-row-name { font: 600 16px/22px var(--font-sans); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ta-row-driver { font: 400 13px/18px var(--font-sans); color: var(--ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ta-row-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: 6px; }

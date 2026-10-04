@@ -157,6 +157,7 @@ export default async function HomePage({
           gameId={selectedId}
           gameType={selectedGame?.game_type ?? null}
           draftId={draftId}
+          draftName={existingDraft?.name ?? null}
           initialSelections={initialSelections}
           trackConfig={trackConfig}
           noteCounts={noteCounts}

@@ -18,6 +18,9 @@ const config = {
   transform: {
     "^.+\\.[tj]sx?$": ["ts-jest", { tsconfig: { jsx: "react-jsx", allowJs: true }, diagnostics: { ignoreCodes: [151001] } }],
   },
+  // Agenternas git-worktrees ligger under .claude/ och har egna node_modules-länkar
+  testPathIgnorePatterns: ["/node_modules/", "<rootDir>/.claude/"],
+  modulePathIgnorePatterns: ["<rootDir>/.claude/"],
   transformIgnorePatterns: [`/node_modules/(?!(${ESM_PACKAGES.join("|")})/)`],
 };
 

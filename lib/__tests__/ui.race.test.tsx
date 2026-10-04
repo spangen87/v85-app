@@ -26,11 +26,20 @@ describe("HorseRow", () => {
     expect(out).toContain(">–<");
     expect(out).not.toContain("Streck ");
   });
-  it("raden går att öppna med tangentbordet när onOpen finns", () => {
-    const out = html(<HorseRow {...base} onOpen={() => {}} />);
-    expect(out).toContain('role="button"');
-    expect(out).toContain('tabindex="0"');
-    expect(out).toContain('aria-label="Öppna Hail Ruler"');
+  it("raden öppnas med en egen knapp, inte nästlad med startnumret", () => {
+    const out = html(<HorseRow {...base} onOpen={() => {}} onToggleSystem={() => {}} />);
+    expect(out).not.toContain('role="button"');
+    const open = out.match(/<button[^>]*class="ta-row-open"[^>]*>([\s\S]*?)<\/button>/);
+    expect(open).not.toBeNull();
+    expect(open![1]).not.toContain("<button");
+    expect(open![1]).not.toContain("<div");
+    expect(open![1]).toContain("Hail Ruler");
+    expect(out.match(/<button/g)).toHaveLength(2);
+  });
+  it("utan onOpen finns ingen öppna-knapp", () => {
+    const out = html(<HorseRow {...base} />);
+    expect(out).not.toContain("<button");
+    expect(out).toContain('class="ta-row-open"');
   });
 });
 
@@ -46,6 +55,13 @@ describe("RaceTabs", () => {
     const out = html(<RaceTabs active={2} onSelect={() => {}} races={[{ n: 1, done: true, picks: 3 }, { n: 2 }]} />);
     expect(out).toContain("Avdelning 1, resultat klart, 3 valda");
     expect(out).toMatch(/aria-selected="true"[^>]*aria-label="Avdelning 2"/);
+  });
+  it("bara aktiv flik nås med Tab och flikarna pekar på panelen", () => {
+    const out = html(<RaceTabs active={2} onSelect={() => {}} panelId="p" races={[{ n: 1 }, { n: 2 }, { n: 3 }]} />);
+    expect(out.match(/tabindex="0"/g)).toHaveLength(1);
+    expect(out.match(/tabindex="-1"/g)).toHaveLength(2);
+    expect(out).toMatch(/id="p-tab-2"[^>]*aria-selected="true"/);
+    expect(out.match(/aria-controls="p"/g)).toHaveLength(3);
   });
 });
 
