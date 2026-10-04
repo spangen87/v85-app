@@ -91,6 +91,7 @@ components/
   SystemOutcomeBanner.tsx   # "Resultaten är rättade"-banner på startsidan (systemutfall)
   SystemDrawer.tsx          # Drawer-panel för systemkonfiguration
   SystemSidebar.tsx         # Sidebar för systembyggaren
+  OptimizerPanel.tsx        # Träffchans/värde och "Föreslå system" (bara admin, under utvärdering)
   SystemsPageClient.tsx     # Client-wrapper för systemsidan
   ThemeProvider.tsx         # Tema-provider (mörkt/ljust)
   ThemeToggle.tsx           # Mörkt/ljust tema-växlare
@@ -141,6 +142,7 @@ lib/
   raceTypes.ts              # Starter/Race-typer för loppvyn
   horseDetail.ts            # Texter i detaljvyn (rang, varför, spår)
   prefs.ts / usePref.ts     # Sparade val per enhet (vy, sortering) med minne som reserv
+  optimizerView.ts          # Texter för optimeraren ("1 på 89", spikens avvägning, standardbudget)
   draftAutosave.ts          # Autosparning av kupongen som utkast (ordning, generation, flush när sidan lämnas)
   relativeTime.ts           # "12 min sedan" för forum och anteckningar
   analysis.ts               # Hjälpformler (distanssignal, spårfaktor, tidsparsning)

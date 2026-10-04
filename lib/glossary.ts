@@ -2,7 +2,7 @@
  * Ordlistan — enda källan för förklaringar i appen. Samma texter står under
  * "## 10. Ordlista" i MANUAL.md; ändra båda samtidigt. `anchor` är rubrikens id.
  */
-export type TermId = "chans" | "streck" | "odds" | "varde" | "grund" | "cs" | "skrall" | "signal" | "oense" | "form" | "spar";
+export type TermId = "chans" | "streck" | "odds" | "varde" | "grund" | "cs" | "skrall" | "signal" | "oense" | "form" | "spar" | "vardeindex";
 
 export interface GlossaryEntry {
   title: string;
@@ -80,6 +80,13 @@ export const GLOSSARY: Record<TermId, GlossaryEntry> = {
     title: "Spår",
     what: "Hästens startspår. På vissa banor ger vissa spår en fördel eller nackdel, och det räknas in i bedömningen.",
     anchor: "spår",
+  },
+  vardeindex: {
+    title: "Värdeindex",
+    what: "Hur stor utdelningen väntas bli om systemet går in, jämfört med ett system med lika många hästar valda efter strecket. Över 1 betyder att du har valt hästar som vinner oftare än strecket säger.",
+    how: "Medelvärdet av chans delat med streck för de valda hästarna i varje avdelning, multiplicerat över avdelningarna. Chansen är den kalibrerade, som väger ihop streck, odds och Grund.",
+    note: "Ett mått på värde, inte på träffchans. Backtesten har ännu inte visat att högre värdeindex ger högre avkastning.",
+    anchor: "värdeindex",
   },
 };
 

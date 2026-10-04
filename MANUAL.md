@@ -166,6 +166,12 @@ Du behöver inte starta något läge. Tryck på ett **startnummer** i listan, ta
 
 Systemet sparas automatiskt som utkast, med namnet du gett det, några sekunder efter varje ändring och direkt om du lämnar sidan. **Spara system** går att trycka på när alla avdelningar har minst en häst. **Rensa** tömmer systemet och tar bort utkastet efter att du bekräftat.
 
+#### Föreslå system (administratörer, under utvärdering)
+
+Administratörer ser **Föreslå system** i kupongen och i sidopanelen. Ange **budget** och antal **spikar**, och välj om hästarna du redan valt ska vara med. Du får tre förslag: **Max chans**, **Balans** och **Värde**. Varje förslag visar rader och kostnad, chansen för alla rätt (till exempel **1 på 89**), chansen för alla utom en, **Värdeindex** och hur ofta spikarna håller alla samtidigt. **Använd förslaget** lägger in systemet, och sedan kan du ändra det som vanligt. Förslagen bygger på en kalibrerad chans som väger ihop streck, odds och Grund. Odds och streck ändras fram till start, och inget förslag lovar vinst.
+
+Medan du bygger visar kupongen samma mått för ditt eget system. Där står också vad varje spik kostar i träffchans och ger i utdelning jämfört med att också ta nästa häst. Funktionen syns för fler när backtesten är godkänd.
+
 #### Se dina system
 
 Under **System** i menyn finns **Mina system**. Välj omgång överst. Där ligger dina **utkast** och **sparade system**. Varje system visar avdelningarna med de hästar du valt, antal rader och kostnad. När omgången är rättad står resultatet till höger, till exempel **6 av 8 rätt**, och vinnaren i varje avdelning är guldfärgad. **Fortsätt bygga** öppnar utkastet i loppvyn, och **Kopiera** kopierar systemet som text. System som du sparat till ett sällskap finns också under sällskapets flik **Spel**.
@@ -335,6 +341,10 @@ Placeringarna i hästens fem senaste starter, nyast till vänster. 0 = oplacerad
 ### Spår
 
 Hästens startspår. På vissa banor ger vissa spår en fördel eller nackdel, och det räknas in i bedömningen.
+
+### Värdeindex
+
+Hur stor utdelningen väntas bli om systemet går in, jämfört med ett system med lika många hästar valda efter strecket. Över 1 betyder att du har valt hästar som vinner oftare än strecket säger. Räknas som medelvärdet av chans delat med streck för de valda hästarna i varje avdelning, multiplicerat över avdelningarna. Ett mått på värde, inte på träffchans; backtesten har ännu inte visat att högre värdeindex ger högre avkastning. Visas bara för administratörer så länge systemförslagen utvärderas.
 
 ### Övriga ord
 

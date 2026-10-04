@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { Badge, Button, Sheet, StartNumber } from "@/components/ui";
 import type { GameSystem, SystemHorse, SystemSelection } from "@/lib/types";
 import { lockedStarts, type SystemSummary } from "@/lib/systemSummary";
@@ -17,11 +18,16 @@ const STATUS = { idle: "", saving: "Sparar utkast …", saved: "Utkastet sparas 
 /** Kupongen på mobil: alla avdelningar med nummer att trycka på. */
 export function SystemDrawer({
   open, onClose, races, selections, onToggleHorse, onSave, onClear, summary, draftName, onDraftNameChange, draftStatus, savedDrafts, onLoadDraft,
+  insights, onPropose,
 }: {
   open: boolean; onClose: () => void; races: RaceInfo[]; selections: SystemSelection[];
   onToggleHorse: (raceNumber: number, horse: SystemHorse) => void; onSave: () => void; onClear: () => void;
   summary: SystemSummary; draftName: string; onDraftNameChange: (s: string) => void; draftStatus: keyof typeof STATUS;
   savedDrafts: GameSystem[]; onLoadDraft: (d: GameSystem) => void;
+  /** Träffchans och värde (administratörer) */
+  insights?: ReactNode;
+  /** Öppnar "Föreslå system" (administratörer) */
+  onPropose?: () => void;
 }) {
   return (
     <Sheet open={open} onClose={onClose} title="Ditt system" wide
@@ -44,6 +50,7 @@ export function SystemDrawer({
         <label htmlFor="system-name" className="ta-field-label">Namn</label>
         <input id="system-name" className="ta-field" value={draftName} maxLength={80} onChange={(e) => onDraftNameChange(e.target.value)} />
       </div>
+      {onPropose && <div className="mb-4"><Button onClick={onPropose}>Föreslå system</Button></div>}
       <div className="ta-card" style={{ overflow: "hidden" }}>
         {races.map((r, i) => {
           const picked = selections.find((s) => s.race_number === r.race_number)?.horses ?? [];
@@ -74,6 +81,7 @@ export function SystemDrawer({
           );
         })}
       </div>
+      {insights && <div className="mt-4">{insights}</div>}
       {savedDrafts.length > 0 && (
         <>
           <h3 className="ta-sheet-sub">Mina utkast</h3>
