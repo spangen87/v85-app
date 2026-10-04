@@ -5,3 +5,5 @@ export { ValueDelta } from "./ValueDelta";
 export { FormStrip } from "./FormStrip";
 export { Metric } from "./Metric";
 export { SegmentedControl } from "./SegmentedControl";
+export { Sheet } from "./Sheet";
+export { Term, ExplainSheet, ExplainBody } from "./Term";
