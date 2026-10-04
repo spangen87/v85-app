@@ -7,3 +7,6 @@ export { Metric } from "./Metric";
 export { SegmentedControl } from "./SegmentedControl";
 export { Sheet } from "./Sheet";
 export { Term, ExplainSheet, ExplainBody } from "./Term";
+export { HorseList, HorseRow } from "./HorseRow";
+export { RaceTabs } from "./RaceTabs";
+export { Assessment } from "./Assessment";
