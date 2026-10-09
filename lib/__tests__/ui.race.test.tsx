@@ -63,6 +63,12 @@ describe("RaceTabs", () => {
     expect(out).toMatch(/id="p-tab-2"[^>]*aria-selected="true"/);
     expect(out.match(/aria-controls="p"/g)).toHaveLength(3);
   });
+  it("fliken Alla först när allTab är på", () => {
+    const out = html(<RaceTabs active={0} onSelect={() => {}} panelId="p" allTab races={[{ n: 1 }, { n: 2 }]} />);
+    expect(out).toMatch(/id="p-tab-0"[^>]*aria-selected="true"[^>]*aria-label="Hela omgången"/);
+    expect(out).toContain(">Alla<");
+    expect(out.match(/role="tab"/g)).toHaveLength(3);
+  });
 });
 
 describe("Assessment", () => {

@@ -1,7 +1,7 @@
 import type { Race, Starter } from "../raceTypes";
 import {
-  activeFilterCount, buildRowModels, EMPTY_FILTERS, filterRows, parseHastParam, raceHasResults,
-  raceLacksMarket, raceTabsInfo, sortRows, type RaceMaps,
+  activeFilterCount, buildRowModels, EMPTY_FILTERS, filterRows, parseHastParam, quickFilterCounts, raceHasResults,
+  raceLacksMarket, raceTabsInfo, sortRows, toggleQuickFilter, type RaceMaps,
 } from "../raceView";
 
 function starter(n: number, o: Partial<Starter> = {}): Starter {
@@ -122,6 +122,37 @@ describe("sortRows och filterRows", () => {
     const r2 = race([starter(1, { odds: 51 }), starter(2, { odds: 50 })]);
     const rows2 = buildRowModels(r2, maps({ prob: { 1: prob(0.5), 2: prob(0.5) } }), new Set());
     expect(filterRows(rows2, { ...EMPTY_FILTERS, hideLongshots: true }).map((x) => x.n)).toEqual([2]);
+  });
+});
+
+describe("hela omgången (fliken Alla)", () => {
+  const r1 = race([starter(1), starter(2), starter(3)], { race_number: 1 });
+  const r2 = race([starter(1), starter(2)], { race_number: 2 });
+  const rows = [
+    ...buildRowModels(r1, maps({ prob: { 1: prob(0.2), 2: prob(0.5), 3: prob(0.3) }, skrall: { 3: { oddsProbPct: 12, edge: 6, classRank: 1, isCandidate: true } } }), new Set([2])),
+    ...buildRowModels(r2, maps({ prob: { 1: prob(0.5), 2: prob(0.5) }, scratched: new Set([2]), edge: { 1: { signals: [], score: 2, isEdge: true } } }), new Set()),
+  ];
+
+  it("raderna vet sin avdelning och valet gäller per avdelning", () => {
+    expect(rows.map((x) => `${x.raceNumber}-${x.n}`)).toEqual(["1-1", "1-2", "1-3", "2-1", "2-2"]);
+    expect(rows.filter((x) => x.numberState === "selected").map((x) => `${x.raceNumber}-${x.n}`)).toEqual(["1-2"]);
+  });
+
+  it("sorterar över avdelningarna; lika chans ordnas efter avdelning, strukna sist", () => {
+    expect(sortRows(rows, "chans").map((x) => `${x.raceNumber}-${x.n}`)).toEqual(["1-2", "2-1", "1-3", "1-1", "2-2"]);
+    expect(sortRows(rows, "number").map((x) => `${x.raceNumber}-${x.n}`)).toEqual(["1-1", "1-2", "1-3", "2-1", "2-2"]);
+  });
+
+  it("snabbknapparna visar en sorts märke åt gången och räknar inte strukna", () => {
+    expect(quickFilterCounts(rows)).toEqual({ skrall: 1, value: 0, signal: 1 });
+    const skrall = toggleQuickFilter(EMPTY_FILTERS, "skrall");
+    expect(filterRows(rows, skrall).map((x) => `${x.raceNumber}-${x.n}`)).toEqual(["1-3"]);
+    const signal = toggleQuickFilter(skrall, "signal");
+    expect([signal.skrall, signal.signal]).toEqual([false, true]);
+    expect(toggleQuickFilter(signal, "signal")).toEqual(EMPTY_FILTERS);
+    // Söktexten och "dölj långskott" rörs inte
+    expect(toggleQuickFilter({ ...EMPTY_FILTERS, search: "x", hideLongshots: true }, "value"))
+      .toEqual({ ...EMPTY_FILTERS, search: "x", hideLongshots: true, value: true });
   });
 });
 

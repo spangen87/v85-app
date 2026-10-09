@@ -15,12 +15,14 @@ function badge(r: RowModel) {
   return null;
 }
 
-export function RaceTable({ race, rows, trackConfig, canSelect, onToggle, onOpen }: {
-  race: Race; rows: RowModel[]; trackConfig: TrackConfig | null; canSelect: boolean;
-  onToggle: (r: RowModel) => void; onOpen: (n: number) => void;
+export function RaceTable({ races, rows, trackConfig, canSelect, onToggle, onOpen, showRace = false }: {
+  /** Avdelningarna som raderna kommer från (en, eller alla i fliken Alla) */
+  races: Race[]; rows: RowModel[]; trackConfig: TrackConfig | null; canSelect: boolean;
+  onToggle: (r: RowModel) => void; onOpen: (r: RowModel) => void;
+  /** Visa kolumnen Avd (när tabellen blandar avdelningar) */
+  showRace?: boolean;
 }) {
   const [all, setAll] = useState(false);
-  const method = race.start_method ?? "auto";
 
   return (
     <div className="flex flex-col gap-2">
@@ -30,6 +32,7 @@ export function RaceTable({ race, rows, trackConfig, canSelect, onToggle, onOpen
             <thead>
               <tr>
                 <th scope="col" className="ta-stick">Häst</th>
+                {showRace && <th scope="col">Avd</th>}
                 <th scope="col" className="ta-left hidden md:table-cell"><Term term="form">Senaste 5</Term></th>
                 <th scope="col"><Term term="chans">Chans</Term></th>
                 <th scope="col"><Term term="streck">Streck</Term></th>
@@ -46,21 +49,27 @@ export function RaceTable({ race, rows, trackConfig, canSelect, onToggle, onOpen
             <tbody>
               {rows.map((r) => {
                 const s = r.starter;
+                const race = races.find((x) => x.race_number === r.raceNumber) ?? races[0];
+                const method = race.start_method ?? "auto";
                 const dist = all ? computeDistanceSignal(s.life_records ?? [], race.distance, method) : null;
                 const trackF = all && s.post_position != null
                   ? computeTrackFactor(s.post_position, method, s.horse_starts_history ?? [], trackConfig ?? undefined, race.distance)
                   : null;
                 return (
-                  <tr key={r.n} style={r.scratched ? { opacity: 0.55 } : undefined}>
+                  <tr key={`${r.raceNumber}-${r.n}`} style={r.scratched ? { opacity: 0.55 } : undefined}>
                     <td className="ta-stick">
                       <div className="flex items-center gap-2.5">
-                        <StartNumber number={r.n} state={r.numberState} onClick={canSelect && r.selectable ? () => onToggle(r) : undefined} />
-                        <button type="button" onClick={() => onOpen(r.n)} className="text-left truncate"
+                        <StartNumber number={r.n} state={r.numberState} onClick={canSelect && r.selectable ? () => onToggle(r) : undefined}
+                          label={showRace && canSelect && r.selectable
+                            ? (r.numberState === "selected" ? `Ta bort avd ${r.raceNumber} nr ${r.n} från systemet` : `Lägg avd ${r.raceNumber} nr ${r.n} i systemet`)
+                            : undefined} />
+                        <button type="button" onClick={() => onOpen(r)} className="text-left truncate"
                           style={{ maxWidth: 160, background: "none", border: 0, padding: 0, cursor: "pointer", color: "var(--ink)", font: "600 14px/20px var(--font-sans)" }}>
                           {r.name}
                         </button>
                       </div>
                     </td>
+                    {showRace && <td className="ta-muted">{r.raceNumber}</td>}
                     <td className="ta-left hidden md:table-cell"><FormStrip results={r.form} /></td>
                     <td className="ta-strong">{fmtPct(r.chansPct)}</td>
                     <td className="ta-muted">{fmtPct(r.streckPct)}</td>

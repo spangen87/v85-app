@@ -48,7 +48,7 @@ npm run backtest-optimizer   # Backtest av systemoptimeraren på cachen (träff,
 app/
   (authenticated)/          # Skyddade sidor (kräver inloggning)
     layout.tsx              # Lägger till BottomNav + InstallPrompt
-    page.tsx                # Startsida: omgångslista, hästkort, Top 5
+    page.tsx                # Startsida: loppvyn (fliken Alla = hela omgången, avdelningarna 1–8)
     admin/                  # Adminsida
     evaluation/             # Utvärderingssida (systemets träffsäkerhet)
     manual/                 # Manualsida (renderar MANUAL.md)
@@ -272,6 +272,12 @@ Loppvyn växlar mellan Lista (hästrader) och Tabell. Tabellen visar Häst, Chan
 Odds, Värde, Grund och Märke (från md även Senaste 5); "Visa alla kolumner" lägger till
 CS, Distans, Spår och Resultat. Rader, sortering och filter kommer från `lib/raceView.ts`
 (samma för lista, tabell och detaljvy). Kolumnrubrikerna är `<Term>` från ordlistan.
+
+### Hela omgången – fliken Alla i `components/RaceList.tsx`
+`RaceTabs` med `allTab` lägger fliken **Alla** först (`ALL_RACES` = 0 som aktiv avdelning). Den listar
+alla avdelningars rader (`RowModel.raceNumber`) med samma sortering och filter; utan filter visas
+topp `ROUND_LIST_CAP` (20). Snabbknapparna Skrällar/Värde/Signal är `toggleQuickFilter` (ett märke åt
+gången) och räknas med `quickFilterCounts`. Designen: ritytan "Hela omgången" i nyckelvyerna.
 
 ### Skrällkandidat – `lib/skrall.ts → computeSkrallSignals()`
 Häst flaggas som skrällkandidat när alla tre villkor uppfylls (trösklar i

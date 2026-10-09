@@ -27,18 +27,20 @@ export function HorseList({ children, sortLabel = "Chans" }: { children: ReactNo
 
 export function HorseRow({
   number, name, driver, chans, streck, odds, form, badge = null, signalScore = 0, valueDelta = null, isValue = false,
-  state = "idle", onToggleSystem, onOpen, noteCount = 0, dimmed = false,
+  state = "idle", onToggleSystem, onOpen, noteCount = 0, dimmed = false, race,
 }: {
   number: number; name: string; driver: string;
   chans: number | null; streck: number | null; odds: number | null; form: string[];
   badge?: RowBadge; signalScore?: number; valueDelta?: number | null; isValue?: boolean;
   state?: NumberState; onToggleSystem?: () => void; onOpen?: () => void; noteCount?: number; dimmed?: boolean;
+  /** Avdelningen — visas när listan blandar avdelningar (fliken Alla) */
+  race?: number;
 }) {
   const content = (
     <>
       <span className="ta-row-main">
         <span className="ta-row-name">{name}</span>
-        <span className="ta-row-driver">{driver}</span>
+        <span className="ta-row-driver">{race != null ? `Avd ${race} · ${driver}` : driver}</span>
         <span className="ta-row-meta">
           <FormStrip results={form} />
           {badge === "skrall" && <Badge tone="skrall">Skräll</Badge>}
@@ -66,6 +68,9 @@ export function HorseRow({
         number={number}
         state={state}
         onClick={onToggleSystem ? () => onToggleSystem() : undefined}
+        label={race != null && onToggleSystem
+          ? (state === "selected" ? `Ta bort avd ${race} nr ${number} från systemet` : `Lägg avd ${race} nr ${number} i systemet`)
+          : undefined}
       />
       {onOpen ? (
         <button type="button" className="ta-row-open" onClick={onOpen}>{content}</button>
