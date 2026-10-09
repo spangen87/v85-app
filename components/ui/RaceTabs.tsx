@@ -1,19 +1,25 @@
 "use client";
 
 import { useEffect, useRef, type KeyboardEvent } from "react";
+import { ALL_RACES } from "@/lib/raceView";
 import { cx } from "./cx";
+
+type TabInfo = { n: number; done?: boolean; picks?: number };
 
 /**
  * Avdelningsflikar. Siffran under = antal valda hästar, guldstreck = resultat klart.
  * Tab når bara aktiv flik; pilar, Home och End byter avdelning.
+ * Med allTab finns först fliken "Alla" (hela omgången, n = ALL_RACES).
  */
-export function RaceTabs({ races, active, onSelect, panelId }: {
-  races: { n: number; done?: boolean; picks?: number }[];
+export function RaceTabs({ races: raceTabs, active, onSelect, panelId, allTab = false }: {
+  races: TabInfo[];
   active: number;
   onSelect: (n: number) => void;
   /** id på panelen som flikarna styr */
   panelId?: string;
+  allTab?: boolean;
 }) {
+  const races: TabInfo[] = allTab ? [{ n: ALL_RACES }, ...raceTabs] : raceTabs;
   const scroller = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = scroller.current?.querySelector<HTMLElement>('[aria-selected="true"]');
@@ -43,11 +49,12 @@ export function RaceTabs({ races, active, onSelect, panelId }: {
           aria-selected={r.n === active}
           aria-controls={panelId}
           tabIndex={r.n === active ? 0 : -1}
-          aria-label={`Avdelning ${r.n}${r.done ? ", resultat klart" : ""}${r.picks ? `, ${r.picks} valda` : ""}`}
-          className={cx("ta-tab", r.done && "ta-tab-done")}
+          aria-label={r.n === ALL_RACES && allTab ? "Hela omgången"
+            : `Avdelning ${r.n}${r.done ? ", resultat klart" : ""}${r.picks ? `, ${r.picks} valda` : ""}`}
+          className={cx("ta-tab", r.done && "ta-tab-done", r.n === ALL_RACES && allTab && "ta-tab-all")}
           onClick={() => onSelect(r.n)}
         >
-          <span className="ta-tab-n">{r.n}</span>
+          <span className="ta-tab-n">{r.n === ALL_RACES && allTab ? "Alla" : r.n}</span>
           <span className="ta-tab-picks">{r.picks ? r.picks : " "}</span>
         </button>
       ))}

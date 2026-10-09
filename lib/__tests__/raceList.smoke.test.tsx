@@ -32,4 +32,20 @@ describe("RaceList (rök)", () => {
     expect(out.match(/class="ta-row(?: ta-row-scratched)?"/g)).toHaveLength(5);
     expect(out).toContain('aria-pressed="true"');
   });
+
+  it("fliken Alla: hela omgången, avdelningen i raden och snabbknappar", () => {
+    const race1 = { ...race, id: "V85_2026-10-10_1_1", race_number: 1, starters: [1, 2, 3].map((n) => starter(n)) } as Race;
+    const out = html(
+      <RaceList races={[race1, race]} activeRaceNumber={0} onSelectRace={() => {}} userGroups={[]} currentUserId="u"
+        systemSelections={[{ race_number: 3, horses: [{ horse_id: "h1", start_number: 1, horse_name: "Häst 1" }] }]}
+        canSelect onToggleHorse={() => {}} />
+    );
+    expect(out).toContain("Hela omgången");
+    expect(out).toContain("2 avdelningar · 8 hästar");
+    expect(out.match(/class="ta-row(?: ta-row-scratched)?"/g)).toHaveLength(8);
+    expect(out).toContain("Avd 1 · Kusk 1");
+    expect(out).toContain('aria-label="Ta bort avd 3 nr 1 från systemet"');
+    expect(out).toContain('aria-label="Visa bara"');
+    expect(out).toContain("Skrällar");
+  });
 });

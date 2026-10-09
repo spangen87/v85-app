@@ -23,6 +23,8 @@ export type RowBadge = "skrall" | "signal" | "scratched" | null;
 
 export interface RowModel {
   starter: Starter;
+  /** Avdelningen hästen springer i */
+  raceNumber: number;
   n: number;
   name: string;
   driver: string;
@@ -119,6 +121,7 @@ export function buildRowModels(race: Race, maps: RaceMaps, selected: Set<number>
     const numberState: NumberState = results ? finishState(s.finish_position) : selected.has(n) ? "selected" : "idle";
     return {
       starter: s,
+      raceNumber: race.race_number,
       n,
       name: s.horses?.name ?? "–",
       driver: s.driver,
@@ -158,9 +161,10 @@ export function sortRows(rows: RowModel[], key: SortKey): RowModel[] {
     odds: (a, b) => asc(a.odds, b.odds),
     grund: (a, b) => desc(a.grundPct, b.grundPct),
     cs: (a, b) => desc(a.cs, b.cs),
-    number: (a, b) => a.n - b.n,
+    number: (a, b) => a.raceNumber - b.raceNumber || a.n - b.n,
   };
-  return [...rows].sort((a, b) => Number(a.scratched) - Number(b.scratched) || cmp[key](a, b) || a.n - b.n);
+  return [...rows].sort((a, b) =>
+    Number(a.scratched) - Number(b.scratched) || cmp[key](a, b) || a.raceNumber - b.raceNumber || a.n - b.n);
 }
 
 export function filterRows(rows: RowModel[], f: Filters): RowModel[] {
@@ -172,6 +176,36 @@ export function filterRows(rows: RowModel[], f: Filters): RowModel[] {
     (!f.hideLongshots || r.odds == null || r.odds <= 50) &&
     (!q || r.name.toLowerCase().includes(q) || r.driver.toLowerCase().includes(q) || r.starter.trainer.toLowerCase().includes(q))
   );
+}
+
+/** Fliken "Alla": hela omgången i en lista. Avdelningar numreras från 1. */
+export const ALL_RACES = 0;
+
+/** Hur många rader "Alla" visar innan "Visa alla" när inget filter är på */
+export const ROUND_LIST_CAP = 20;
+
+/** Snabbknapparna i "Alla" — visar bara en sorts märke åt gången */
+export type QuickFilter = "skrall" | "value" | "signal";
+export const QUICK_FILTERS: { key: QuickFilter; label: string }[] = [
+  { key: "skrall", label: "Skrällar" },
+  { key: "value", label: "Värde" },
+  { key: "signal", label: "Signal" },
+];
+
+/** Slår på en snabbknapp (och stänger de andra två) eller stänger den om den redan var på. */
+export function toggleQuickFilter(f: Filters, key: QuickFilter): Filters {
+  const on = f[key] && QUICK_FILTERS.every((q) => q.key === key || !f[q.key]);
+  return { ...f, skrall: false, value: false, signal: false, [key]: !on };
+}
+
+/** Antal hästar per snabbknapp (strukna räknas inte) */
+export function quickFilterCounts(rows: RowModel[]): Record<QuickFilter, number> {
+  const live = rows.filter((r) => !r.scratched);
+  return {
+    skrall: live.filter((r) => r.badge === "skrall").length,
+    value: live.filter((r) => r.isValue).length,
+    signal: live.filter((r) => r.isEdge).length,
+  };
 }
 
 export function raceTabsInfo(races: Race[], selections: SystemSelection[]): { n: number; done: boolean; picks: number }[] {

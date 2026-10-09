@@ -56,9 +56,11 @@ function SignalsSection({ signals, total }: { signals: { key: string; detail: st
   );
 }
 
-export function HorseDetail({ race, row, reasons, signals, trackConfig, userGroups, currentUserId, canSelect, onToggle, onClose }: {
+export function HorseDetail({ race, row, reasons, signals, trackConfig, userGroups, currentUserId, canSelect, onToggle, onClose, backLabel }: {
   race: Race; row: RowModel; reasons: string[]; signals: { key: string; detail: string; points: number }[]; trackConfig: TrackConfig | null;
   userGroups: Group[]; currentUserId: string; canSelect: boolean; onToggle: () => void; onClose: () => void;
+  /** Texten på tillbakaknappen (standard: avdelningen). Med en egen text står avdelningen i stället under namnet. */
+  backLabel?: string;
 }) {
   const s = row.starter;
   const [starts, setStarts] = useState<FetchedStart[] | null>(null);
@@ -84,7 +86,7 @@ export function HorseDetail({ race, row, reasons, signals, trackConfig, userGrou
   const results = row.numberState !== "idle" && row.numberState !== "selected";
   const inSystem = row.numberState === "selected";
   const sex = SEX[s.horse_sex ?? ""] ?? s.horse_sex ?? "";
-  const info = [s.horse_age ? `${s.horse_age} år` : null, sex || null, s.post_position != null ? `Spår ${s.post_position}` : null].filter(Boolean).join(" · ");
+  const info = [backLabel ? `Avd ${race.race_number}` : null, s.horse_age ? `${s.horse_age} år` : null, sex || null, s.post_position != null ? `Spår ${s.post_position}` : null].filter(Boolean).join(" · ");
   const cat = distanceCategory(race.distance);
   const method = race.start_method ?? "auto";
   const methods = Array.from(new Set((s.life_records ?? []).map((r) => r.start_method)));
@@ -99,7 +101,7 @@ export function HorseDetail({ race, row, reasons, signals, trackConfig, userGrou
         <header className="sticky top-0 z-10 flex items-center justify-between gap-3 px-4 py-3" style={{ background: "var(--surface)", borderBottom: "1px solid var(--line)" }}>
           <button type="button" onClick={onClose} className="ta-link inline-flex items-center gap-1" style={{ background: "none", border: 0, cursor: "pointer", minHeight: 40 }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6" /></svg>
-            {`Avdelning ${race.race_number}`}
+            {backLabel ?? `Avdelning ${race.race_number}`}
           </button>
         </header>
 

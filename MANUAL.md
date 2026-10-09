@@ -9,6 +9,7 @@
 4. [Navigera bland omgångar](#4-navigera-bland-omgångar)
    - [Lista och tabell](#41-lista-och-tabell)
    - [Sortera och filtrera](#42-sortera-och-filtrera)
+   - [Hela omgången](#43-hela-omgången)
 5. [Hästraden och detaljvyn](#5-hästraden-och-detaljvyn)
    - [Detaljvyn](#51-detaljvyn)
    - [Composite Score (CS)](#52-composite-score-cs)
@@ -77,7 +78,7 @@ Innan du kan analysera en omgång måste du hämta data från ATG.
 
 Högst upp står omgången, till exempel **V85 · Solvalla** och datumet. Tryck på den för att byta omgång, hämta en ny från ATG eller hämta resultat.
 
-Under den ligger avdelningarna **1–8**. Siffran under ett nummer är hur många hästar du har valt i avdelningen, och ett guldstreck betyder att resultatet är klart.
+Under den ligger fliken **Alla** och avdelningarna **1–8**. **Alla** visar hela omgången i en lista (se [Hela omgången](#43-hela-omgången)). Siffran under ett nummer är hur många hästar du har valt i avdelningen, och ett guldstreck betyder att resultatet är klart.
 
 ### 4.1 Lista och tabell
 
@@ -89,6 +90,15 @@ Varje avdelning kan visas som **Lista** (en rad per häst) eller **Tabell** (all
 - **Filter** – bara värde, bara skräll, bara signal, dölj långskott (odds över 50) och sök på häst, kusk eller tränare. Siffran på knappen visar hur många filter som är på.
 
 Strukna hästar hamnar alltid sist, nedtonade, med märket **Struken**.
+
+### 4.3 Hela omgången
+
+Fliken **Alla** först bland avdelningarna samlar omgångens alla hästar i en lista, sorterad på **Chans** som standard. Då ser du vilka hästar som har störst chans i hela omgången, till exempel när du letar spikar. Varje rad visar avdelningen före kusken, till exempel **Avd 3 · Jonas Berglöf**. I tabellen finns en egen kolumn **Avd**.
+
+- Utan filter visas de **20** första. **Visa alla** visar resten.
+- Knapparna **Skrällar**, **Värde** och **Signal** visar bara hästar med det märket i hela omgången. Siffran är hur många det finns. Tryck igen för att visa alla. Knapparna är samma filter som under **Filter**.
+- **Sortera** och **Filter** fungerar som i en avdelning.
+- Tryck på startnumret för att lägga hästen i systemet och på raden för att öppna detaljvyn. Tillbakaknappen leder till **Hela omgången**.
 
 ## 5. Hästraden och detaljvyn
 
