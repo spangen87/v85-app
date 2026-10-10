@@ -88,6 +88,7 @@ components/
   RaceTabContext.tsx        # Context för aktiv avdelningsflik
   ResultsButton.tsx         # Knapp för att hämta loppresultat
   SaveSystemDialog.tsx      # Dialog för att spara spelsystem
+  AtgFileButton.tsx         # "Ladda ner ATG-fil": systemet som .xml för ATG:s filinlämning
   StartCountdown.tsx        # Nedräkning till start
   SystemOutcomeBanner.tsx   # "Resultaten är rättade"-banner på startsidan (systemutfall)
   SystemDrawer.tsx          # Drawer-panel för systemkonfiguration
@@ -156,6 +157,7 @@ lib/
                             # adjustCoverage: logit(c′)=α+β·logit(c), kalibrerar visad täckning (coverage i modellfilen)
   oddsSnapshots.ts          # Ögonblicksbilder av odds/streck vid hämtning (fel stoppar aldrig hämtningen)
   push.ts                   # Web push-utskick (sendPushToUsers, no-op utan VAPID-env)
+  atgFile.ts                # ATG-fil (.xml) för filinlämning: kupong per system, CRC-16/ARC i filnamnet
   systems.ts                # gradeSystemsForGame (rättar system, returnerar notifierbara sällskap)
   results.ts                # fetchAndStoreResults (resultat → starters, rättning, notis) — knapp + cron
   evaluation.ts             # computeEvaluation: utvärderingsmått (CS + Grundchans)

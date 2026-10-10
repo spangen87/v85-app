@@ -196,6 +196,7 @@ export function MainPageClient({
           />
         </div>
         <SystemSidebar
+          gameId={gameId}
           races={races}
           selections={systemSelections}
           onSave={handleOpenSaveDialog}
@@ -213,6 +214,7 @@ export function MainPageClient({
       )}
 
       <SystemDrawer
+        gameId={gameId}
         open={showDrawer}
         onClose={() => setShowDrawer(false)}
         races={races}
