@@ -503,6 +503,35 @@ export async function fetchGameResults(gameId: string): Promise<AtgGameResults> 
   return parseGameResults(raw);
 }
 
+/**
+ * ATG anger starttid som svensk lokal tid utan tidszon ("2026-10-10T15:00:00").
+ * Sparas den som den är tolkar databasen den som UTC och tiden visas två timmar
+ * fel på sommaren (en på vintern). Gör om till en riktig tidpunkt med svensk offset.
+ * Tider som redan har tidszon (Z eller ±hh:mm) lämnas orörda.
+ */
+export function atgLocalTimeToIso(value: string): string {
+  if (!value) return "";
+  if (/(Z|[+-]\d{2}:?\d{2})$/i.test(value)) return value;
+  const m = value.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/);
+  if (!m) return value;
+  const [y, mo, d, h, mi, se] = m.slice(1).map((x) => Number(x ?? 0));
+  const wall = Date.UTC(y, mo - 1, d, h, mi, se);
+  // Svensk offset vid den tidpunkten; två varv räcker även kring sommartidsbytet
+  let utc = wall - stockholmOffsetMs(wall);
+  utc = wall - stockholmOffsetMs(utc);
+  return new Date(utc).toISOString();
+}
+
+function stockholmOffsetMs(utcMs: number): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Europe/Stockholm", hourCycle: "h23",
+    year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit",
+  }).formatToParts(new Date(utcMs));
+  const get = (t: string) => Number(parts.find((p) => p.type === t)?.value);
+  const asUtc = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second"));
+  return asUtc - Math.floor(utcMs / 1000) * 1000;
+}
+
 function parseGame(raw: Record<string, unknown>, gameType: string): AtgGame {
   const currentYear = String(new Date().getFullYear());
   const prevYear = String(new Date().getFullYear() - 1);
@@ -617,7 +646,7 @@ function parseGame(raw: Record<string, unknown>, gameType: string): AtgGame {
       start_method: startMethod,
       first_prize: parseFirstPrize(race["prize"]),
       breed: detectBreed(race["terms"]),
-      start_time: String(race["startTime"] ?? ""),
+      start_time: atgLocalTimeToIso(String(race["startTime"] ?? "")),
       track: String((race["track"] as Record<string, unknown>)?.["name"] ?? ""),
       starters,
     };

@@ -2,6 +2,7 @@ import {
   detectBreed,
   normalizeLifeRecords,
   parseFirstPrize,
+  atgLocalTimeToIso,
   parseGameResults,
   parseHistoryRecord,
   parseHistoryRecords,
@@ -151,5 +152,19 @@ describe("parseHistoryRecord – kusk", () => {
       record({ start: { distance: 2140, postPosition: 4, driver: { firstName: "Ulf", lastName: "Ohlsson" } } })
     );
     expect(h?.driver).toBe("Ulf Ohlsson");
+  });
+});
+
+describe("atgLocalTimeToIso", () => {
+  it("tolkar ATG:s tid utan tidszon som svensk tid (sommartid och vintertid)", () => {
+    expect(atgLocalTimeToIso("2026-10-10T15:00:00")).toBe("2026-10-10T13:00:00.000Z");
+    expect(atgLocalTimeToIso("2026-12-05T16:20:00")).toBe("2026-12-05T15:20:00.000Z");
+  });
+  it("klarar sommartidsbytet och lämnar tider med tidszon orörda", () => {
+    expect(atgLocalTimeToIso("2026-03-29T03:30:00")).toBe("2026-03-29T01:30:00.000Z");
+    expect(atgLocalTimeToIso("2026-10-25T01:30:00")).toBe("2026-10-24T23:30:00.000Z");
+    expect(atgLocalTimeToIso("2026-10-10T15:00:00+02:00")).toBe("2026-10-10T15:00:00+02:00");
+    expect(atgLocalTimeToIso("2026-10-10T13:00:00Z")).toBe("2026-10-10T13:00:00Z");
+    expect(atgLocalTimeToIso("")).toBe("");
   });
 });
