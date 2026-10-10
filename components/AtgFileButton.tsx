@@ -6,8 +6,9 @@ import { buildAtgFile, downloadAtgFile, parseAtgGameId, supportsAtgFile } from "
 import type { SystemSelection } from "@/lib/types";
 
 /**
- * Laddar ner systemet som ATG-fil (.xml) för filinlämning på atg.se eller i
- * laget på ATG Tillsammans — så hästarna inte behöver klickas i en gång till.
+ * Laddar ner systemet som ATG-fil (.xml) för filinlämning på atg.se/spel/reducerat
+ * — så hästarna inte behöver klickas i en gång till. ATG Tillsammans saknar
+ * filuppladdning för lag (lagspel läggs i ATG:s reduceringsverktyg).
  * Visas inte för speltyper som saknar filformat.
  */
 export function AtgFileButton({ gameId, selections, size, disabled, style }: {
@@ -32,7 +33,7 @@ export function AtgFileButton({ gameId, selections, size, disabled, style }: {
   return (
     <>
       <Button size={size} disabled={disabled} style={style} onClick={handleClick}
-        title="Ladda upp filen under Spela reducerat → Filinlämning på atg.se eller i laget på ATG Tillsammans">
+        title="Ladda upp filen på atg.se/spel/reducerat (filinlämning, inloggad)">
         {status.done ? "Nedladdad" : "Ladda ner ATG-fil"}
       </Button>
       {status.error && <p className="ta-error" role="alert" style={{ margin: 0, flexBasis: "100%" }}>{status.error}</p>}

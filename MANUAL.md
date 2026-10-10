@@ -192,8 +192,8 @@ Under **System** i menyn finns **Mina system**. Välj omgång överst. Där ligg
 
 Du behöver inte klicka i hästarna en gång till på ATG. Tryck på **Ladda ner ATG-fil**, så laddas systemet ner som en fil. Knappen finns i kupongen, i sidopanelen och på varje system under **Mina system** och sällskapets flik **Spel**. Den går att trycka på när alla avdelningar har minst en häst.
 
-- **På atg.se:** öppna **Spela reducerat** → **Filinlämning** och ladda upp filen. ATG visar systemet och priset innan du bekräftar.
-- **På ATG Tillsammans:** spelläggaren aktiverar omgången i laget, väljer att lämna in en fil och laddar upp samma fil. Systemet får inte kosta mer än laget har samlat in.
+- **På atg.se:** logga in och gå till [atg.se/spel/reducerat](https://www.atg.se/spel/reducerat). Scrolla ner till rutan för filinlämning och dra dit filen, eller klicka och välj den. ATG visar rader och pris innan du bekräftar. Filen går inte att ladda upp på själva spelsidan eller i ATG:s reduceringsverktyg.
+- **På ATG Tillsammans** går det i dag inte att ladda upp filen. Ett lagspel läggs i ATG:s eget reduceringsverktyg, och där finns ingen filuppladdning. Filinlämningen på atg.se lägger alltid spelet på ditt eget konto.
 
 Filen innehåller ett vanligt system med insatsen 1 gång. Den fungerar för V85, V86, V75, GS75, V65, V64, V5 och V4, men inte för Dagens Dubbel, Lunchdubbel eller V3. Kontrollera alltid hästarna hos ATG innan du betalar. Ett spel går inte att ångra när det är lagt.
 

@@ -1,8 +1,9 @@
 import type { SystemSelection } from '@/lib/types'
 
 /**
- * ATG-fil för filinlämning (atg.se → Spela reducerat → Filinlämning, eller
- * laget på ATG Tillsammans). Formatet följer atg_filebetting.xsd (ver 1.8):
+ * ATG-fil för filinlämning på atg.se/spel/reducerat. Uppladdningen spelar
+ * alltid privat — lagspel på ATG Tillsammans går via ATG:s reduceringsverktyg,
+ * som inte tar emot filer. Formatet följer atg_filebetting.xsd (ver 1.8):
  * en kupong är ett helt system med en 0/1-sträng per avdelning, så ett vanligt
  * system blir en enda kupong.
  *
