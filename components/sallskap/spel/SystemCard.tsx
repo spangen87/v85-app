@@ -9,6 +9,7 @@ import { isWinningHorse } from '@/lib/systemsHelpers'
 import { formatRowCost } from '@/lib/atg'
 import { Badge, Button } from '@/components/ui'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { AtgFileButton } from '@/components/AtgFileButton'
 
 interface SystemCardProps {
   system: GameSystem
@@ -138,6 +139,7 @@ export function SystemCard({ system, currentUserId, onDeleted, winnersByRace, ga
         {!system.is_draft && (
           <Button size="sm" onClick={handleCopy}>{copied ? 'Kopierat' : 'Kopiera'}</Button>
         )}
+        {sorted.length > 0 && <AtgFileButton size="sm" gameId={gameId} selections={system.selections} />}
         {canLogBet && (
           <Button size="sm" onClick={handleLogBet} disabled={logged || logging}>
             {logged ? 'Spelat' : logging ? 'Registrerar…' : 'Jag spelade detta'}

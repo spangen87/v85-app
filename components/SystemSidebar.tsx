@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui";
+import { AtgFileButton } from "@/components/AtgFileButton";
 import type { SystemSelection } from "@/lib/types";
 import type { SystemSummary } from "@/lib/systemSummary";
 
@@ -16,7 +17,9 @@ interface RaceInfo {
 const STATUS = { idle: "", saving: "Sparar utkast …", saved: "Utkastet är sparat", error: "Kunde inte spara utkastet" } as const;
 
 /** Systemet på dator: alltid synligt bredvid loppet. */
-export function SystemSidebar({ races, selections, onSave, onClear, summary, draftName, draftStatus, insights, onPropose }: {
+export function SystemSidebar({ gameId, races, selections, onSave, onClear, summary, draftName, draftStatus, insights, onPropose }: {
+  /** ATG:s spel-id — behövs för ATG-filen */
+  gameId?: string | null;
   races: RaceInfo[];
   selections: SystemSelection[];
   onSave: () => void;
@@ -69,6 +72,7 @@ export function SystemSidebar({ races, selections, onSave, onClear, summary, dra
           <Button onClick={onClear} disabled={empty}>Rensa</Button>
           <Button variant="primary" onClick={onSave} disabled={!summary.complete} style={{ flex: 1 }}>Spara system</Button>
         </div>
+        <AtgFileButton gameId={gameId} selections={selections} disabled={!summary.complete} />
       </div>
     </aside>
   );

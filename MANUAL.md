@@ -188,6 +188,15 @@ Medan du bygger visar kupongen samma mått för ditt eget system. Där står ock
 
 Under **System** i menyn finns **Mina system**. Välj omgång överst. Där ligger dina **utkast** och **sparade system**. Varje system visar avdelningarna med de hästar du valt, antal rader och kostnad. När omgången är rättad står resultatet till höger, till exempel **6 av 8 rätt**, och vinnaren i varje avdelning är guldfärgad. **Fortsätt bygga** öppnar utkastet i loppvyn, och **Kopiera** kopierar systemet som text. System som du sparat till ett sällskap finns också under sällskapets flik **Spel**.
 
+#### Spela systemet på ATG
+
+Du behöver inte klicka i hästarna en gång till på ATG. Tryck på **Ladda ner ATG-fil**, så laddas systemet ner som en fil. Knappen finns i kupongen, i sidopanelen och på varje system under **Mina system** och sällskapets flik **Spel**. Den går att trycka på när alla avdelningar har minst en häst.
+
+- **På atg.se:** öppna **Spela reducerat** → **Filinlämning** och ladda upp filen. ATG visar systemet och priset innan du bekräftar.
+- **På ATG Tillsammans:** spelläggaren aktiverar omgången i laget, väljer att lämna in en fil och laddar upp samma fil. Systemet får inte kosta mer än laget har samlat in.
+
+Filen innehåller ett vanligt system med insatsen 1 gång. Den fungerar för V85, V86, V75, GS75, V65, V64, V5 och V4, men inte för Dagens Dubbel, Lunchdubbel eller V3. Kontrollera alltid hästarna hos ATG innan du betalar. Ett spel går inte att ångra när det är lagt.
+
 ---
 
 ## 7. Sällskap och samarbete

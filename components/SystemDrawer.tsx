@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { Badge, Button, Sheet, StartNumber } from "@/components/ui";
+import { AtgFileButton } from "@/components/AtgFileButton";
 import type { GameSystem, SystemHorse, SystemSelection } from "@/lib/types";
 import { lockedStarts, type SystemSummary } from "@/lib/systemSummary";
 
@@ -17,9 +18,11 @@ const STATUS = { idle: "", saving: "Sparar utkast …", saved: "Utkastet sparas 
 
 /** Kupongen på mobil: alla avdelningar med nummer att trycka på. */
 export function SystemDrawer({
-  open, onClose, races, selections, onToggleHorse, onSave, onClear, summary, draftName, onDraftNameChange, draftStatus, savedDrafts, onLoadDraft,
+  gameId, open, onClose, races, selections, onToggleHorse, onSave, onClear, summary, draftName, onDraftNameChange, draftStatus, savedDrafts, onLoadDraft,
   insights, onPropose,
 }: {
+  /** ATG:s spel-id — behövs för ATG-filen */
+  gameId?: string | null;
   open: boolean; onClose: () => void; races: RaceInfo[]; selections: SystemSelection[];
   onToggleHorse: (raceNumber: number, horse: SystemHorse) => void; onSave: () => void; onClear: () => void;
   summary: SystemSummary; draftName: string; onDraftNameChange: (s: string) => void; draftStatus: keyof typeof STATUS;
@@ -44,6 +47,7 @@ export function SystemDrawer({
             <Button onClick={onClear} disabled={selections.length === 0} style={{ flex: 1 }}>Rensa</Button>
             <Button variant="primary" onClick={onSave} disabled={!summary.complete} style={{ flex: 2 }}>Spara system</Button>
           </div>
+          <AtgFileButton gameId={gameId} selections={selections} disabled={!summary.complete} />
         </div>
       }>
       <div className="flex flex-col gap-1.5 mb-4">
