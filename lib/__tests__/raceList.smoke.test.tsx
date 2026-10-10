@@ -46,6 +46,6 @@ describe("RaceList (rök)", () => {
     expect(out).toContain("Avd 1 · Kusk 1");
     expect(out).toContain('aria-label="Ta bort avd 3 nr 1 från systemet"');
     expect(out).toContain('aria-label="Visa bara"');
-    expect(out).toContain("Skrällar");
+    expect(out).toContain("Skrällbud");
   });
 });

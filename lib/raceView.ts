@@ -1,5 +1,5 @@
 import { computeWinProbabilities, type WinProbability } from "./probability";
-import { computeSkrallMap, type SkrallSignal } from "./skrall";
+import { computeSkrallMap, SKRALLBUD, type SkrallSignal } from "./skrall";
 import { computeEdgeMap, type EdgeResult } from "./edge";
 import { computeFundamentalMapForRows, isDisagreement, scratchedMask, type FundamentalResult } from "./fundamental";
 import type { Race, Starter } from "./raceTypes";
@@ -12,11 +12,11 @@ export const SORT_LABELS: Record<SortKey, string> = {
   chans: "Chans", streck: "Streck", odds: "Odds", grund: "Grund", cs: "CS", number: "Startnummer",
 };
 
-export interface Filters { value: boolean; skrall: boolean; signal: boolean; hideLongshots: boolean; search: string }
-export const EMPTY_FILTERS: Filters = { value: false, skrall: false, signal: false, hideLongshots: false, search: "" };
+export interface Filters { value: boolean; skrall: boolean; skrallbud: boolean; signal: boolean; hideLongshots: boolean; search: string }
+export const EMPTY_FILTERS: Filters = { value: false, skrall: false, skrallbud: false, signal: false, hideLongshots: false, search: "" };
 
 export function activeFilterCount(f: Filters): number {
-  return [f.value, f.skrall, f.signal, f.hideLongshots, f.search.trim().length > 0].filter(Boolean).length;
+  return [f.value, f.skrall, f.skrallbud, f.signal, f.hideLongshots, f.search.trim().length > 0].filter(Boolean).length;
 }
 
 export type RowBadge = "skrall" | "signal" | "scratched" | null;
@@ -36,6 +36,8 @@ export interface RowModel {
   isValue: boolean;
   grundPct: number | null;
   grundRank: number | null;
+  /** Rang i fältet på intjänat per start (1 = högst) */
+  classRank: number | null;
   cs: number | null;
   csRank: number | null;
   disagree: boolean;
@@ -133,6 +135,7 @@ export function buildRowModels(race: Race, maps: RaceMaps, selected: Set<number>
       isValue,
       grundPct,
       grundRank: grundRanks.get(n) ?? null,
+      classRank: maps.skrall[n]?.classRank ?? null,
       cs: cs.get(n) ?? null,
       csRank: csRanks.get(n) ?? null,
       disagree: !scratched && isDisagreement(grundPct != null ? grundPct / 100 : null, streckPct),
@@ -167,11 +170,30 @@ export function sortRows(rows: RowModel[], key: SortKey): RowModel[] {
     Number(a.scratched) - Number(b.scratched) || cmp[key](a, b) || a.raceNumber - b.raceNumber || a.n - b.n);
 }
 
-export function filterRows(rows: RowModel[], f: Filters): RowModel[] {
+export const rowKey = (r: Pick<RowModel, "raceNumber" | "n">) => `${r.raceNumber}-${r.n}`;
+
+/**
+ * Omgångens skrällbud (se SKRALLBUD i lib/skrall.ts): de bästa på chans bland
+ * hästar under 15 % streck som är topp 3 i sitt lopp på intjänat per start.
+ * Ska få hela omgångens rader. Ger nycklar enligt rowKey.
+ */
+export function skrallbudKeys(rows: RowModel[]): Set<string> {
+  const picks = rows
+    .filter((r) => !r.scratched && r.chansPct != null && r.streckPct != null &&
+      r.streckPct < SKRALLBUD.maxStreck && r.classRank != null && r.classRank <= SKRALLBUD.maxClassRank)
+    .sort((a, b) => b.chansPct! - a.chansPct! || a.raceNumber - b.raceNumber || a.n - b.n)
+    .slice(0, SKRALLBUD.count);
+  return new Set(picks.map(rowKey));
+}
+
+/** skrallbud = omgångens skrällbud (från skrallbudKeys på hela omgången); utan den räknas de på raderna själva. */
+export function filterRows(rows: RowModel[], f: Filters, skrallbud?: Set<string>): RowModel[] {
   const q = f.search.trim().toLowerCase();
+  const bud = f.skrallbud ? skrallbud ?? skrallbudKeys(rows) : null;
   return rows.filter((r) =>
     (!f.value || r.isValue) &&
     (!f.skrall || r.badge === "skrall") &&
+    (!bud || bud.has(rowKey(r))) &&
     (!f.signal || r.isEdge) &&
     (!f.hideLongshots || r.odds == null || r.odds <= 50) &&
     (!q || r.name.toLowerCase().includes(q) || r.driver.toLowerCase().includes(q) || r.starter.trainer.toLowerCase().includes(q))
@@ -184,25 +206,26 @@ export const ALL_RACES = 0;
 /** Hur många rader "Alla" visar innan "Visa alla" när inget filter är på */
 export const ROUND_LIST_CAP = 20;
 
-/** Snabbknapparna i "Alla" — visar bara en sorts märke åt gången */
-export type QuickFilter = "skrall" | "value" | "signal";
+/** Snabbknapparna i "Alla" — visar en sorts hästar åt gången */
+export type QuickFilter = "skrallbud" | "value" | "signal";
 export const QUICK_FILTERS: { key: QuickFilter; label: string }[] = [
-  { key: "skrall", label: "Skrällar" },
+  { key: "skrallbud", label: "Skrällbud" },
   { key: "value", label: "Värde" },
   { key: "signal", label: "Signal" },
 ];
+const MARK_FILTERS = ["skrall", "skrallbud", "value", "signal"] as const;
 
-/** Slår på en snabbknapp (och stänger de andra två) eller stänger den om den redan var på. */
+/** Slår på en snabbknapp (och stänger de andra märkesfiltren) eller stänger den om den redan var ensam på. */
 export function toggleQuickFilter(f: Filters, key: QuickFilter): Filters {
-  const on = f[key] && QUICK_FILTERS.every((q) => q.key === key || !f[q.key]);
-  return { ...f, skrall: false, value: false, signal: false, [key]: !on };
+  const on = f[key] && MARK_FILTERS.every((k) => k === key || !f[k]);
+  return { ...f, skrall: false, skrallbud: false, value: false, signal: false, [key]: !on };
 }
 
-/** Antal hästar per snabbknapp (strukna räknas inte) */
-export function quickFilterCounts(rows: RowModel[]): Record<QuickFilter, number> {
+/** Antal hästar per snabbknapp (strukna räknas inte). skrallbud från skrallbudKeys på hela omgången. */
+export function quickFilterCounts(rows: RowModel[], skrallbud: Set<string>): Record<QuickFilter, number> {
   const live = rows.filter((r) => !r.scratched);
   return {
-    skrall: live.filter((r) => r.badge === "skrall").length,
+    skrallbud: live.filter((r) => skrallbud.has(rowKey(r))).length,
     value: live.filter((r) => r.isValue).length,
     signal: live.filter((r) => r.isEdge).length,
   };

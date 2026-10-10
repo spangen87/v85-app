@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import GithubSlugger from "github-slugger";
 import { GLOSSARY, isTermId, manualHref, type TermId } from "../glossary";
-import { SKRALL_THRESHOLDS } from "../skrall";
+import { SKRALL_THRESHOLDS, SKRALLBUD } from "../skrall";
 import { EDGE_THRESHOLDS } from "../edge";
 
 const NB = " ";
@@ -22,7 +22,7 @@ function manualSlugs(): Set<string> {
   return out;
 }
 
-const IDS: TermId[] = ["chans", "streck", "odds", "varde", "grund", "cs", "skrall", "signal", "oense", "form", "spar", "vardeindex"];
+const IDS: TermId[] = ["chans", "streck", "odds", "varde", "grund", "cs", "skrall", "skrallbud", "signal", "oense", "form", "spar", "vardeindex"];
 
 describe("GLOSSARY", () => {
   it("har titel och förklaring för varje term", () => {
@@ -42,6 +42,13 @@ describe("GLOSSARY", () => {
     expect(how).toContain(`${SKRALL_THRESHOLDS.maxStreck}${NB}%`);
     expect(how).toContain(`${SKRALL_THRESHOLDS.minEdge} procentenheter`);
     expect(how).toContain(`topp ${SKRALL_THRESHOLDS.maxClassRank}`);
+  });
+
+  it("skrällbudtexten stämmer med trösklarna", () => {
+    const text = `${GLOSSARY.skrallbud.what} ${GLOSSARY.skrallbud.how}`;
+    expect(text).toContain(`${SKRALLBUD.maxStreck}${NB}%`);
+    expect(text).toContain(`topp ${SKRALLBUD.maxClassRank}`);
+    expect(text).toContain("fem bästa");
   });
 
   it("signaltexten stämmer med trösklarna", () => {

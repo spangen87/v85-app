@@ -1,17 +1,19 @@
 "use client";
 
 import { useCallback, useEffect, useId, useMemo, useState } from "react";
-import { Button, HorseList, HorseRow, RaceTabs } from "@/components/ui";
+import { Button, HorseList, HorseRow, RaceTabs, Term } from "@/components/ui";
 import { RaceToolbar, type RaceView } from "./RaceToolbar";
 import { StartCountdown } from "./StartCountdown";
 import { HorseDetail } from "./HorseDetail";
 import { RaceTable } from "./RaceTable";
 import { topReasons } from "@/lib/fundamental";
+import { SKRALLBUD } from "@/lib/skrall";
 import { fmtClock, fmtStartMethod } from "@/lib/format";
 import { usePref } from "@/lib/usePref";
 import {
   activeFilterCount, ALL_RACES, buildRowModels, computeRaceMaps, EMPTY_FILTERS, filterRows, parseHastParam, QUICK_FILTERS,
-  quickFilterCounts, raceLacksMarket, raceTabsInfo, ROUND_LIST_CAP, SORT_KEYS, SORT_LABELS, sortRows, toggleQuickFilter,
+  quickFilterCounts, raceLacksMarket, raceTabsInfo, ROUND_LIST_CAP, rowKey, skrallbudKeys, SORT_KEYS, SORT_LABELS, sortRows,
+  toggleQuickFilter,
   type Filters, type RaceMaps, type RowModel,
 } from "@/lib/raceView";
 import type { Race } from "@/lib/raceTypes";
@@ -76,8 +78,14 @@ export function RaceList({
     (r: Race) => buildRowModels(r, mapsByRace.get(r.race_number)!, selectedByRace.get(r.race_number) ?? new Set()),
     [mapsByRace, selectedByRace],
   );
-  const allRows = useMemo(() => (isAll ? races.flatMap(rowsFor) : race ? rowsFor(race) : []), [isAll, races, race, rowsFor]);
-  const rows = sortRows(filterRows(allRows, filters), sort);
+  const roundRows = useMemo(() => races.flatMap(rowsFor), [races, rowsFor]);
+  // Skrällbud väljs bland hela omgången, även när en avdelning visas
+  const skrallbud = useMemo(() => skrallbudKeys(roundRows), [roundRows]);
+  const allRows = useMemo(
+    () => (isAll ? roundRows : race ? roundRows.filter((r) => r.raceNumber === race.race_number) : []),
+    [isAll, roundRows, race],
+  );
+  const rows = sortRows(filterRows(allRows, filters, skrallbud), sort);
   // Utan filter visar "Alla" topplistan; resten bakom "Visa alla"
   const canExpand = isAll && activeFilterCount(filters) === 0 && rows.length > ROUND_LIST_CAP;
   const capped = canExpand && !showAllRows;
@@ -96,8 +104,8 @@ export function RaceList({
   };
   const detailRace = detail ? races.find((r) => r.race_number === detail.race) ?? null : null;
   const detailMaps = detailRace ? mapsByRace.get(detailRace.race_number) ?? null : null;
-  const detailRow = detail && detailRace ? rowsFor(detailRace).find((r) => r.n === detail.n) ?? null : null;
-  const counts = isAll ? quickFilterCounts(allRows) : null;
+  const detailRow = detail ? roundRows.find((r) => r.raceNumber === detail.race && r.n === detail.n) ?? null : null;
+  const counts = isAll ? quickFilterCounts(allRows, skrallbud) : null;
   const firstStart = races.find((r) => r.start_time)?.start_time ?? null;
 
   return (
@@ -149,6 +157,13 @@ export function RaceList({
         </div>
       )}
 
+      {filters.skrallbud && (
+        <p style={{ margin: 0, font: "400 12px/16px var(--font-sans)", color: "var(--ink-muted)" }}>
+          <Term term="skrallbud">Skrällbud</Term>
+          {`: omgångens ${SKRALLBUD.count} bästa på chans bland hästar under ${SKRALLBUD.maxStreck} % streck som är topp ${SKRALLBUD.maxClassRank} i loppet på pengar per start.`}
+        </p>
+      )}
+
       {raceLacksMarket(allRows) && (
         <p className="ta-banner" style={{ margin: 0 }}>Streck och odds saknas än. Hämta om omgången när spelet har öppnat.</p>
       )}
@@ -162,7 +177,7 @@ export function RaceList({
         <HorseList sortLabel={SORT_LABELS[sort]}>
           {shownRows.map((r) => (
             <HorseRow
-              key={`${r.raceNumber}-${r.n}`}
+              key={rowKey(r)}
               race={isAll ? r.raceNumber : undefined}
               number={r.n}
               name={r.name}

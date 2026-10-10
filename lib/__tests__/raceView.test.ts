@@ -1,7 +1,7 @@
 import type { Race, Starter } from "../raceTypes";
 import {
   activeFilterCount, buildRowModels, EMPTY_FILTERS, filterRows, parseHastParam, quickFilterCounts, raceHasResults,
-  raceLacksMarket, raceTabsInfo, sortRows, toggleQuickFilter, type RaceMaps,
+  raceLacksMarket, raceTabsInfo, rowKey, skrallbudKeys, sortRows, toggleQuickFilter, type RaceMaps,
 } from "../raceView";
 
 function starter(n: number, o: Partial<Starter> = {}): Starter {
@@ -143,16 +143,48 @@ describe("hela omgången (fliken Alla)", () => {
     expect(sortRows(rows, "number").map((x) => `${x.raceNumber}-${x.n}`)).toEqual(["1-1", "1-2", "1-3", "2-1", "2-2"]);
   });
 
-  it("snabbknapparna visar en sorts märke åt gången och räknar inte strukna", () => {
-    expect(quickFilterCounts(rows)).toEqual({ skrall: 1, value: 0, signal: 1 });
-    const skrall = toggleQuickFilter(EMPTY_FILTERS, "skrall");
-    expect(filterRows(rows, skrall).map((x) => `${x.raceNumber}-${x.n}`)).toEqual(["1-3"]);
-    const signal = toggleQuickFilter(skrall, "signal");
-    expect([signal.skrall, signal.signal]).toEqual([false, true]);
+  it("snabbknapparna visar en sorts hästar åt gången och räknar inte strukna", () => {
+    const bud = new Set(["1-3", "2-2"]);
+    expect(quickFilterCounts(rows, bud)).toEqual({ skrallbud: 1, value: 0, signal: 1 });
+    const sb = toggleQuickFilter(EMPTY_FILTERS, "skrallbud");
+    expect(filterRows(rows, sb, bud).map(rowKey)).toEqual(["1-3", "2-2"]);
+    const signal = toggleQuickFilter({ ...sb, skrall: true }, "signal");
+    expect([signal.skrall, signal.skrallbud, signal.signal]).toEqual([false, false, true]);
     expect(toggleQuickFilter(signal, "signal")).toEqual(EMPTY_FILTERS);
     // Söktexten och "dölj långskott" rörs inte
     expect(toggleQuickFilter({ ...EMPTY_FILTERS, search: "x", hideLongshots: true }, "value"))
       .toEqual({ ...EMPTY_FILTERS, search: "x", hideLongshots: true, value: true });
+  });
+});
+
+describe("skrallbudKeys", () => {
+  const cls = (classRank: number) => ({ oddsProbPct: null, edge: null, classRank, isCandidate: false });
+  // Avd 1: nr 1 favorit (streck 40), nr 2–5 lågt streckade, nr 5 utan klass
+  const r1 = race([
+    starter(1, { bet_distribution: 40 }), starter(2, { bet_distribution: 12 }), starter(3, { bet_distribution: 8 }),
+    starter(4, { bet_distribution: 5 }), starter(5, { bet_distribution: 9 }),
+  ], { race_number: 1 });
+  // Avd 2: nr 3 struken, nr 1 och 2 med klass
+  const r2 = race([starter(1, { bet_distribution: 10 }), starter(2, { bet_distribution: 14.9 }), starter(3, { bet_distribution: 3 })], { race_number: 2 });
+  const rows = [
+    ...buildRowModels(r1, maps({
+      prob: { 1: prob(0.4), 2: prob(0.2), 3: prob(0.15), 4: prob(0.05), 5: prob(0.2) },
+      skrall: { 1: cls(1), 2: cls(2), 3: cls(3), 4: cls(3), 5: cls(4) },
+    }), new Set()),
+    ...buildRowModels(r2, maps({
+      prob: { 1: prob(0.12), 2: prob(0.3), 3: prob(0.58) },
+      skrall: { 1: cls(1), 2: cls(2), 3: cls(1) }, scratched: new Set([3]),
+    }), new Set()),
+  ];
+
+  it("omgångens fem bästa på chans bland streck under 15 % och topp 3 på intjänat", () => {
+    expect([...skrallbudKeys(rows)]).toEqual(["2-2", "1-2", "1-3", "2-1", "1-4"]);
+  });
+
+  it("filtret räknar på raderna själva när ingen omgång skickas med", () => {
+    const one = rows.filter((r) => r.raceNumber === 1);
+    expect(filterRows(one, { ...EMPTY_FILTERS, skrallbud: true }).map(rowKey)).toEqual(["1-2", "1-3", "1-4"]);
+    expect(activeFilterCount({ ...EMPTY_FILTERS, skrallbud: true })).toBe(1);
   });
 });
 

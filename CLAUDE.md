@@ -276,7 +276,7 @@ CS, Distans, Spår och Resultat. Rader, sortering och filter kommer från `lib/r
 ### Hela omgången – fliken Alla i `components/RaceList.tsx`
 `RaceTabs` med `allTab` lägger fliken **Alla** först (`ALL_RACES` = 0 som aktiv avdelning). Den listar
 alla avdelningars rader (`RowModel.raceNumber`) med samma sortering och filter; utan filter visas
-topp `ROUND_LIST_CAP` (20). Snabbknapparna Skrällar/Värde/Signal är `toggleQuickFilter` (ett märke åt
+topp `ROUND_LIST_CAP` (20). Snabbknapparna Skrällbud/Värde/Signal är `toggleQuickFilter` (ett märke åt
 gången) och räknas med `quickFilterCounts`. Designen: ritytan "Hela omgången" i nyckelvyerna.
 
 ### Skrällkandidat – `lib/skrall.ts → computeSkrallSignals()`
@@ -285,6 +285,10 @@ Häst flaggas som skrällkandidat när alla tre villkor uppfylls (trösklar i
 procentenheter över strecket, samt topp-3 i fältet på intjänat per start.
 Beräknas client-side på hela startfältet (`lib/raceView.ts` → lista, tabell, detaljvy).
 Trösklarna kommer från databasanalys 2026-06-12 (155 lopp med facit).
+**Skrällbud** (`SKRALLBUD`, `skrallbudKeys` i `lib/raceView.ts`): omgångens 5 bästa på chans bland
+streck < 15 % och topp 3 på intjänat per start — utan oddsvillkoret, alltid en lista. Väljs över hela
+omgången (även i en avdelning) och är filtret `skrallbud`. Testat 2026-10-10 på 405 lopp i databasen:
+1,43× / 1,36× vad chansen sa i två perioder; oddsvillkoret höll inte där (oddsen är från hämtningen).
 
 ### Tysta signaler / kantpoäng – `lib/edge.ts → computeEdgeSignals()`
 Signaler som inte syns i odds/streck: barfota-byte (+2 runt om, +1 fram/bak,

@@ -87,7 +87,7 @@ Varje avdelning kan visas som **Lista** (en rad per häst) eller **Tabell** (all
 ### 4.2 Sortera och filtrera
 
 - **Sortera** – Chans (standard), Streck, Odds, Grund, CS eller Startnummer.
-- **Filter** – bara värde, bara skräll, bara signal, dölj långskott (odds över 50) och sök på häst, kusk eller tränare. Siffran på knappen visar hur många filter som är på.
+- **Filter** – bara värde, bara skräll, bara omgångens skrällbud, bara signal, dölj långskott (odds över 50) och sök på häst, kusk eller tränare. Siffran på knappen visar hur många filter som är på.
 
 Strukna hästar hamnar alltid sist, nedtonade, med märket **Struken**.
 
@@ -96,7 +96,9 @@ Strukna hästar hamnar alltid sist, nedtonade, med märket **Struken**.
 Fliken **Alla** först bland avdelningarna samlar omgångens alla hästar i en lista, sorterad på **Chans** som standard. Då ser du vilka hästar som har störst chans i hela omgången, till exempel när du letar spikar. Varje rad visar avdelningen före kusken, till exempel **Avd 3 · Jonas Berglöf**. I tabellen finns en egen kolumn **Avd**.
 
 - Utan filter visas de **20** första. **Visa alla** visar resten.
-- Knapparna **Skrällar**, **Värde** och **Signal** visar bara hästar med det märket i hela omgången. Siffran är hur många det finns. Tryck igen för att visa alla. Knapparna är samma filter som under **Filter**.
+- **Skrällbud** visar omgångens fem bästa skrällbud: hästar under 15 % streck som är topp 3 i sitt lopp på pengar per start, sorterade på chans (se [Skrällbud](#skrällbud)). Listan finns alltid, även när ingen häst har märket **Skräll**.
+- **Värde** och **Signal** visar bara hästar med det märket i hela omgången.
+- Siffran på knappen är hur många hästar det gäller. Tryck igen för att visa alla. Knapparna är samma filter som under **Filter**.
 - **Sortera** och **Filter** fungerar som i en avdelning.
 - Tryck på startnumret för att lägga hästen i systemet och på raden för att öppna detaljvyn. Tillbakaknappen leder till **Hela omgången**.
 
@@ -335,6 +337,10 @@ Rankning av fältet från 0 till 100: streck 55 %, distansrekord 20 %, odds 10 %
 ### Skräll
 
 Lågt streckad häst där vinnaroddsen tror mer på hästen än V85-spelarna gör, och som har hög klass: streck under 15 %, oddschansen minst 5 procentenheter över strecket och topp 3 i loppet på pengar per start. På ett års lopp har skrällkandidaterna vunnit 16 % av gångerna, mot 9 % som strecket sa.
+
+### Skrällbud
+
+Omgångens fem bästa hästar på chans bland dem som är lågt streckade men har hög klass: streck under 15 % och topp 3 i loppet på pengar per start. Bredare än Skräll och ger alltid en lista. I 405 lopp med facit vann skrällbuden 15 % av gångerna, ungefär 1,4 gånger så ofta som chansen sa. Litet underlag, så se det som en lista att titta närmare på.
 
 ### Signal
 

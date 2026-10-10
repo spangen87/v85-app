@@ -2,7 +2,7 @@
  * Ordlistan — enda källan för förklaringar i appen. Samma texter står under
  * "## 10. Ordlista" i MANUAL.md; ändra båda samtidigt. `anchor` är rubrikens id.
  */
-export type TermId = "chans" | "streck" | "odds" | "varde" | "grund" | "cs" | "skrall" | "signal" | "oense" | "form" | "spar" | "vardeindex";
+export type TermId = "chans" | "streck" | "odds" | "varde" | "grund" | "cs" | "skrall" | "skrallbud" | "signal" | "oense" | "form" | "spar" | "vardeindex";
 
 export interface GlossaryEntry {
   title: string;
@@ -57,6 +57,13 @@ export const GLOSSARY: Record<TermId, GlossaryEntry> = {
     how: `Streck under 15${NB}%, oddschansen minst 5 procentenheter över strecket och topp 3 i loppet på pengar per start.`,
     note: `På ett års lopp har skrällkandidaterna vunnit 16${NB}% av gångerna, mot 9${NB}% som strecket sa.`,
     anchor: "skräll",
+  },
+  skrallbud: {
+    title: "Skrällbud",
+    what: "Omgångens fem bästa hästar på chans bland dem som är lågt streckade men har hög klass. Bredare än Skräll och ger alltid en lista.",
+    how: `Streck under 15${NB}% och topp 3 i loppet på pengar per start, sorterat på chans över hela omgången.`,
+    note: `I 405 lopp med facit vann skrällbuden 15${NB}% av gångerna, ungefär 1,4 gånger så ofta som chansen sa. Litet underlag, så se det som en lista att titta närmare på.`,
+    anchor: "skrällbud",
   },
   signal: {
     title: "Signal",
