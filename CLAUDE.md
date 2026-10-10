@@ -1,8 +1,9 @@
-# CLAUDE.md – Projektöversikt för v85-app
+# CLAUDE.md – Projektöversikt för Trava (v85-app)
 
 ## Projektbeskrivning
 
-Next.js 16 + React 19 + TypeScript-app för analys av ATG-travspel (V85 m.fl.).
+**Trava** – Next.js 16 + React 19 + TypeScript-app för analys av ATG-travspel (V85 m.fl.).
+Namn, färger och logga (hästhuvudet) finns i `lib/brand.ts`; ikonfilerna byggs med `npm run make-icons`.
 Databasen är Supabase (PostgreSQL). Styling med Tailwind CSS v4. PWA via Serwist.
 
 ---
@@ -34,6 +35,7 @@ npm run recompute-formscore  # Räkna om lagrad CS och Grundchans för alla omg�
                              # (kan även köras från /admin → "Räkna om alla CS-poäng")
 npm run backfill-history     # Fyll i hästhistorik + resultat (km-tid) i efterhand för alla omgångar (kräver Supabase-env)
                              # --dry = torrkörning, --game <id> = en omgång. Kör recompute-formscore efteråt.
+npm run make-icons           # Bygger app/icon.svg, app/favicon.ico och PWA-ikonerna i public/ från lib/brand.ts
 npm run fit-fundamental      # Tränar Grundchans på ett års ATG-data (cache i .cache/atg/). --write skriver lib/data/fundamental-model.json
 npm run fit-calibrated       # Skattar vikterna för kalibrerad chans (streck/odds/Grundchans) på cachen, kronologiskt. --write skriver lib/data/calibrated-model.json
 npm run backtest-optimizer   # Backtest av systemoptimeraren på cachen (träff, utdelning, kalibrering, märken). --out fil.md
@@ -70,7 +72,7 @@ app/
 
 components/
   ui/                       # Grundkomponenter från designsystemet (Button, Badge, StartNumber, Term, Sheet,
-                            # PageHeader, GameSelect, EmptyState …)
+                            # PageHeader, GameSelect, EmptyState, TravaIcon/TravaWordmark …)
   ManualContent.tsx         # Renderar MANUAL.md på /manual
   HorseDetail.tsx           # Hästens detaljvy (bedömning, signaler, starter, statistik); ?hast=<avd>-<nr>
   RaceTable.tsx             # Tabellvyn (f.d. analysverktyget)
@@ -136,6 +138,7 @@ scripts/
   recompute-formscore.ts    # Räknar om lagrad CS med aktuella vikter (npm run recompute-formscore)
 
 lib/
+  brand.ts                  # Trava: namn, färger och ikonens former (enda källan för loggan)
   format.ts                 # Formatering: 24,1 %, +4,2, 1.12,4, 41 200 kr
   glossary.ts               # Ordlistan — enda källan för förklaringar (Term, manualen)
   theme.ts                  # Temaval (ljust/mörkt/system) + skript mot blink
@@ -326,7 +329,7 @@ påverkar inte CS eller kalibrerad sannolikhet — ett kvalitativt lager ovanpå
 - All text i UI är på **svenska**.
 - Teman: följer systemet; eget val (ljust/mörkt) sparas i localStorage via `ThemeToggle` under Sällskap → Utseende och i TopNav.
 - **Designsystem:** tokens och komponenter kommer från designsystemet i Claude Design (https://claude.ai/artifact/5KsW2p1tV4vxod4bNTg1Mz).
-  Ritytor: nyckelvyer https://claude.ai/artifact/UVCKQANpMwDrUqfWhFFFXn, övriga vyer (Utvärdering, Sällskap, Mina system) https://claude.ai/artifact/UsTtteTSw4VWXyWjo2W53i.
+  Ritytor: nyckelvyer https://claude.ai/artifact/UVCKQANpMwDrUqfWhFFFXn, övriga vyer (Utvärdering, Sällskap, Mina system) och loggan ("Logga · Trava", A) https://claude.ai/artifact/UsTtteTSw4VWXyWjo2W53i.
   Sidor byggs av `PageHeader`, `ta-page`, `ta-section`, `ta-card` och `EmptyState`; inga emojis och inga trafikljusfärger. Nya komponenter använder tokens som `--ink`, `--surface`, `--accent` — aldrig `--tn-*` (alias för gamla sidor).
 - **Förklaringar:** alla mått förklaras med `<Term term="…">` från `lib/glossary.ts`. Ändra texten där och under "Ordlista" i MANUAL.md samtidigt. Inga `title=`-tooltips.
 - Mobil-navigation via `BottomNav` (fast, döljs på md+).

@@ -62,7 +62,7 @@ export function InstallPrompt() {
 
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold leading-tight" style={{ color: "#fff" }}>
-            Installera Travappen
+            Installera Trava
           </p>
           {isIOS ? (
             <p className="text-xs mt-0.5 leading-snug" style={{ color: "rgba(255,255,255,0.7)" }}>

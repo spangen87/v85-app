@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
+import { Fredoka, Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
+import { BRAND } from "@/lib/brand";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,13 +22,20 @@ const instrumentSerif = Instrument_Serif({
   style: ["normal", "italic"],
 });
 
+// Ordmärket "Trava" (components/ui/Logo.tsx)
+const fredoka = Fredoka({
+  variable: "--font-brand",
+  subsets: ["latin"],
+  weight: "600",
+});
+
 export const metadata: Metadata = {
-  title: "Travappen",
-  description: "Matematisk analys för svenska travspel — V75, V85, V64, V86, GS75",
+  title: BRAND.name,
+  description: BRAND.description,
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Travappen",
+    title: BRAND.name,
   },
   formatDetection: {
     telephone: false,
@@ -57,7 +65,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable} antialiased overflow-x-hidden`}
+        className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable} ${fredoka.variable} antialiased overflow-x-hidden`}
       >
         <ThemeProvider>{children}</ThemeProvider>
         <script

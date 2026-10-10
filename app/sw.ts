@@ -50,10 +50,10 @@ swScope.addEventListener("push", (event: PushLike) => {
   try {
     payload = (event.data.json() as typeof payload) ?? {};
   } catch {
-    payload = { title: "V85 Analys", body: event.data.text() };
+    payload = { title: "Trava", body: event.data.text() };
   }
   event.waitUntil(
-    swScope.registration.showNotification(payload.title ?? "V85 Analys", {
+    swScope.registration.showNotification(payload.title ?? "Trava", {
       body: payload.body ?? "",
       icon: "/icon-192.png",
       badge: "/icon-192.png",

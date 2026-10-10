@@ -2,6 +2,7 @@ import Link from "next/link";
 import { NavActiveLink } from "@/components/NavActiveLink";
 import { NAV_ITEMS } from "@/lib/nav";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { TravaWordmark } from "@/components/ui";
 import { UserMenu } from "@/components/groups/UserMenu";
 import { getProfile, getMyGroups } from "@/lib/actions/groups";
 import { getGroupActivity } from "@/lib/actions/activity";
@@ -27,7 +28,7 @@ export async function TopNav() {
       style={{ background: "var(--surface)", borderBottom: "1px solid var(--line)" }}
       aria-label="Huvudmeny"
     >
-      <span style={{ font: "italic 400 26px/30px var(--font-display)", color: "var(--ink)" }}>Travappen</span>
+      <Link href="/" aria-label="Trava, till loppvyn" className="shrink-0"><TravaWordmark size={30} /></Link>
 
       <div className="flex gap-1">
         {NAV_ITEMS.map((tab) => (

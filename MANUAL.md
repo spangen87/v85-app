@@ -1,4 +1,4 @@
-# Användarmanual – Travappen
+# Användarmanual – Trava
 
 ## Innehållsförteckning
 
@@ -31,7 +31,7 @@
 
 ## 1. Introduktion
 
-**Travappen** är ett verktyg för dig som spelar V85 (och liknande ATG-spel). Systemet hämtar aktuell tävlingsdata direkt från ATG, räknar ut sannolikheter baserat på form, odds, konsistens, tider och startspår, och låter dig dela anteckningar och diskutera med dina spelvänner i ett gemensamt sällskap.
+**Trava** är ett verktyg för dig som spelar V85 (och liknande ATG-spel). Systemet hämtar aktuell tävlingsdata direkt från ATG, räknar ut sannolikheter baserat på form, odds, konsistens, tider och startspår, och låter dig dela anteckningar och diskutera med dina spelvänner i ett gemensamt sällskap.
 
 Menyn har fyra delar: **Lopp** (omgången och hästarna), **System** (dina sparade system), **Utvärdering** (hur träffsäkra måtten har varit) och **Sällskap** (dina sällskap, din profil och utseendet). Manualen når du från **?** högst upp, och varje understruket ord i appen går att trycka på för en kort förklaring.
 
@@ -388,4 +388,4 @@ Hur stor utdelningen väntas bli om systemet går in, jämfört med ett system m
 
 ---
 
-*Manual version 4.0 – Travappen*
+*Manual version 4.1 – Trava*

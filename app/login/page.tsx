@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import { TravaWordmark } from "@/components/ui";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -33,12 +34,9 @@ export default function LoginPage() {
     >
       <div className="flex flex-col flex-1 px-7 py-10 max-w-sm mx-auto w-full">
         {/* Brand */}
-        <div className="flex items-center gap-2 mt-6">
-          <span
-            className="inline-block w-2.5 h-2.5 rounded-full"
-            style={{ background: "var(--tn-accent)" }}
-          />
-          <span className="tn-eyebrow">TRAVAPPEN · V75 V85 V64 V86 GS75</span>
+        <div className="flex items-center gap-3 mt-6">
+          <TravaWordmark size={36} />
+          <span className="tn-eyebrow">V85 · V86 · V75 · V64 · GS75</span>
         </div>
 
         {/* Hero */}

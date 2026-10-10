@@ -1,4 +1,4 @@
-/* Travappen grundkomponenter — porterat från designsystemets bundle.css. */
+/* Trava grundkomponenter — porterat från designsystemets bundle.css. */
 
 .ta-btn:focus-visible, .ta-num:focus-visible, .ta-term:focus-visible, .ta-tab:focus-visible,
 .ta-nav-item:focus-visible, .ta-row-open:focus-visible, .ta-link:focus-visible, .ta-chip:focus-visible,
@@ -219,3 +219,7 @@ button.ta-row-open { cursor: pointer; }
 
 /* Bekräftelse av något som inte går att ångra */
 .ta-btn.ta-btn-danger { background: var(--danger); color: var(--on-accent); border-color: transparent; }
+
+/* Ordmärket (components/ui/Logo.tsx) */
+.ta-wordmark { display: inline-flex; align-items: center; gap: 10px; }
+.ta-wordmark-text { font-family: var(--font-brand), var(--font-sans); font-weight: 600; line-height: 1; letter-spacing: -0.01em; color: var(--ink); }
