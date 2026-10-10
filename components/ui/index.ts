@@ -13,3 +13,4 @@ export { Assessment } from "./Assessment";
 export { PageHeader } from "./PageHeader";
 export { GameSelect, type GameOption } from "./GameSelect";
 export { EmptyState } from "./EmptyState";
+export { TravaIcon, TravaWordmark } from "./Logo";

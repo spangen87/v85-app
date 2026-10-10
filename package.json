@@ -12,7 +12,8 @@
     "backfill-history": "tsx scripts/backfill-history.ts",
     "fit-fundamental": "tsx scripts/fit-fundamental.ts",
     "fit-calibrated": "tsx scripts/fit-calibrated.ts",
-    "backtest-optimizer": "tsx scripts/backtest-optimizer.ts"
+    "backtest-optimizer": "tsx scripts/backtest-optimizer.ts",
+    "make-icons": "tsx scripts/make-icons.ts"
   },
   "dependencies": {
     "@serwist/next": "^9.5.6",

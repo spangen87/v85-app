@@ -3,7 +3,7 @@
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
-/* ─── Design tokens (Travappen designsystem, tokens.json) ───── */
+/* ─── Design tokens (Travas designsystem, tokens.json) ───── */
 @theme {
   --radius-sm: 6px;
   --radius-md: 10px;

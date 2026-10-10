@@ -88,7 +88,7 @@ export function buildAtgFile(
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<issuer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"' +
       ' xsi:noNamespaceSchemaLocation="https://www.atg.se/services/schemas/filebet/1.8.4/atg_filebetting.xsd"' +
-      ` company="Travappen" product="Travappen" version="1.0" createddate="${createdDate}" createdtime="${createdTime}"` +
+      ` company="Trava" product="Trava" version="1.0" createddate="${createdDate}" createdtime="${createdTime}"` +
       ' schemaversion="ATG File Betting XSD ver 1.8">',
     '  <betcoupons>',
     `    <${spec.element} couponid="1" date="${game.date}"${track} betmultiplier="1">`,
