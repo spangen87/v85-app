@@ -27,6 +27,25 @@ export const SKRALL_THRESHOLDS = {
   maxClassRank: 3,
 } as const;
 
+/**
+ * Skrällbud: omgångens bästa lågt streckade hästar med klass. Bredare än
+ * skrällkandidaten (inget oddsvillkor) och alltid en lista, sorterad på chans.
+ *
+ * Testat 2026-10-10 på 405 lopp med facit i databasen (mars–okt 2026), delat i två
+ * perioder: topp 5 per omgång på chans bland streck < 15 % och topp 3 på intjänat
+ * per start vann 15,5 % / 14,5 % — 1,43× / 1,36× vad chansen sa. Oddsvillkoret i
+ * skrällregeln höll inte i den datan (oddsen är från hämtningen, inte slutodds),
+ * klassvillkoret gjorde det.
+ */
+export const SKRALLBUD = {
+  /** Streckning måste vara under denna gräns (%) */
+  maxStreck: 15,
+  /** Klassrank (intjänat/start inom fältet) måste vara högst denna */
+  maxClassRank: 3,
+  /** Så många per omgång */
+  count: 5,
+} as const;
+
 export interface SkrallInput {
   start_number: number;
   bet_distribution: number | null;
