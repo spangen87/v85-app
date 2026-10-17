@@ -17,7 +17,7 @@ interface RaceInfo {
 const STATUS = { idle: "", saving: "Sparar utkast …", saved: "Utkastet är sparat", error: "Kunde inte spara utkastet" } as const;
 
 /** Systemet på dator: alltid synligt bredvid loppet. */
-export function SystemSidebar({ gameId, races, selections, onSave, onClear, summary, draftName, draftStatus, insights, onPropose }: {
+export function SystemSidebar({ gameId, races, selections, onSave, onClear, summary, draftName, draftStatus, insights, onPropose, refreshOdds }: {
   /** ATG:s spel-id — behövs för ATG-filen */
   gameId?: string | null;
   races: RaceInfo[];
@@ -31,6 +31,8 @@ export function SystemSidebar({ gameId, races, selections, onSave, onClear, summ
   insights?: ReactNode;
   /** Öppnar "Föreslå system" (administratörer) */
   onPropose?: () => void;
+  /** "Uppdatera odds" före spelstopp */
+  refreshOdds?: ReactNode;
 }) {
   const empty = selections.length === 0;
   return (
@@ -63,6 +65,7 @@ export function SystemSidebar({ gameId, races, selections, onSave, onClear, summ
       )}
       {insights && <div style={{ padding: 16, borderTop: "1px solid var(--line)" }}>{insights}</div>}
       <div className="flex flex-col gap-3" style={{ padding: 16, borderTop: "1px solid var(--line)" }}>
+        {refreshOdds}
         {onPropose && <Button onClick={onPropose}>Föreslå system</Button>}
         <div className="flex justify-between items-baseline">
           <span style={{ font: "600 20px/24px var(--font-sans)", fontVariantNumeric: "tabular-nums" }}>{summary.complete ? `${summary.rows} ${summary.rows === 1 ? "rad" : "rader"}` : summary.headline}</span>

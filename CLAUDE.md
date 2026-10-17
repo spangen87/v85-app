@@ -91,6 +91,7 @@ components/
   ResultsButton.tsx         # Knapp för att hämta loppresultat
   SaveSystemDialog.tsx      # Dialog för att spara spelsystem
   AtgFileButton.tsx         # "Ladda ner ATG-fil": systemet som .xml för ATG:s filinlämning
+  RefreshOddsButton.tsx     # "Uppdatera odds": hämtar om omgången (fetch-routen) + router.refresh, kupongen ligger kvar
   StartCountdown.tsx        # Nedräkning till start
   SystemOutcomeBanner.tsx   # "Resultaten är rättade"-banner på startsidan (systemutfall)
   SystemDrawer.tsx          # Drawer-panel för systemkonfiguration
@@ -147,7 +148,7 @@ lib/
   raceTypes.ts              # Starter/Race-typer för loppvyn
   horseDetail.ts            # Texter i detaljvyn (rang, varför, spår)
   prefs.ts / usePref.ts     # Sparade val per enhet (vy, sortering) med minne som reserv
-  optimizerView.ts          # Texter för optimeraren ("1 på 89", spikens avvägning, standardbudget)
+  optimizerView.ts          # Texter för optimeraren ("1 på 89", spikens avvägning, standardbudget, "Odds och streck från kl. …")
   draftAutosave.ts          # Autosparning av kupongen som utkast (ordning, generation, flush när sidan lämnas)
   relativeTime.ts           # "12 min sedan" för forum och anteckningar
   analysis.ts               # Hjälpformler (distanssignal, spårfaktor, tidsparsning)

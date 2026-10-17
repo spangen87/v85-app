@@ -17,6 +17,7 @@ import { createDraftAutosave, type DraftStatus } from '@/lib/draftAutosave'
 import { APP_COVERAGE_CALIBRATION, optimizerRacesFromRaces, systemMetrics } from '@/lib/optimizer'
 import { getRowPrice } from '@/lib/atg'
 import { ProposeSheet, SystemInsights } from '@/components/OptimizerPanel'
+import { RefreshOddsButton } from '@/components/RefreshOddsButton'
 import type { Race } from '@/lib/raceTypes'
 
 interface MainPageClientProps {
@@ -37,6 +38,8 @@ interface MainPageClientProps {
   initialDetail?: number | null
   /** Systemförslag och träffchans visas bara för administratörer (under utvärdering) */
   isAdmin?: boolean
+  /** När odds och streck senast hämtades (senaste ögonblicksbilden) */
+  oddsFetchedAt?: string | null
 }
 
 export function MainPageClient({
@@ -53,6 +56,7 @@ export function MainPageClient({
   noteCounts = {},
   initialDetail = null,
   isAdmin = false,
+  oddsFetchedAt = null,
 }: MainPageClientProps) {
   const { activeRaceNumber: activeRace, setActiveRaceNumber: setActiveRace } = useRaceTab()
   const [systemSelections, setSystemSelections] = useState<SystemSelection[]>(initialSelections)
@@ -166,6 +170,10 @@ export function MainPageClient({
   )
   const insights = optimizerRaces && metrics ? <SystemInsights races={optimizerRaces} metrics={metrics} /> : undefined
   const openPropose = isAdmin ? () => { setShowDrawer(false); setShowPropose(true) } : undefined
+  // Färska odds strax före spelstopp: samma omgång hämtas om, kupongen ligger kvar
+  const refreshOdds = gameId && gameType
+    ? <RefreshOddsButton gameId={gameId} gameType={gameType} fetchedAt={oddsFetchedAt} />
+    : undefined
 
   if (races.length === 0) {
     return (
@@ -206,6 +214,7 @@ export function MainPageClient({
           draftStatus={draftSaveStatus}
           insights={insights}
           onPropose={openPropose}
+          refreshOdds={refreshOdds}
         />
       </div>
 
@@ -230,6 +239,7 @@ export function MainPageClient({
         onLoadDraft={handleLoadDraft}
         insights={insights}
         onPropose={openPropose}
+        refreshOdds={refreshOdds}
       />
 
       {optimizerRaces && (
@@ -241,6 +251,7 @@ export function MainPageClient({
           rowPrice={getRowPrice(gameType ?? '')}
           selections={systemSelections}
           onApply={setSystemSelections}
+          refreshOdds={refreshOdds}
         />
       )}
 

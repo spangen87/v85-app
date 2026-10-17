@@ -57,6 +57,23 @@ describe("ProposeSheet", () => {
     expect(onApply.mock.calls[0][0]).toHaveLength(8);
   });
 
+  it("räknar om förslaget när oddsen uppdateras (nya races) och visar Uppdatera odds", () => {
+    const render = (rs: OptimizerRace[]) => root.render(
+      <ProposeSheet open onClose={() => {}} races={rs} gameType="V85" rowPrice={0.5} selections={[]} onApply={() => {}}
+        refreshOdds={<button type="button">Uppdatera odds</button>} />);
+    act(() => render(races));
+    expect(buttons("Uppdatera odds")).toHaveLength(1);
+    act(() => buttons("Föreslå")[0].click());
+    const before = document.body.textContent;
+    // Favoriten i avd 1 tappar: annan häst blir störst
+    const fresh = races.map((r) => r.race_number !== 1 ? r : {
+      ...r, horses: r.horses.map((h, i) => ({ ...h, chance: i === 0 ? 0.08 : i === 1 ? 0.44 : 0.08 })),
+    });
+    act(() => render(fresh));
+    expect(buttons("Använd förslaget")).toHaveLength(1);
+    expect(document.body.textContent).not.toBe(before);
+  });
+
   it("för låg budget ger en förklaring i stället för förslag", () => {
     const buttons = (text: string) => Array.from(document.querySelectorAll("button")).filter((b) => b.textContent === text);
     act(() => root.render(<ProposeSheet open onClose={() => {}} races={races} gameType="V85" rowPrice={0.5} selections={[]} onApply={() => {}} />));

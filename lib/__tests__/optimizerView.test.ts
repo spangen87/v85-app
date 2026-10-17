@@ -1,4 +1,4 @@
-import { defaultBudget, defaultSpikes, fmtOneIn, hitLabels, locksFromSelections, spikeTradeoffText } from "@/lib/optimizerView";
+import { defaultBudget, defaultSpikes, fmtOneIn, hitLabels, locksFromSelections, oddsFetchedText, spikeTradeoffText } from "@/lib/optimizerView";
 
 describe("fmtOneIn", () => {
   it("chans som 1 på N", () => {
@@ -42,5 +42,22 @@ describe("spikeTradeoffText", () => {
   it("som i issuen: träffchans och utdelning per krona", () => {
     const t = { race_number: 7, start_number: 5, chance: 0.38, nextStartNumber: 3, chanceDelta: -0.49, valueDelta: 0.19, p8IfAdded: 0, valueIndexIfAdded: 0 };
     expect(spikeTradeoffText(t, "Shogun R.R.")).toBe("Spik på 5 Shogun R.R. i avd 7: −49 % träffchans i avdelningen, +19 % utdelning per krona jämfört med att också ta nr 3.");
+  });
+});
+
+describe("oddsFetchedText", () => {
+  const now = new Date("2026-10-18T13:40:00Z"); // 15:40 svensk sommartid
+
+  it("i dag: bara klockslaget i svensk tid", () => {
+    expect(oddsFetchedText("2026-10-18T12:05:00Z", now)).toBe("Odds och streck från kl. 14:05");
+  });
+
+  it("annan dag: med datum", () => {
+    expect(oddsFetchedText("2026-10-17T19:30:00Z", now)).toBe("Odds och streck från 17 okt kl. 21:30");
+  });
+
+  it("saknas eller ogiltig tid: ingen text", () => {
+    expect(oddsFetchedText(null, now)).toBeNull();
+    expect(oddsFetchedText("inte en tid", now)).toBeNull();
   });
 });
