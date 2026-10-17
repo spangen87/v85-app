@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { Button, Metric, Sheet, Term } from "@/components/ui";
 import { fmtNum, fmtPct } from "@/lib/format";
-import { APP_COVERAGE_CALIBRATION, proposeSystems, type OptimizerRace, type SystemMetrics, type SystemProposal } from "@/lib/optimizer";
+import { APP_COVERAGE_CALIBRATION, proposeSystems, type OptimizerLock, type OptimizerRace, type SpikeConstraint, type SystemMetrics, type SystemProposal } from "@/lib/optimizer";
 import { defaultBudget, defaultSpikes, fmtOneIn, hitLabels, locksFromSelections, spikeTradeoffText } from "@/lib/optimizerView";
 import type { SystemSelection } from "@/lib/types";
 
@@ -94,7 +94,7 @@ function ProposalCard({ p, nRaces, onApply }: { p: SystemProposal; nRaces: numbe
 }
 
 /** "Föreslå system": budget och spikar in, tre förslag ut. */
-export function ProposeSheet({ open, onClose, races, gameType, rowPrice, selections, onApply }: {
+export function ProposeSheet({ open, onClose, races, gameType, rowPrice, selections, onApply, refreshOdds }: {
   open: boolean;
   onClose: () => void;
   races: OptimizerRace[];
@@ -102,25 +102,29 @@ export function ProposeSheet({ open, onClose, races, gameType, rowPrice, selecti
   rowPrice: number;
   selections: SystemSelection[];
   onApply: (selection: SystemSelection[]) => void;
+  /** "Uppdatera odds" — förslaget räknas om med de nya oddsen */
+  refreshOdds?: ReactNode;
 }) {
   const [budget, setBudget] = useState(String(defaultBudget(gameType)));
   // Standard: optimeraren väljer antalet spikar (bäst i backtesten); annars ett fast antal
   const [spikes, setSpikes] = useState<"auto" | number>("auto");
   const maxSpikes = defaultSpikes(races.length) + 1;
   const [keepMine, setKeepMine] = useState(true);
-  const [proposals, setProposals] = useState<SystemProposal[] | null>(null);
+  // Valen när Föreslå trycktes; förslagen räknas om när oddsen uppdateras (nya races)
+  const [request, setRequest] = useState<{ budgetKr: number; spikes: SpikeConstraint; locks: OptimizerLock[] } | null>(null);
   const [showMore, setShowMore] = useState(false);
+  const proposals: SystemProposal[] | null = useMemo(
+    () => (request ? proposeSystems({ races, rowPrice, ...request, coverageCalibration: APP_COVERAGE_CALIBRATION }) : null),
+    [request, races, rowPrice],
+  );
 
   function run() {
     const budgetKr = Number(budget.replace(",", "."));
-    setProposals(proposeSystems({
-      races,
+    setRequest({
       budgetKr: Number.isFinite(budgetKr) ? budgetKr : 0,
-      rowPrice,
       spikes: spikes === "auto" ? { min: 0, max: maxSpikes } : spikes,
       locks: keepMine ? locksFromSelections(selections) : [],
-      coverageCalibration: APP_COVERAGE_CALIBRATION,
-    }));
+    });
     setShowMore(false);
   }
 
@@ -156,7 +160,10 @@ export function ProposeSheet({ open, onClose, races, gameType, rowPrice, selecti
             Behåll hästarna jag redan valt
           </label>
         )}
-        <div><Button variant="primary" onClick={run}>Föreslå</Button></div>
+        <div className="flex flex-wrap items-start gap-3">
+          <Button variant="primary" onClick={run}>Föreslå</Button>
+          {refreshOdds}
+        </div>
         {proposals && (
           <div className="flex flex-col gap-3" aria-live="polite">
             {main.map((p) => <ProposalCard key={p.key} p={p} nRaces={races.length} onApply={apply} />)}

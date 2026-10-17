@@ -1,5 +1,6 @@
 import type { OptimizerLock, SpikeTradeoff } from "@/lib/optimizer";
 import type { SystemSelection } from "@/lib/types";
+import { fmtClock } from "@/lib/format";
 
 const NB = " ";
 const MINUS = "−";
@@ -39,4 +40,16 @@ const signedPct = (v: number) => {
 export function spikeTradeoffText(t: SpikeTradeoff, horseName: string): string {
   return `Spik på ${t.start_number} ${horseName} i avd ${t.race_number}: ${signedPct(t.chanceDelta)} träffchans i avdelningen, `
     + `${signedPct(t.valueDelta)} utdelning per krona jämfört med att också ta nr ${t.nextStartNumber}.`;
+}
+
+const stockholmDate = (d: Date) => d.toLocaleDateString("sv-SE", { timeZone: "Europe/Stockholm" });
+
+/** När odds och streck senast hämtades: "kl. 16:20" i dag, annars med datum. */
+export function oddsFetchedText(fetchedAt: string | null, now: Date = new Date()): string | null {
+  if (!fetchedAt) return null;
+  const at = new Date(fetchedAt);
+  if (Number.isNaN(at.getTime())) return null;
+  if (stockholmDate(at) === stockholmDate(now)) return `Odds och streck från kl. ${fmtClock(fetchedAt)}`;
+  const day = at.toLocaleDateString("sv-SE", { day: "numeric", month: "short", timeZone: "Europe/Stockholm" }).replace(/\./g, "");
+  return `Odds och streck från ${day} kl. ${fmtClock(fetchedAt)}`;
 }

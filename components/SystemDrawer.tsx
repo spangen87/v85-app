@@ -19,7 +19,7 @@ const STATUS = { idle: "", saving: "Sparar utkast …", saved: "Utkastet sparas 
 /** Kupongen på mobil: alla avdelningar med nummer att trycka på. */
 export function SystemDrawer({
   gameId, open, onClose, races, selections, onToggleHorse, onSave, onClear, summary, draftName, onDraftNameChange, draftStatus, savedDrafts, onLoadDraft,
-  insights, onPropose,
+  insights, onPropose, refreshOdds,
 }: {
   /** ATG:s spel-id — behövs för ATG-filen */
   gameId?: string | null;
@@ -31,6 +31,8 @@ export function SystemDrawer({
   insights?: ReactNode;
   /** Öppnar "Föreslå system" (administratörer) */
   onPropose?: () => void;
+  /** "Uppdatera odds" före spelstopp */
+  refreshOdds?: ReactNode;
 }) {
   return (
     <Sheet open={open} onClose={onClose} title="Ditt system" wide
@@ -54,7 +56,12 @@ export function SystemDrawer({
         <label htmlFor="system-name" className="ta-field-label">Namn</label>
         <input id="system-name" className="ta-field" value={draftName} maxLength={80} onChange={(e) => onDraftNameChange(e.target.value)} />
       </div>
-      {onPropose && <div className="mb-4"><Button onClick={onPropose}>Föreslå system</Button></div>}
+      {(refreshOdds || onPropose) && (
+        <div className="flex flex-wrap items-start gap-3 mb-4">
+          {refreshOdds}
+          {onPropose && <Button onClick={onPropose}>Föreslå system</Button>}
+        </div>
+      )}
       <div className="ta-card" style={{ overflow: "hidden" }}>
         {races.map((r, i) => {
           const picked = selections.find((s) => s.race_number === r.race_number)?.horses ?? [];

@@ -52,6 +52,18 @@ async function getRaces(supabase: Awaited<ReturnType<typeof createClient>>, game
   return data ?? [];
 }
 
+// Senaste hämtningens tid: ögonblicksbilderna sparas vid varje hämtning (migration v15)
+async function getOddsFetchedAt(supabase: Awaited<ReturnType<typeof createClient>>, gameId: string): Promise<string | null> {
+  const { data } = await supabase
+    .from("odds_snapshots")
+    .select("captured_at")
+    .eq("game_id", gameId)
+    .order("captured_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return data?.captured_at ?? null;
+}
+
 export default async function HomePage({
   searchParams,
 }: {
@@ -78,16 +90,18 @@ export default async function HomePage({
 
   // Allt som bara beror på vald omgång hämtas parallellt i ett svep —
   // forumlänk, bandata och senaste utkast behöver inte vänta på loppdatan.
-  const [races, postSummary, trackConfig, existingDraft] = await Promise.all([
+  const [races, postSummary, trackConfig, existingDraft, oddsFetchedAt] = await Promise.all([
     selectedId ? getRaces(supabase, selectedId) : Promise.resolve([]),
     selectedId ? getGamePostSummary(selectedId) : Promise.resolve(null),
     selectedGame ? getTrackConfig(selectedGame.track) : Promise.resolve(null),
     selectedId ? getDraftForGame(selectedId) : Promise.resolve(null),
+    selectedId ? getOddsFetchedAt(supabase, selectedId) : Promise.resolve(null),
   ]) as [
     Awaited<ReturnType<typeof getRaces>>,
     Awaited<ReturnType<typeof getGamePostSummary>>,
     TrackConfig | null,
     Awaited<ReturnType<typeof getDraftForGame>>,
+    string | null,
   ];
 
   // Anteckningsantal per häst behöver häst-id:n från loppdatan
@@ -163,6 +177,7 @@ export default async function HomePage({
           noteCounts={noteCounts}
           initialDetail={hast?.start ?? null}
           isAdmin={isAdmin(user.id)}
+          oddsFetchedAt={oddsFetchedAt}
         />
       </div>
     </main>
