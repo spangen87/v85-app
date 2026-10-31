@@ -168,7 +168,11 @@ export function RaceList({
         <p className="ta-banner" style={{ margin: 0 }}>Streck och odds saknas än. Hämta om omgången när spelet har öppnat.</p>
       )}
 
-      {rows.length === 0 ? (
+      {allRows.length === 0 ? (
+        <div className="ta-card flex flex-col items-center gap-3 py-8">
+          <p style={{ margin: 0, color: "var(--ink-muted)" }}>Inga hästar inlästa för avdelningen. Hämta om omgången.</p>
+        </div>
+      ) : rows.length === 0 ? (
         <div className="ta-card flex flex-col items-center gap-3 py-8">
           <p style={{ margin: 0, color: "var(--ink-muted)" }}>Inga hästar matchar filtret.</p>
           <Button onClick={() => setFilters(EMPTY_FILTERS)}>Rensa filter</Button>

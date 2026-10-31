@@ -48,4 +48,14 @@ describe("RaceList (rök)", () => {
     expect(out).toContain('aria-label="Visa bara"');
     expect(out).toContain("Skrällbud");
   });
+
+  it("avdelning utan inlästa hästar: säger det i stället för att skylla på filtret", () => {
+    const empty = { ...race, id: "V85_2026-10-10_1_2", race_number: 2, starters: [] } as Race;
+    const out = html(
+      <RaceList races={[empty]} activeRaceNumber={2} onSelectRace={() => {}} userGroups={[]} currentUserId="u"
+        systemSelections={[]} canSelect onToggleHorse={() => {}} />
+    );
+    expect(out).toContain("Inga hästar inlästa för avdelningen");
+    expect(out).not.toContain("Inga hästar matchar filtret");
+  });
 });

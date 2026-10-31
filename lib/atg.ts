@@ -468,7 +468,7 @@ export function parseGameResults(raw: Record<string, unknown>): AtgGameResults {
     const starts = (race["starts"] as Record<string, unknown>[]) ?? [];
     starts.forEach((s) => {
       const horse = (s["horse"] as Record<string, unknown>) ?? {};
-      const horseId = String(horse["id"] ?? "");
+      const horseId = horseIdOf(horse);
       const startNumber = Number(s["number"] ?? 0);
 
       // Prova result.finish → result.place → s.place (fallback)
@@ -530,6 +530,23 @@ function stockholmOffsetMs(utcMs: number): number {
   const get = (t: string) => Number(parts.find((p) => p.type === t)?.value);
   const asUtc = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second"));
   return asUtc - Math.floor(utcMs / 1000) * 1000;
+}
+
+const FOLD: Record<string, string> = { "ø": "o", "æ": "ae", "ß": "ss", "đ": "d", "ł": "l" };
+
+/**
+ * Hästens id. Utlandsregistrerade hästar (t.ex. i norska och danska lopp) saknar
+ * id hos ATG — de får ett eget, stabilt id av land och namn, annars faller de
+ * bort ur omgången. Id:t är URL-säkert (används i /api/horses/[horseId]).
+ */
+export function horseIdOf(horse: Record<string, unknown>): string {
+  if (horse["id"] != null && horse["id"] !== "") return String(horse["id"]);
+  const slug = (v: unknown) => String(v ?? "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/[øæßđł]/g, (c) => FOLD[c]).replace(/['’.]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  const name = slug(horse["name"]);
+  if (!name) return "";
+  const nat = slug(horse["nationality"]);
+  return ["utl", nat, name].filter(Boolean).join("-");
 }
 
 function parseGame(raw: Record<string, unknown>, gameType: string): AtgGame {
@@ -595,7 +612,7 @@ function parseGame(raw: Record<string, unknown>, gameType: string): AtgGame {
       return {
         start_number: Number(s["number"] ?? 0),
         post_position: Number(s["postPosition"] ?? s["number"] ?? 0),
-        horse_id: String(horse["id"] ?? ""),
+        horse_id: horseIdOf(horse),
         horse_name: String(horse["name"] ?? ""),
         horse_age: horse["age"] != null ? Number(horse["age"]) : null,
         horse_sex: String(horse["sex"] ?? ""),
