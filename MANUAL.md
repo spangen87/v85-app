@@ -124,7 +124,7 @@ Tryck på raden för att öppna hästen. Telefonens bakåtknapp stänger den. De
 
 ### 5.2 Composite Score (CS)
 
-CS rankar fältet från 0 till 100: streck 55 %, distansrekord 20 %, odds 10 %, jämnhet 10 % och form 5 %. Du hittar CS i detaljvyn och i tabellen under **Visa alla kolumner**.
+CS rankar fältet från 0 till 100: streck 85 %, form 5 %, jämnhet 5 % och klass (intjänat per start) 5 %. Vikterna är prövade mot 484 avgjorda lopp (november 2026). Distansrekord, odds, kuskform och galopprisk gjorde rankningen sämre och väger därför inte in. Eftersom strecket dominerar säger CS ungefär vad spelarna tycker; den oberoende bedömningen finns i **Grund**. Du hittar CS i detaljvyn och i tabellen under **Visa alla kolumner**.
 
 ## 6. Tabellen
 
@@ -165,7 +165,7 @@ För banor med **banspecifik konfiguration** (administreras på adminsidan) just
 - **Open stretch** (+0.12) — spår som gynnas av en extra innerfil på upploppet.
 - **Kort lopp** (−0.08) — yttre spår (5+) missgynnas extra i sprinterlopp.
 
-Justeringen beskrivs i detaljvyn under **Spår** och syns i tabellens **Spår**-kolumn (under **Visa alla kolumner**), och påverkar CS-beräkningen vid omgångshämtning.
+Justeringen beskrivs i detaljvyn under **Spår** och syns i tabellens **Spår**-kolumn (under **Visa alla kolumner**). Spårfaktorn väger inte in i CS.
 
 ---
 
@@ -345,7 +345,7 @@ Vinstchans räknad bara på hästens egna meriter: km-tider, form, spår, distan
 
 ### CS
 
-Rankning av fältet från 0 till 100: streck 55 %, distansrekord 20 %, odds 10 %, jämnhet 10 % och form 5 %.
+Rankning av fältet från 0 till 100: streck 85 %, form 5 %, jämnhet 5 % och klass (intjänat per start) 5 %.
 
 ### Skräll
 

@@ -48,7 +48,7 @@ export const GLOSSARY: Record<TermId, GlossaryEntry> = {
   cs: {
     title: "CS",
     what: "Rankning av fältet från 0 till 100. Högst CS står överst när du sorterar på CS.",
-    how: `Streck 55${NB}%, distansrekord 20${NB}%, odds 10${NB}%, jämnhet 10${NB}% och form 5${NB}%.`,
+    how: `Streck 85${NB}%, form 5${NB}%, jämnhet 5${NB}% och klass (intjänat per start) 5${NB}%.`,
     anchor: "cs",
   },
   skrall: {
