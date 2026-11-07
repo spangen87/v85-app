@@ -129,7 +129,7 @@ components/
     ProfileForm.tsx         # Byt visningsnamn
 
 scripts/
-  backtest-weights.ts       # Grid-söker CS-vikter mot lopp med facit, train/test + log-loss (npm run backtest)
+  backtest-weights.ts       # Söker CS-vikter mot lopp med facit, kronologisk train/test + log-loss (npm run backtest)
   backfill-history.ts       # Efterkonstruerar historik + resultat för sparade omgångar (npm run backfill-history)
   fit-fundamental.ts        # Tränar Grundchans-modellen (npm run fit-fundamental)
   fit-calibrated.ts         # Skattar vikterna för kalibrerad chans (npm run fit-calibrated)
@@ -222,14 +222,15 @@ supabase/
 
 ### Composite Score (CS, 0–100) – `lib/formscore.ts → calculateCompositeScore()`
 ```
-CS = 55% streckning + 20% distansrekord + 10% odds + 10% konsistens + 5% form
+CS = 85% streckning + 5% form + 5% konsistens + 5% klass (intjänat per start)
 ```
 Vikterna definieras i `CS_WEIGHTS` och delkomponenterna beräknas i
 `computeComponents()` (normaliserade 0–1 inom fältet). CS beräknas vid
 omgångshämtning och lagras i kolumnen `starters.formscore`. Vikterna kalibreras
-mot faktiska resultat med `npm run backtest` (scripts/backtest-weights.ts).
-Vinstprocent, tid, spårfaktor, kuskform och galopprisk har för närvarande vikt 0
-men beräknas och visas fortfarande i UI.
+mot faktiska resultat med `npm run backtest` (scripts/backtest-weights.ts;
+kronologisk split, lokal sökning). Omkalibrerade 2026-11-07 (#69, 484 lopp):
+vinstprocent, tid, distans, odds, spår, kuskform och galopprisk har vikt 0
+men beräknas fortfarande. Rapport: `docs/superpowers/reports/2026-11-07-cs-omkalibrering.md`.
 Häst markeras som "Värde" om CS > 55 och kalibrerad chans > streckning.
 CS rankar fältet; den kalibrerade sannolikheten (se nedan) är värdemåttet.
 

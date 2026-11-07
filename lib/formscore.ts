@@ -30,26 +30,28 @@ export interface RaceContext {
 /**
  * Vikter för Composite Score — summerar till 1.0.
  *
- * Kalibrerade 2026-06-11 mot 155 lopp med facit (scripts/backtest-weights.ts):
- * toppval-träff 48,7 % och topp-3-täckning 81,8 % (mot 38/67 % för de
- * ursprungliga vikterna). Streckningen (V85-procenten) visade sig vara den
- * starkaste enskilda prediktorn, före vinnarodds.
- * Komponenter med vikt 0 behålls i strukturen och visas fortfarande i UI;
- * kusk/galopp/spår/form saknade historisk data vid kalibreringen — kör om
- * backtesten när fler omgångar med komplett starthistorik samlats in.
+ * Omkalibrerade 2026-11-07 (issue #69) mot 484 lopp med facit i databasen,
+ * kronologisk split: träning 339 lopp t.o.m. 2026-08-22, test 145 lopp
+ * 2026-08-26 – 2026-11-01. Lokal sökning i steg om 0,05 från tre startpunkter
+ * gav samma vikter. Test-logloss 1,904 mot 1,990 för de tidigare vikterna
+ * (55/20/10/10/5), parad skillnad −0,086 ± 0,079 (95 %); toppval lika (33,8 %),
+ * topp 3 69,7 % mot 67,6 %. Kuskform och galopprisk fick vikt 0 trots
+ * fullständig data sedan juni; distans och odds (linjärt min–max) gjorde CS
+ * sämre. Rapport: docs/superpowers/reports/2026-11-07-cs-omkalibrering.md.
+ * Komponenter med vikt 0 behålls i strukturen (spår visas fortfarande i UI).
  */
 export const CS_WEIGHTS = {
   form: 0.05,
   winRate: 0.0,
-  odds: 0.10,
+  odds: 0.0,
   time: 0.0,
-  consistency: 0.10,
-  distance: 0.20,
+  consistency: 0.05,
+  distance: 0.0,
   track: 0.0,
-  streck: 0.55,
+  streck: 0.85,
   driver: 0.0,
   gallop: 0.0,
-  klass: 0.0,
+  klass: 0.05,
 } as const;
 
 export type ComponentName = keyof typeof CS_WEIGHTS;

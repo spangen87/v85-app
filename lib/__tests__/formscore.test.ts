@@ -198,8 +198,15 @@ describe("calculateCompositeScore", () => {
       start_number: 2,
       life_records: [],
     });
-    const scores = calculateCompositeScore([withRecord, withoutRecord], defaultRace);
-    // Häst med vinstrekord på distansen bör ha högre poäng
+    // Distansen har vikt 0 i CS sedan omkalibreringen (#69) men räknas fortfarande
+    const c = computeComponents([withRecord, withoutRecord], defaultRace);
+    expect(c.distance[0]).toBeGreaterThan(c.distance[1]);
+  });
+
+  it("tar hänsyn till klass (intjänat per start)", () => {
+    const rich = makeStarter({ starts_total: 20, earnings_total: 4_000_000 });
+    const poor = makeStarter({ start_number: 2, starts_total: 20, earnings_total: 100_000 });
+    const scores = calculateCompositeScore([rich, poor], defaultRace);
     expect(scores[0]).toBeGreaterThan(scores[1]);
   });
 
