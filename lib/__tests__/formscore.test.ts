@@ -66,6 +66,19 @@ describe("nya komponenter (streck, kuskform, galopprisk)", () => {
     expect(c.driver[2]).toBe(0);
   });
 
+  it("klass: högre intjänat per start ger högre komponent, utan starter = 0", () => {
+    const starters = [
+      makeStarter({ starts_total: 10, earnings_total: 2_000_000 }),
+      makeStarter({ start_number: 2, starts_total: 10, earnings_total: 200_000 }),
+      makeStarter({ start_number: 3, starts_total: 0, earnings_total: 0 }),
+    ];
+    const c = computeComponents(starters, defaultRace);
+    expect(c.klass[0]).toBe(1);
+    expect(c.klass[1]).toBeGreaterThan(0);
+    expect(c.klass[1]).toBeLessThan(1);
+    expect(c.klass[2]).toBe(0);
+  });
+
   it("galopprisk: bokstavsplaceringar sänker komponenten, utan data = neutral", () => {
     const mkStart = (place: string) => ({
       place, date: "2025-01-01", track: "Solvalla", time: "1:14,5", post_position: null,

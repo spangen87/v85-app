@@ -6,8 +6,15 @@
  * computeComponents) och grid-söker viktuppsättningar som maximerar
  * topp-3-täckning (andel lopp där vinnaren finns bland de tre högst rankade).
  *
- * Körning:  npm run backtest            (steg 0.05 i viktrummet)
- *           npm run backtest -- --step 10   (grövre steg 0.10, snabbare)
+ * Körning:  npm run backtest                      (steg 0.05, kronologisk split)
+ *           npm run backtest -- --step 10         (grövre steg 0.10)
+ *           npm run backtest -- --split random    (slumpad split per lopp i stället)
+ *           npm run backtest -- --from 2026-06-01 (bara lopp från och med datumet)
+ *           npm run backtest -- --search local    (lokal sökning; väljs automatiskt
+ *                                                  när hela gridden blir för stor)
+ *
+ * Strukna hästar (utan odds när loppet har odds) tas bort ur fältet innan
+ * komponenterna räknas — de kan inte vinna och späder bara ut fältet.
  *
  * Kräver env: NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY
  * (.env.local läses automatiskt om den finns).
@@ -21,6 +28,7 @@ import {
 } from "../lib/formscore";
 import type { AtgStarter } from "../lib/atg";
 import type { TrackConfig } from "../lib/types";
+import { scratchedMask } from "../lib/fundamental";
 
 const COMPONENT_ORDER = Object.keys(CS_WEIGHTS) as ComponentName[];
 const N_COMP = COMPONENT_ORDER.length;
@@ -94,9 +102,12 @@ interface RaceData {
   comp: Float64Array;
   n: number;
   winnerIdx: number;
+  /** Omgångens datum (YYYY-MM-DD), för kronologisk split */
+  date: string;
+  gameId: string;
 }
 
-async function loadRaces(): Promise<RaceData[]> {
+async function loadRaces(fromDate?: string): Promise<RaceData[]> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) {
@@ -109,12 +120,13 @@ async function loadRaces(): Promise<RaceData[]> {
 
   const [{ data: games }, { data: configs }, { data: races }] =
     await Promise.all([
-      db.from("games").select("id, track"),
+      db.from("games").select("id, track, date"),
       db.from("track_configs").select("*"),
       db.from("races").select("id, game_id, distance, start_method"),
     ]);
 
   const trackByGame = new Map((games ?? []).map((g) => [g.id, g.track as string | null]));
+  const dateByGame = new Map((games ?? []).map((g) => [g.id as string, String(g.date ?? "")]));
   const configByTrack = new Map(
     ((configs ?? []) as TrackConfig[])
       .filter((c) => c.active)
@@ -151,11 +163,15 @@ async function loadRaces(): Promise<RaceData[]> {
   }
 
   const result: RaceData[] = [];
-  for (const [raceId, rows] of byRace) {
-    const winnerIdx = rows.findIndex((r) => r.finish_position === 1);
-    if (winnerIdx < 0) continue;
+  for (const [raceId, allRows] of byRace) {
     const meta = raceById.get(raceId);
     if (!meta) continue;
+    const date = dateByGame.get(meta.game_id) ?? "";
+    if (fromDate && date < fromDate) continue;
+    const scratched = scratchedMask(allRows as unknown as Parameters<typeof scratchedMask>[0]);
+    const rows = allRows.filter((_, i) => !scratched[i]);
+    const winnerIdx = rows.findIndex((r) => r.finish_position === 1);
+    if (winnerIdx < 0 || rows.length < 2) continue;
 
     const starters = rows.map(rowToStarter);
     const ctx: RaceContext = {
@@ -173,7 +189,7 @@ async function loadRaces(): Promise<RaceData[]> {
         comp[i * N_COMP + k] = vectors[COMPONENT_ORDER[k]][i];
       }
     }
-    result.push({ comp, n: rows.length, winnerIdx });
+    result.push({ comp, n: rows.length, winnerIdx, date, gameId: meta.game_id });
   }
   return result;
 }
@@ -187,6 +203,21 @@ interface Metrics {
   top3: number;
   /** Genomsnittlig log-loss på vinnaren (lägre = bättre kalibrerat) */
   logloss: number;
+}
+
+/** Vinnarens log-loss per lopp (för parad jämförelse mellan vikter) */
+function raceLogLoss(race: RaceData, w: number[]): number {
+  const { comp, n, winnerIdx } = race;
+  let fieldSum = 0;
+  let winnerScore = 0;
+  for (let i = 0; i < n; i++) {
+    let score = 0;
+    for (let k = 0; k < N_COMP; k++) score += w[k] * comp[i * N_COMP + k];
+    fieldSum += score;
+    if (i === winnerIdx) winnerScore = score;
+  }
+  const pWinner = fieldSum > 0 ? winnerScore / fieldSum : 1 / n;
+  return -Math.log(Math.max(pWinner, 1e-12));
 }
 
 function evaluate(races: RaceData[], w: number[]): Metrics {
@@ -253,6 +284,93 @@ function trainTestSplit(
   return { test: shuffled.slice(0, nTest), train: shuffled.slice(nTest) };
 }
 
+/**
+ * Kronologisk split: de senaste omgångarna blir test. Hela omgångar hålls
+ * ihop så att lopp från samma dag aldrig hamnar på båda sidor.
+ */
+function chronologicalSplit(
+  races: RaceData[],
+  testFraction: number
+): { train: RaceData[]; test: RaceData[] } {
+  const games = [...new Set(races.map((r) => `${r.date}|${r.gameId}`))].sort();
+  const nTestRaces = Math.round(races.length * testFraction);
+  const testGames = new Set<string>();
+  let count = 0;
+  for (let i = games.length - 1; i >= 0 && count < nTestRaces; i--) {
+    testGames.add(games[i]);
+    count += races.filter((r) => `${r.date}|${r.gameId}` === games[i]).length;
+  }
+  const key = (r: RaceData) => `${r.date}|${r.gameId}`;
+  return {
+    train: races.filter((r) => !testGames.has(key(r))),
+    test: races.filter((r) => testGames.has(key(r))),
+  };
+}
+
+/** Antal punkter i gridden: kompositioner av `units` i N_COMP delar */
+function gridSize(units: number): number {
+  // C(units + N − 1, N − 1)
+  let c = 1;
+  for (let i = 1; i <= N_COMP - 1; i++) c = (c * (units + i)) / i;
+  return Math.round(c);
+}
+
+/**
+ * Lokal sökning i viktrummet: flyttar ett steg (1/units) mellan två
+ * komponenter så länge målet förbättras. Startar från nuvarande vikter,
+ * likformiga vikter och varje hörn (allt på en komponent) för att undvika
+ * att fastna i ett dåligt lokalt optimum.
+ */
+function localSearch(
+  races: RaceData[],
+  units: number,
+  starts: number[][],
+  score: (w: number[]) => number
+): number[] {
+  let bestW: number[] = [];
+  let bestScore = Infinity;
+  for (const start of starts) {
+    // avrunda starten till gridden
+    let u = start.map((x) => Math.round(x * units));
+    let diff = units - u.reduce((a, b) => a + b, 0);
+    for (let k = 0; diff !== 0; k = (k + 1) % N_COMP) {
+      if (diff > 0) { u[k]++; diff--; } else if (u[k] > 0) { u[k]--; diff++; }
+    }
+    let cur = score(u.map((x) => x / units));
+    let improved = true;
+    while (improved) {
+      improved = false;
+      let bestMove: number[] | null = null;
+      let bestMoveScore = cur;
+      for (let from = 0; from < N_COMP; from++) {
+        if (u[from] === 0) continue;
+        for (let to = 0; to < N_COMP; to++) {
+          if (to === from) continue;
+          const cand = [...u];
+          cand[from]--;
+          cand[to]++;
+          const sc = score(cand.map((x) => x / units));
+          if (sc < bestMoveScore - 1e-12) {
+            bestMoveScore = sc;
+            bestMove = cand;
+          }
+        }
+      }
+      if (bestMove) {
+        u = bestMove;
+        cur = bestMoveScore;
+        improved = true;
+      }
+    }
+    if (cur < bestScore) {
+      bestScore = cur;
+      bestW = u.map((x) => x / units);
+    }
+  }
+  void races;
+  return bestW;
+}
+
 /** Alla sätt att fördela `units` enheter över N_COMP vikter (kompositioner) */
 function* weightGrid(units: number): Generator<number[]> {
   const w = new Array<number>(N_COMP).fill(0);
@@ -302,10 +420,16 @@ async function main() {
   const testFraction = parseFloat(argValue("--test") ?? "0.3");
   // optimeringsmål på träningsdelen: "logloss" (default) eller "top3"
   const objective = (argValue("--objective") ?? "logloss") as "logloss" | "top3";
+  const split = (argValue("--split") ?? "date") as "date" | "random";
+  const fromDate = argValue("--from");
+  const MAX_GRID = 2_000_000;
+  const search = (argValue("--search") ?? (gridSize(units) > MAX_GRID ? "local" : "grid")) as
+    | "grid"
+    | "local";
 
   console.log("Hämtar lopp med resultat från Supabase …");
-  const races = await loadRaces();
-  console.log(`${races.length} lopp med vinnare hittades.`);
+  const races = await loadRaces(fromDate);
+  console.log(`${races.length} lopp med vinnare hittades${fromDate ? ` från ${fromDate}` : ""}.`);
 
   if (races.length < 300) {
     console.warn(
@@ -313,9 +437,16 @@ async function main() {
     );
   }
 
-  const { train, test } = trainTestSplit(races, testFraction, seed);
+  const { train, test } =
+    split === "date" ? chronologicalSplit(races, testFraction) : trainTestSplit(races, testFraction, seed);
+  const span = (rs: RaceData[]) => {
+    const d = rs.map((r) => r.date).sort();
+    return d.length ? `${d[0]} – ${d[d.length - 1]}` : "–";
+  };
   console.log(
-    `Split (seed ${seed}): ${train.length} träningslopp, ${test.length} testlopp.\n`
+    split === "date"
+      ? `Kronologisk split: ${train.length} träningslopp (${span(train)}), ${test.length} testlopp (${span(test)}).\n`
+      : `Slumpad split (seed ${seed}): ${train.length} träningslopp, ${test.length} testlopp.\n`
   );
 
   const baseW = COMPONENT_ORDER.map((name) => CS_WEIGHTS[name]);
@@ -323,43 +454,73 @@ async function main() {
   console.log(`  Train: ${fmtMetrics(evaluate(train, baseW), train.length)}`);
   console.log(`  Test:  ${fmtMetrics(evaluate(test, baseW), test.length)}\n`);
 
-  console.log(
-    `Grid-söker viktrummet i steg om ${stepPct} pe, optimerar "${objective}" på träningsdelen …`
-  );
+  // Varje komponent ensam — visar vilka som bär signal
+  console.log("Varje komponent ensam (test):");
+  for (let k = 0; k < N_COMP; k++) {
+    const w = COMPONENT_ORDER.map((_, j) => (j === k ? 1 : 0));
+    console.log(`  ${COMPONENT_ORDER[k].padEnd(12)} ${fmtMetrics(evaluate(test, w), test.length)}`);
+  }
+  console.log("");
+
   // Lägre logloss är bättre; högre top3 är bättre
   const better = (a: Metrics, b: Metrics) =>
     objective === "logloss"
       ? a.logloss - b.logloss // sortera stigande
       : b.top3 - a.top3 || b.top1 - a.top1;
 
-  type Result = { w: number[]; m: Metrics };
-  let best: Result[] = [];
-  let count = 0;
-  for (const w of weightGrid(units)) {
-    best.push({ w: [...w], m: evaluate(train, w) });
-    count++;
-    if (best.length > 5000) {
-      best.sort((a, b) => better(a.m, b.m));
-      best.length = 200;
+  let championW: number[];
+  if (search === "grid") {
+    console.log(
+      `Grid-söker viktrummet i steg om ${stepPct} pe (${gridSize(units)} punkter), optimerar "${objective}" på träningsdelen …`
+    );
+    type Result = { w: number[]; m: Metrics };
+    let best: Result[] = [];
+    for (const w of weightGrid(units)) {
+      best.push({ w: [...w], m: evaluate(train, w) });
+      if (best.length > 5000) {
+        best.sort((a, b) => better(a.m, b.m));
+        best.length = 200;
+      }
     }
-  }
-  best.sort((a, b) => better(a.m, b.m));
-  best = best.slice(0, 200);
-  console.log(`${count} viktuppsättningar utvärderade på träningsdelen.\n`);
-
-  console.log(`Topp 10 på träningsdelen (efter ${objective}):`);
-  for (const { w, m } of best.slice(0, 10)) {
-    console.log(`  ${fmtMetrics(m, train.length)}  ${fmtWeights(w)}`);
+    best.sort((a, b) => better(a.m, b.m));
+    console.log(`\nTopp 10 på träningsdelen (efter ${objective}):`);
+    for (const { w, m } of best.slice(0, 10)) {
+      console.log(`  ${fmtMetrics(m, train.length)}  ${fmtWeights(w)}`);
+    }
+    championW = best[0].w;
+  } else {
+    console.log(
+      `Lokal sökning i steg om ${stepPct} pe (hela gridden vore ${gridSize(units)} punkter), optimerar "${objective}" på träningsdelen …`
+    );
+    const starts: number[][] = [baseW, COMPONENT_ORDER.map(() => 1 / N_COMP)];
+    for (let k = 0; k < N_COMP; k++) starts.push(COMPONENT_ORDER.map((_, j) => (j === k ? 1 : 0)));
+    const score = (w: number[]) => {
+      const m = evaluate(train, w);
+      return objective === "logloss" ? m.logloss : -(m.top3 + m.top1 / 1000);
+    };
+    championW = localSearch(train, units, starts, score);
   }
 
   // Den ärliga siffran: bästa träningsvikterna utvärderade på testdelen
-  const champion = best[0];
-  const championTest = evaluate(test, champion.w);
-  console.log(`\nBästa träningsvikter: ${fmtWeights(champion.w)}`);
-  console.log(`  Train: ${fmtMetrics(champion.m, train.length)}`);
+  const championTrain = evaluate(train, championW);
+  const championTest = evaluate(test, championW);
+  console.log(`\nBästa träningsvikter: ${fmtWeights(championW)}`);
+  console.log(`  Train: ${fmtMetrics(championTrain, train.length)}`);
   console.log(`  Test:  ${fmtMetrics(championTest, test.length)}   ← ärlig uppskattning av verklig prestanda`);
 
-  const overfit = champion.m.logloss - championTest.logloss;
+  // Parad jämförelse mot nuvarande vikter på testdelen (samma lopp)
+  const diffs = test.map((r) => raceLogLoss(r, championW) - raceLogLoss(r, baseW));
+  const mean = diffs.reduce((a, b) => a + b, 0) / Math.max(diffs.length, 1);
+  const sd = Math.sqrt(
+    diffs.reduce((a, b) => a + (b - mean) ** 2, 0) / Math.max(diffs.length - 1, 1)
+  );
+  const se = sd / Math.sqrt(Math.max(diffs.length, 1));
+  console.log(
+    `\nTest-logloss, nya minus nuvarande: ${mean >= 0 ? "+" : ""}${mean.toFixed(4)} ` +
+      `(95 %-intervall ${(mean - 1.96 * se).toFixed(4)} – ${(mean + 1.96 * se).toFixed(4)}; negativt = bättre)`
+  );
+
+  const overfit = championTrain.logloss - championTest.logloss;
   if (overfit < -0.03) {
     console.log(
       `\n⚠ Test-logloss är ${Math.abs(overfit).toFixed(3)} sämre än train — tecken på överanpassning. Behåll hellre robusta/jämna vikter.`

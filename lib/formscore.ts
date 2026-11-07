@@ -49,6 +49,7 @@ export const CS_WEIGHTS = {
   streck: 0.55,
   driver: 0.0,
   gallop: 0.0,
+  klass: 0.0,
 } as const;
 
 export type ComponentName = keyof typeof CS_WEIGHTS;
@@ -181,6 +182,17 @@ export function computeComponents(
     return 1 - risky / results.length;
   });
 
+  // --- Komponent 11: Klass — intjänat per start (karriär) relativt fältet ---
+  // Log-skala: prispengar är mycket skeva, en stjärna ska inte trycka ihop resten av fältet
+  const klassRaw = starters.map((s) => {
+    const starts = Number(s.starts_total) || 0;
+    const earnings = Number(s.earnings_total) || 0;
+    return starts > 0 && earnings > 0 ? Math.log1p(earnings / starts) : 0;
+  });
+  const klassMin = Math.min(...klassRaw);
+  const klassMax = Math.max(...klassRaw);
+  const klassComponents = klassRaw.map((v) => normalize(v, klassMin, klassMax));
+
   return {
     form: formComponents,
     winRate: winRates,
@@ -192,6 +204,7 @@ export function computeComponents(
     streck: streckComponents,
     driver: driverComponents,
     gallop: gallopComponents,
+    klass: klassComponents,
   };
 }
 
