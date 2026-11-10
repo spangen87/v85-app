@@ -190,7 +190,7 @@ export function RaceList({
               streck={r.streckPct}
               odds={r.odds}
               form={r.form}
-              badge={r.badge}
+              badges={r.badges}
               signalScore={r.edgeScore}
               valueDelta={r.valueDelta}
               isValue={r.isValue}

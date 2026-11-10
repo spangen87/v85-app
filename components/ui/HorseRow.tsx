@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { fmtNum, fmtPct } from "@/lib/format";
 import type { RowBadge } from "@/lib/raceView";
-import { Badge } from "./Badge";
+import { RowBadges } from "./RowBadges";
 import { FormStrip } from "./FormStrip";
 import { StartNumber, type NumberState } from "./StartNumber";
 import { Term } from "./Term";
@@ -26,12 +26,12 @@ export function HorseList({ children, sortLabel = "Chans" }: { children: ReactNo
 }
 
 export function HorseRow({
-  number, name, driver, chans, streck, odds, form, badge = null, signalScore = 0, valueDelta = null, isValue = false,
+  number, name, driver, chans, streck, odds, form, badges = [], signalScore = 0, valueDelta = null, isValue = false,
   state = "idle", onToggleSystem, onOpen, noteCount = 0, dimmed = false, race,
 }: {
   number: number; name: string; driver: string;
   chans: number | null; streck: number | null; odds: number | null; form: string[];
-  badge?: RowBadge; signalScore?: number; valueDelta?: number | null; isValue?: boolean;
+  badges?: RowBadge[]; signalScore?: number; valueDelta?: number | null; isValue?: boolean;
   state?: NumberState; onToggleSystem?: () => void; onOpen?: () => void; noteCount?: number; dimmed?: boolean;
   /** Avdelningen — visas när listan blandar avdelningar (fliken Alla) */
   race?: number;
@@ -43,9 +43,7 @@ export function HorseRow({
         <span className="ta-row-driver">{race != null ? `Avd ${race} · ${driver}` : driver}</span>
         <span className="ta-row-meta">
           <FormStrip results={form} />
-          {badge === "skrall" && <Badge tone="skrall">Skräll</Badge>}
-          {badge === "signal" && <Badge tone="signal">{`Signal +${signalScore}`}</Badge>}
-          {badge === "scratched" && <Badge>Struken</Badge>}
+          <RowBadges badges={badges} signalScore={signalScore} />
           {noteCount > 0 && <span className="ta-row-notes">{noteCount} ant.</span>}
         </span>
       </span>

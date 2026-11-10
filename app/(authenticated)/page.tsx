@@ -16,6 +16,7 @@ import { getTrackConfig } from "@/lib/actions/tracks";
 import { getAuthUser, isAdmin } from "@/lib/supabase/guards";
 import { redirect } from "next/navigation";
 import { parseHastParam } from "@/lib/raceView";
+import { defaultGameId, stockholmDate } from "@/lib/autoFetch";
 import Link from "next/link";
 import type { SystemSelection, TrackConfig } from "@/lib/types";
 
@@ -81,10 +82,10 @@ export default async function HomePage({
     getLatestGradedOutcome(),
   ]);
 
-  // Välj spel: URL-param → senaste sparade
+  // Välj spel: URL-param → närmast kommande omgång → senaste sparade
   const selectedId = params.game && games.find((g) => g.id === params.game)
     ? params.game
-    : games[0]?.id ?? null;
+    : defaultGameId(games, stockholmDate());
 
   const selectedGame = games.find((g) => g.id === selectedId) ?? null;
 

@@ -8,6 +8,7 @@ import { Badge, Button, EmptyState, Term } from "@/components/ui";
 import { deleteGame } from "@/lib/actions/games";
 import { fmtGameLabel, fmtPct } from "@/lib/format";
 import type { GameEval, Overall } from "@/lib/evaluation";
+import { SMALL_SAMPLE, type BadgeStat } from "@/lib/badgeStats";
 
 export interface GameSummary {
   game_id: string;
@@ -18,6 +19,8 @@ export interface GameSummary {
 }
 
 interface Props {
+  /** Märkenas facit; utelämnas när inget lopp är avgjort */
+  badges?: { races: number; stats: BadgeStat[] };
   overall: Overall;
   games: GameEval[];
   allGames: GameSummary[];
@@ -31,13 +34,58 @@ const Chevron = ({ open }: { open: boolean }) => (
   </svg>
 );
 
-/** Träffsäkerheten för CS och Grund sida vid sida. */
+/** Märkenas facit: hur ofta hästar med varje märke vann, mot vad strecket och Chans sa. */
+function BadgeCard({ races, stats }: { races: number; stats: BadgeStat[] }) {
+  const pct = (v: number) => fmtPct(v, 1);
+  const shown = stats.filter((s) => s.n > 0);
+  const small = shown.some((s) => s.n < SMALL_SAMPLE);
+  return (
+    <section className="ta-card ta-card-pad flex flex-col gap-3">
+      <h2 className="ta-section-title">Märkenas facit</h2>
+      <div className="overflow-x-auto">
+        <table className="ta-table">
+          <thead>
+            <tr>
+              <th className="ta-left" style={{ background: "transparent", paddingLeft: 0 }}>Märke</th>
+              <th style={{ background: "transparent" }}>Hästar</th>
+              <th style={{ background: "transparent" }}><Term term="streck">Streck</Term></th>
+              <th style={{ background: "transparent" }}><Term term="chans">Chans</Term></th>
+              <th style={{ background: "transparent" }}>Vann</th>
+            </tr>
+          </thead>
+          <tbody>
+            {shown.map((s) => (
+              <tr key={s.key}>
+                <td className="ta-left" style={{ paddingLeft: 0 }}>
+                  {s.term ? <Term term={s.term}>{s.label}</Term> : s.label}
+                  {s.n < SMALL_SAMPLE ? " *" : ""}
+                </td>
+                <td className="ta-muted">{s.n}</td>
+                <td className="ta-muted">{pct(s.streckPct)}</td>
+                <td className="ta-muted">{pct(s.expectedPct)}</td>
+                <td className="ta-strong">{pct(s.winPct)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="ta-text">
+        {`Underlag: ${races} avgjorda avdelningar. `}
+        Streck och Chans är snittet för hästarna med märket, alltså hur ofta de borde ha vunnit. Vann är hur ofta de gjorde det.
+        Odds och streck är från senaste hämtningen före start.
+        {small ? ` * Färre än ${SMALL_SAMPLE} hästar, så siffran är osäker.` : ""}
+      </p>
+    </section>
+  );
+}
+
+/** Toppvalen för CS och Grund sida vid sida. */
 function AccuracyCard({ overall }: { overall: Overall }) {
   const hasGrund = overall.fundamental_races_evaluated > 0;
   const pct = (v: number) => fmtPct(v, 0);
   return (
     <section className="ta-card ta-card-pad flex flex-col gap-3">
-      <h2 className="ta-section-title">Träffsäkerhet</h2>
+      <h2 className="ta-section-title">Toppval</h2>
       <table className="ta-table">
         <thead>
           <tr>
@@ -112,7 +160,7 @@ function GameRow({ game, first }: { game: GameEval; first: boolean }) {
   );
 }
 
-export function EvaluationPanel({ overall, games, allGames, isAdmin }: Props) {
+export function EvaluationPanel({ badges, overall, games, allGames, isAdmin }: Props) {
   const router = useRouter();
   const [showAllGames, setShowAllGames] = useState(false);
   // Följer serverns lista efter router.refresh(); borttagna döljs direkt
@@ -143,6 +191,7 @@ export function EvaluationPanel({ overall, games, allGames, isAdmin }: Props) {
     <div className="flex flex-col gap-6">
       {overall.races_evaluated > 0 ? (
         <>
+          {badges && badges.races > 0 && <BadgeCard races={badges.races} stats={badges.stats} />}
           <AccuracyCard overall={overall} />
           <section className="ta-section">
             <h2 className="ta-section-title">Per omgång</h2>

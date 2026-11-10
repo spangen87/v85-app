@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isAdmin, getAuthUser } from "@/lib/supabase/guards";
 import { EvaluationPanel } from "@/components/EvaluationPanel";
 import { computeEvaluation, type EvalStarterRow } from "@/lib/evaluation";
+import { computeBadgeStats, type BadgeStarterRow } from "@/lib/badgeStats";
 import { PageHeader } from "@/components/ui";
 import { redirect } from "next/navigation";
 
@@ -26,12 +27,14 @@ export default async function EvaluationPage() {
 
   // Alla startande i lopp med formscore (även de som galopperat) — sidvis,
   // Supabase returnerar högst 1 000 rader per anrop
-  const rows: EvalStarterRow[] = [];
+  const rows: (EvalStarterRow & BadgeStarterRow)[] = [];
   for (let from = 0; ; from += 1000) {
     const { data: page } = await supabase
       .from("starters")
       .select(`
         race_id, start_number, formscore, fundamental_p, finish_position,
+        odds, bet_distribution, earnings_total, starts_total, last_5_results,
+        shoes_reported, shoes_front, shoes_back, shoes_front_changed, shoes_back_changed,
         races ( race_number, game_id, games ( id, date, game_type, track ) ),
         horses ( name )
       `)
@@ -39,7 +42,7 @@ export default async function EvaluationPage() {
       .order("race_id")
       .order("start_number")
       .range(from, from + 999);
-    rows.push(...((page ?? []) as unknown as EvalStarterRow[]));
+    rows.push(...((page ?? []) as unknown as (EvalStarterRow & BadgeStarterRow)[]));
     if (!page || page.length < 1000) break;
   }
 
@@ -61,6 +64,7 @@ export default async function EvaluationPage() {
   }
 
   const { overall, games } = computeEvaluation(rows);
+  const badges = computeBadgeStats(rows);
 
   const racesWithResultsByGame = new Map<string, Set<string>>();
   for (const row of (resultedRacesData ?? []) as unknown as { race_id: string; races: { game_id: string } | null }[]) {
@@ -91,9 +95,9 @@ export default async function EvaluationPage() {
 
   return (
     <main className="min-h-screen" style={{ background: "var(--bg)", color: "var(--ink)" }}>
-      <PageHeader title="Utvärdering" sub="Hur ofta modellernas toppval vinner" />
+      <PageHeader title="Utvärdering" sub="Hur märkena och toppvalen har gått" />
       <div className="ta-page">
-        <EvaluationPanel overall={overall} games={games} allGames={allGames} isAdmin={isAdmin(user.id)} />
+        <EvaluationPanel badges={badges} overall={overall} games={games} allGames={allGames} isAdmin={isAdmin(user.id)} />
       </div>
     </main>
   );

@@ -65,6 +65,7 @@ app/
       [gameId]/results/     # POST → hämtar resultat (lib/results.ts)
     cron/
       results/              # GET (Vercel Cron, vercel.json) → nattlig resultathämtning, kräver CRON_SECRET
+      games/                # GET (pg_cron var 10:e minut + Vercel Cron dagligen) → nya omgångar och färska odds
     horses/
       [horseId]/starts/     # GET → hämtar häststarter från ATG
   join/                     # Öppen sida för inbjudningslänk /join/[code]
@@ -154,7 +155,11 @@ lib/
   analysis.ts               # Hjälpformler (distanssignal, spårfaktor, tidsparsning)
   formscore.ts              # Composite Score: computeComponents + CS_WEIGHTS
   skrall.ts                 # Skrällkandidat-signal (låg streck + odds/streck-diskrepans + klass)
-  edge.ts                   # Tysta signaler/kantpoäng (barfota-byte, toppkusk, formtrend, uppehåll)
+  edge.ts                   # Tysta signaler/kantpoäng (barfota-byte, skor på, formtrend)
+  overplayed.ts             # Överspelad favorit (streck ≥ 20 %, Chans ≤ 0,8 × streck)
+  badgeStats.ts             # Märkenas facit för utvärderingssidan (computeBadgeStats)
+  autoFetch.ts              # Regler för schemalagd hämtning (refreshDue, defaultGameId, stockholmDate)
+  gameFetch.ts              # fetchAndStoreGame: omgång från ATG → databasen (knapp + cron)
   probability.ts            # Kalibrerad vinstsannolikhet (50% streck + 50% odds, BLEND_ALPHA) — Chans i loppvyn
   calibrated.ts             # Kalibrerad chans för optimeraren: softmax(a·log streck + b·log oddsP + c·log grund), läge per lopp
   optimizer.ts              # Systemoptimerare: systemMetrics, optimizeSystem, proposeSystems (rena funktioner)
@@ -164,7 +169,7 @@ lib/
   atgFile.ts                # ATG-fil (.xml) för filinlämning: kupong per system, CRC-16/ARC i filnamnet
   systems.ts                # gradeSystemsForGame (rättar system, returnerar notifierbara sällskap)
   results.ts                # fetchAndStoreResults (resultat → starters, rättning, notis) — knapp + cron
-  evaluation.ts             # computeEvaluation: utvärderingsmått (CS + Grundchans)
+  evaluation.ts             # computeEvaluation: toppval per omgång (CS + Grundchans)
   fundamental/              # Grundchans (odds-fri conditional logit)
     features.ts             # 33 faktorer, hastighetssiffra (banpar)
     model.ts                # standardisering, softmax, förklaringar (topReasons), Oense
@@ -214,6 +219,7 @@ supabase/
 **track_configs** – banspecifik konfiguration (open_stretch, short_race_threshold)
 **group_last_seen** – när användare senast besökte ett sällskap (aktivitetsbadges)
 **push_subscriptions** – web push-prenumerationer per enhet (endpoint, p256dh, auth)
+**cron_tokens** – SHA-256 av nycklar som får anropa `/api/cron/games` (name, token_hash); bara service-klienten läser
 **odds_snapshots** – odds och streck per start vid varje hämtning (game_id, race_id, race_number, start_number, horse_id, odds, bet_distribution, captured_at); ingen FK mot races
 
 ---
@@ -283,7 +289,7 @@ CS, Distans, Spår och Resultat. Rader, sortering och filter kommer från `lib/r
 ### Hela omgången – fliken Alla i `components/RaceList.tsx`
 `RaceTabs` med `allTab` lägger fliken **Alla** först (`ALL_RACES` = 0 som aktiv avdelning). Den listar
 alla avdelningars rader (`RowModel.raceNumber`) med samma sortering och filter; utan filter visas
-topp `ROUND_LIST_CAP` (20). Snabbknapparna Skrällbud/Värde/Signal är `toggleQuickFilter` (ett märke åt
+topp `ROUND_LIST_CAP` (20). Snabbknapparna Skrällbud/Värde/Signal/Överspelad är `toggleQuickFilter` (ett märke åt
 gången) och räknas med `quickFilterCounts`. Designen: ritytan "Hela omgången" i nyckelvyerna.
 
 ### Skrällkandidat – `lib/skrall.ts → computeSkrallSignals()`
@@ -298,12 +304,35 @@ omgången (även i en avdelning) och är filtret `skrallbud`. Testat 2026-10-10 
 1,43× / 1,36× vad chansen sa i två perioder; oddsvillkoret höll inte där (oddsen är från hämtningen).
 
 ### Tysta signaler / kantpoäng – `lib/edge.ts → computeEdgeSignals()`
-Signaler som inte syns i odds/streck: barfota-byte (+2 runt om, +1 fram/bak,
-−1 skor på), toppkusk (topp-2 i fältet på vinstprocent, minst 15 %, +1),
-formtrend från last_5 (senaste 2 vs äldre, ±1) och uppehåll > 60 dagar (−1).
+Signaler som inte syns i odds/streck: barfota-byte (+2 runt om, +1 fram/bak), skor på (−2,
+`shoesOn` → eget märke **Skor på**) och formtrend från last_5 (senaste 2 vs äldre, ±1).
 Trösklar i `EDGE_THRESHOLDS`. Kantpoäng = summan; ≥ +2 flaggas (`isEdge`).
-Beräknas client-side på hela fältet (`lib/raceView.ts` → lista, tabell, detaljvy) och
+Beräknas client-side per häst (`lib/raceView.ts` → lista, tabell, detaljvy) och
 påverkar inte CS eller kalibrerad sannolikhet — ett kvalitativt lager ovanpå.
+Omprövat 2026-11-09 på 484 lopp: toppkusk och uppehåll gav ingen effekt och togs bort,
+skor på höjdes från −1 (väntat 9,3 %, vann 5,5 %).
+
+### Överspelad – `lib/overplayed.ts → isOverplayed()`
+Varningsmärke: streck ≥ 20 % och Chans ≤ 0,8 × streck (`OVERPLAYED`). 229 sådana hästar i
+484 lopp hade 36,5 % streck och vann 22,3 %. Filter `overplayed` och snabbknapp i fliken Alla.
+En rad kan ha flera märken (`RowModel.badges`, `components/ui/RowBadges.tsx`).
+
+### Märkenas facit – `lib/badgeStats.ts → computeBadgeStats()`
+Utvärderingssidan räknar för varje märke (Favoriten, Överspelad, Skor på, Skräll, Skrällbud,
+Signal, Värde) antal hästar, snittstreck, snitt-Chans och hur ofta de vann, på alla avgjorda
+lopp i databasen med samma regler som loppvyn. Räknas vid sidladdning, inga lagrade siffror.
+
+### Schemalagd hämtning – `app/api/cron/games`, `lib/autoFetch.ts`, `lib/gameFetch.ts`
+`/api/cron/games` hämtar nya omgångar ur ATG:s kalender (`AUTO_FETCH_TYPES`, i dag +
+`AUTO_FETCH_LOOKAHEAD_DAYS`) och hämtar om sparade omgångar som inte startat enligt
+`refreshDue` (12 h / 3 h / 30 min / 10 min beroende på tid till start). Varje hämtning sparar
+en ögonblicksbild i `odds_snapshots`. `fetchAndStoreGame` delas med `/api/games/fetch`;
+`reuseHistory` hoppar över historikanropen vid ren oddsuppdatering. Körs var tionde minut av
+pg_cron + pg_net i Supabase (`migration_v17_cron_games.sql`, kräver `app_url` i Vault) och en
+gång per dygn av Vercel Cron som reserv (Vercels gratisnivå tillåter inte tätare). Databasens
+jobb loggar in med en egen nyckel: den ligger i Vault och appen jämför dess SHA-256 mot
+tabellen `cron_tokens` (`lib/cronAuth.ts`), så `CRON_SECRET` behöver inte kopieras till Supabase.
+Startsidan visar närmast kommande omgång (`defaultGameId`).
 
 ### Distansfaktor
 | Situation | Faktor |

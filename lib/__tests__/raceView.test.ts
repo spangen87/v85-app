@@ -46,15 +46,15 @@ describe("buildRowModels", () => {
     expect(buildRowModels(r, maps({ prob: { 1: prob(0.3) } }), new Set())[0].isValue).toBe(false);
   });
 
-  it("skräll vinner över signal, struken över båda", () => {
+  it("skräll står före signal, struken står ensam", () => {
     const r = race([starter(1), starter(2), starter(3)]);
     const rows = buildRowModels(r, maps({
       prob: { 1: prob(0.5), 2: prob(0.5) },
       skrall: { 1: { isCandidate: true, oddsProbPct: 20, edge: 10, classRank: 1 }, 2: { isCandidate: false, oddsProbPct: 10, edge: 0, classRank: 2 } },
-      edge: { 1: { signals: [], score: 3, isEdge: true }, 2: { signals: [], score: 2, isEdge: true } },
+      edge: { 1: { signals: [], score: 3, isEdge: true, shoesOn: false }, 2: { signals: [], score: 2, isEdge: true, shoesOn: false } },
       scratched: new Set([3]),
     }), new Set());
-    expect(rows.map((x) => x.badge)).toEqual(["skrall", "signal", "scratched"]);
+    expect(rows.map((x) => x.badges)).toEqual([["skrall", "signal"], ["signal"], ["scratched"]]);
   });
 
   it("före pooler: ingen chans, inget värde, saknad marknad", () => {
@@ -97,7 +97,7 @@ describe("sortRows och filterRows", () => {
     prob: { 1: prob(0.5), 2: prob(0.3), 3: prob(0.2) },
     scratched: new Set([4]),
     fundamental: { 1: { start_number: 1, p: 0.2, contributions: [] }, 2: { start_number: 2, p: 0.5, contributions: [] }, 3: { start_number: 3, p: 0.3, contributions: [] } },
-    edge: { 2: { signals: [], score: 2, isEdge: true } },
+    edge: { 2: { signals: [], score: 2, isEdge: true, shoesOn: false } },
   }), new Set());
 
   it("varje nyckel, saknade värden och strukna sist", () => {
@@ -130,7 +130,7 @@ describe("hela omgången (fliken Alla)", () => {
   const r2 = race([starter(1), starter(2)], { race_number: 2 });
   const rows = [
     ...buildRowModels(r1, maps({ prob: { 1: prob(0.2), 2: prob(0.5), 3: prob(0.3) }, skrall: { 3: { oddsProbPct: 12, edge: 6, classRank: 1, isCandidate: true } } }), new Set([2])),
-    ...buildRowModels(r2, maps({ prob: { 1: prob(0.5), 2: prob(0.5) }, scratched: new Set([2]), edge: { 1: { signals: [], score: 2, isEdge: true } } }), new Set()),
+    ...buildRowModels(r2, maps({ prob: { 1: prob(0.5), 2: prob(0.5) }, scratched: new Set([2]), edge: { 1: { signals: [], score: 2, isEdge: true, shoesOn: false } } }), new Set()),
   ];
 
   it("raderna vet sin avdelning och valet gäller per avdelning", () => {
@@ -145,7 +145,7 @@ describe("hela omgången (fliken Alla)", () => {
 
   it("snabbknapparna visar en sorts hästar åt gången och räknar inte strukna", () => {
     const bud = new Set(["1-3", "2-2"]);
-    expect(quickFilterCounts(rows, bud)).toEqual({ skrallbud: 1, value: 0, signal: 1 });
+    expect(quickFilterCounts(rows, bud)).toEqual({ skrallbud: 1, value: 0, signal: 1, overplayed: 0 });
     const sb = toggleQuickFilter(EMPTY_FILTERS, "skrallbud");
     expect(filterRows(rows, sb, bud).map(rowKey)).toEqual(["1-3", "2-2"]);
     const signal = toggleQuickFilter({ ...sb, skrall: true }, "signal");
@@ -203,5 +203,22 @@ describe("parseHastParam", () => {
   });
   it("trasiga länkar ignoreras", () => {
     for (const v of [null, "", "x", "3-", "-2", "9-2", "3-99", "3-2-1", "3.5-2"]) expect(parseHastParam(v, races)).toBeNull();
+  });
+});
+
+describe("överspelad och skor på", () => {
+  it("märker högt streckad häst där chansen ligger klart under strecket", () => {
+    const r = race([starter(1, { bet_distribution: 40 }), starter(2, { bet_distribution: 40 }), starter(3, { bet_distribution: 10 })]);
+    const rows = buildRowModels(r, maps({
+      prob: { 1: prob(0.3), 2: prob(0.36), 3: prob(0.05) },
+      edge: { 2: { signals: [], score: -2, isEdge: false, shoesOn: true } },
+    }), new Set());
+    // 30 / 40 = 0,75 → överspelad; 36 / 40 = 0,9 → inte; streck 10 % är för lågt
+    expect(rows.map((x) => x.isOverplayed)).toEqual([true, false, false]);
+    expect(rows[0].badges).toEqual(["overplayed"]);
+    expect(rows[1].badges).toEqual(["shoes"]);
+    expect(filterRows(rows, { ...EMPTY_FILTERS, overplayed: true }).map((x) => x.n)).toEqual([1]);
+    expect(quickFilterCounts(rows, new Set()).overplayed).toBe(1);
+    expect(toggleQuickFilter({ ...EMPTY_FILTERS, value: true }, "overplayed")).toMatchObject({ value: false, overplayed: true });
   });
 });

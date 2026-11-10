@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Assessment, Badge, Button, FormStrip, StartNumber, Term, ValueDelta } from "@/components/ui";
+import { Assessment, Button, FormStrip, RowBadges, StartNumber, Term, ValueDelta } from "@/components/ui";
 import { HorseNotes } from "./notes/HorseNotes";
 import { useModalLayer } from "@/lib/modalLayer";
 import { fmtKmTime, fmtKr, fmtNum, fmtOrdinal, fmtPct } from "@/lib/format";
@@ -119,9 +119,7 @@ export function HorseDetail({ race, row, reasons, signals, trackConfig, userGrou
             </div>
             <div className="flex items-center gap-2 flex-wrap">
               <FormStrip results={row.form} />
-              {row.badge === "skrall" && <Badge tone="skrall">Skräll</Badge>}
-              {row.badge === "signal" && <Badge tone="signal">{`Signal +${row.edgeScore}`}</Badge>}
-              {row.badge === "scratched" && <Badge>Struken</Badge>}
+              <RowBadges badges={row.badges} signalScore={row.edgeScore} />
             </div>
             {results ? (
               <p style={{ margin: 0, font: "600 15px/20px var(--font-sans)" }}>
@@ -137,7 +135,8 @@ export function HorseDetail({ race, row, reasons, signals, trackConfig, userGrou
           <Section title="Bedömning">
             <Assessment rows={[
               { key: "chans", label: <Term term="chans" />, value: fmtPct(row.chansPct), note: chansNote(row.chansRank) },
-              { key: "streck", label: <Term term="streck" />, value: fmtPct(row.streckPct) },
+              { key: "streck", label: <Term term="streck" />, value: fmtPct(row.streckPct),
+                note: row.isOverplayed ? <><Term term="overspelad">Överspelad</Term>: strecket är klart högre än chansen.</> : null },
               { key: "varde", label: <Term term="varde" />, value: row.valueDelta != null ? <ValueDelta delta={row.valueDelta} highlight={row.isValue} /> : "–",
                 note: row.isValue ? "Vinner oftare än strecket säger." : null },
               { key: "odds", label: <Term term="odds" />, value: fmtNum(row.odds), note: s.p_odds != null ? `Platsodds ${fmtNum(s.p_odds, 2)}` : null },

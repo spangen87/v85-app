@@ -11,6 +11,7 @@ const CHECKS: { key: Exclude<keyof Filters, "search">; label: string }[] = [
   { key: "skrall", label: "Bara skräll" },
   { key: "skrallbud", label: "Bara omgångens skrällbud" },
   { key: "signal", label: "Bara signal" },
+  { key: "overplayed", label: "Bara överspelade favoriter" },
   { key: "hideLongshots", label: "Dölj långskott (odds över 50)" },
 ];
 
