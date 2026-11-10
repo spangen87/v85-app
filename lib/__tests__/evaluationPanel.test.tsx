@@ -20,9 +20,14 @@ const allGames = [
 ];
 
 describe("EvaluationPanel", () => {
-  const out = html(<EvaluationPanel overall={overall} games={games} allGames={allGames} isAdmin={false} />);
+  const badges = { races: 94, stats: [
+    { key: "overplayed" as const, label: "Överspelad", term: "overspelad" as const, n: 229, streckPct: 36.5, expectedPct: 25.8, winPct: 22.3 },
+    { key: "skrall" as const, label: "Skräll", term: "skrall" as const, n: 93, streckPct: 7.4, expectedPct: 12.9, winPct: 16.1 },
+    { key: "value" as const, label: "Värde", term: "varde" as const, n: 0, streckPct: 0, expectedPct: 0, winPct: 0 },
+  ] };
+  const out = html(<EvaluationPanel badges={badges} overall={overall} games={games} allGames={allGames} isAdmin={false} />);
   it("jämför CS och Grund i en tabell med förklarbara rubriker", () => {
-    expect(out).toContain("Träffsäkerhet");
+    expect(out).toContain("Toppval");
     expect(out).toMatch(/ta-term[^>]*>CS</);
     expect(out).toMatch(/ta-term[^>]*>Grund</);
     expect(out).toContain("Toppval vinner");
@@ -30,6 +35,16 @@ describe("EvaluationPanel", () => {
     expect(out).toContain("24 %");
     expect(out).toContain("Vinnaren bland topp 3");
     expect(out).toContain("12 omgångar · 94 avdelningar");
+  });
+  it("märkenas facit: streck, chans och utfall per märke, tomma märken dolda", () => {
+    expect(out).toContain("Märkenas facit");
+    expect(out).toMatch(/ta-term[^>]*>Överspelad</);
+    expect(out).toContain("36,5\u00a0%");
+    expect(out).toContain("22,3\u00a0%");
+    expect(out).toContain("94 avgjorda avdelningar");
+    // Skräll har under 100 hästar och får en asterisk med förklaring
+    expect(out).toContain("Färre än 100 hästar");
+    expect(out).not.toMatch(/ta-term[^>]*>Värde</);
   });
   it("omgångarna med träff i text", () => {
     expect(out).toContain("V85 · Solvalla · lör 10 okt");

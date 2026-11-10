@@ -1,6 +1,7 @@
 import { computeWinProbabilities, type WinProbability } from "./probability";
 import { computeSkrallMap, SKRALLBUD, type SkrallSignal } from "./skrall";
 import { computeEdgeMap, type EdgeResult } from "./edge";
+import { isOverplayed } from "./overplayed";
 import { computeFundamentalMapForRows, isDisagreement, scratchedMask, type FundamentalResult } from "./fundamental";
 import type { Race, Starter } from "./raceTypes";
 import type { SystemSelection } from "./types";
@@ -12,14 +13,15 @@ export const SORT_LABELS: Record<SortKey, string> = {
   chans: "Chans", streck: "Streck", odds: "Odds", grund: "Grund", cs: "CS", number: "Startnummer",
 };
 
-export interface Filters { value: boolean; skrall: boolean; skrallbud: boolean; signal: boolean; hideLongshots: boolean; search: string }
-export const EMPTY_FILTERS: Filters = { value: false, skrall: false, skrallbud: false, signal: false, hideLongshots: false, search: "" };
+export interface Filters { value: boolean; skrall: boolean; skrallbud: boolean; signal: boolean; overplayed: boolean; hideLongshots: boolean; search: string }
+export const EMPTY_FILTERS: Filters = { value: false, skrall: false, skrallbud: false, signal: false, overplayed: false, hideLongshots: false, search: "" };
 
 export function activeFilterCount(f: Filters): number {
-  return [f.value, f.skrall, f.skrallbud, f.signal, f.hideLongshots, f.search.trim().length > 0].filter(Boolean).length;
+  return [f.value, f.skrall, f.skrallbud, f.signal, f.overplayed, f.hideLongshots, f.search.trim().length > 0].filter(Boolean).length;
 }
 
-export type RowBadge = "skrall" | "signal" | "scratched" | null;
+/** Märken på en häst. overplayed och shoes är varningar. */
+export type RowBadge = "skrall" | "overplayed" | "shoes" | "signal" | "scratched";
 
 export interface RowModel {
   starter: Starter;
@@ -41,7 +43,12 @@ export interface RowModel {
   cs: number | null;
   csRank: number | null;
   disagree: boolean;
-  badge: RowBadge;
+  /** Märkena i visningsordning; en struken häst har bara "scratched" */
+  badges: RowBadge[];
+  /** Högt streckad häst där Chans ligger klart under strecket (lib/overplayed.ts) */
+  isOverplayed: boolean;
+  /** Får skor på jämfört med senast */
+  shoesOn: boolean;
   edgeScore: number;
   isEdge: boolean;
   form: string[];
@@ -68,7 +75,7 @@ export function computeRaceMaps(race: Race): RaceMaps {
   return {
     prob: Object.fromEntries(active.map((s, i) => [s.start_number, probs[i]])),
     skrall: computeSkrallMap(race.starters),
-    edge: computeEdgeMap(race.starters, race.start_time),
+    edge: computeEdgeMap(race.starters),
     fundamental: computeFundamentalMapForRows(race, raceDate, race.starters),
     scratched,
   };
@@ -117,7 +124,14 @@ export function buildRowModels(race: Race, maps: RaceMaps, selected: Set<number>
     const isValue = !scratched && (s.formscore ?? 0) > 55 && streckPct != null && chansPct != null && chansPct > streckPct;
     const edge = maps.edge[n];
     const isEdge = !scratched && (edge?.isEdge ?? false);
-    const badge: RowBadge = scratched ? "scratched" : maps.skrall[n]?.isCandidate ? "skrall" : isEdge ? "signal" : null;
+    const overplayed = !scratched && isOverplayed(chansPct, streckPct);
+    const shoesOn = !scratched && (edge?.shoesOn ?? false);
+    const badges: RowBadge[] = scratched ? ["scratched"] : [
+      ...(maps.skrall[n]?.isCandidate ? ["skrall" as const] : []),
+      ...(overplayed ? ["overplayed" as const] : []),
+      ...(shoesOn ? ["shoes" as const] : []),
+      ...(isEdge ? ["signal" as const] : []),
+    ];
     const grundPct = grund.get(n) ?? null;
     // En struken häst som redan ligger i systemet visas som vald och går att ta bort, men inte att lägga till
     const numberState: NumberState = results ? finishState(s.finish_position) : selected.has(n) ? "selected" : "idle";
@@ -139,7 +153,9 @@ export function buildRowModels(race: Race, maps: RaceMaps, selected: Set<number>
       cs: cs.get(n) ?? null,
       csRank: csRanks.get(n) ?? null,
       disagree: !scratched && isDisagreement(grundPct != null ? grundPct / 100 : null, streckPct),
-      badge,
+      badges,
+      isOverplayed: overplayed,
+      shoesOn,
       edgeScore: edge?.score ?? 0,
       isEdge,
       form: (s.last_5_results ?? []).map((r) => r.place),
@@ -177,7 +193,7 @@ export const rowKey = (r: Pick<RowModel, "raceNumber" | "n">) => `${r.raceNumber
  * hästar under 15 % streck som är topp 3 i sitt lopp på intjänat per start.
  * Ska få hela omgångens rader. Ger nycklar enligt rowKey.
  */
-export function skrallbudKeys(rows: RowModel[]): Set<string> {
+export function skrallbudKeys(rows: Pick<RowModel, "scratched" | "chansPct" | "streckPct" | "classRank" | "raceNumber" | "n">[]): Set<string> {
   const picks = rows
     .filter((r) => !r.scratched && r.chansPct != null && r.streckPct != null &&
       r.streckPct < SKRALLBUD.maxStreck && r.classRank != null && r.classRank <= SKRALLBUD.maxClassRank)
@@ -192,9 +208,10 @@ export function filterRows(rows: RowModel[], f: Filters, skrallbud?: Set<string>
   const bud = f.skrallbud ? skrallbud ?? skrallbudKeys(rows) : null;
   return rows.filter((r) =>
     (!f.value || r.isValue) &&
-    (!f.skrall || r.badge === "skrall") &&
+    (!f.skrall || r.badges.includes("skrall")) &&
     (!bud || bud.has(rowKey(r))) &&
     (!f.signal || r.isEdge) &&
+    (!f.overplayed || r.isOverplayed) &&
     (!f.hideLongshots || r.odds == null || r.odds <= 50) &&
     (!q || r.name.toLowerCase().includes(q) || r.driver.toLowerCase().includes(q) || r.starter.trainer.toLowerCase().includes(q))
   );
@@ -207,18 +224,19 @@ export const ALL_RACES = 0;
 export const ROUND_LIST_CAP = 20;
 
 /** Snabbknapparna i "Alla" — visar en sorts hästar åt gången */
-export type QuickFilter = "skrallbud" | "value" | "signal";
+export type QuickFilter = "skrallbud" | "value" | "signal" | "overplayed";
 export const QUICK_FILTERS: { key: QuickFilter; label: string }[] = [
   { key: "skrallbud", label: "Skrällbud" },
   { key: "value", label: "Värde" },
   { key: "signal", label: "Signal" },
+  { key: "overplayed", label: "Överspelad" },
 ];
-const MARK_FILTERS = ["skrall", "skrallbud", "value", "signal"] as const;
+const MARK_FILTERS = ["skrall", "skrallbud", "value", "signal", "overplayed"] as const;
 
 /** Slår på en snabbknapp (och stänger de andra märkesfiltren) eller stänger den om den redan var ensam på. */
 export function toggleQuickFilter(f: Filters, key: QuickFilter): Filters {
   const on = f[key] && MARK_FILTERS.every((k) => k === key || !f[k]);
-  return { ...f, skrall: false, skrallbud: false, value: false, signal: false, [key]: !on };
+  return { ...f, skrall: false, skrallbud: false, value: false, signal: false, overplayed: false, [key]: !on };
 }
 
 /** Antal hästar per snabbknapp (strukna räknas inte). skrallbud från skrallbudKeys på hela omgången. */
@@ -228,6 +246,7 @@ export function quickFilterCounts(rows: RowModel[], skrallbud: Set<string>): Rec
     skrallbud: live.filter((r) => skrallbud.has(rowKey(r))).length,
     value: live.filter((r) => r.isValue).length,
     signal: live.filter((r) => r.isEdge).length,
+    overplayed: live.filter((r) => r.isOverplayed).length,
   };
 }
 

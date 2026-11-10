@@ -2,7 +2,7 @@
  * Ordlistan — enda källan för förklaringar i appen. Samma texter står under
  * "## 10. Ordlista" i MANUAL.md; ändra båda samtidigt. `anchor` är rubrikens id.
  */
-export type TermId = "chans" | "streck" | "odds" | "varde" | "grund" | "cs" | "skrall" | "skrallbud" | "signal" | "oense" | "form" | "spar" | "vardeindex";
+export type TermId = "chans" | "streck" | "odds" | "varde" | "grund" | "cs" | "skrall" | "skrallbud" | "signal" | "overspelad" | "skorpa" | "oense" | "form" | "spar" | "vardeindex";
 
 export interface GlossaryEntry {
   title: string;
@@ -67,9 +67,24 @@ export const GLOSSARY: Record<TermId, GlossaryEntry> = {
   },
   signal: {
     title: "Signal",
-    what: "Tecken som inte syns i odds och streck: barfota-byte, toppkusk och stigande form ger plus. Skor på, sjunkande form och uppehåll över 60 dagar ger minus.",
-    how: "Märket visas när summan är +2 eller mer.",
+    what: "Tecken som inte syns i odds och streck: barfota-byte och stigande form ger plus. Skor på och sjunkande form ger minus.",
+    how: "Barfota runt om +2, barfota fram eller bak +1, stigande form +1, sjunkande form −1 och skor på −2. Märket visas när summan är +2 eller mer.",
+    note: `I 484 lopp med facit vann hästar med märket 10,5${NB}% av gångerna, mot 8,7${NB}% som chansen sa.`,
     anchor: "signal",
+  },
+  overspelad: {
+    title: "Överspelad",
+    what: "Högt streckad häst där chansen ligger klart under strecket. Spelarna har lagt mer på hästen än vinnaroddsen motiverar.",
+    how: `Streck minst 20${NB}% och chans högst 0,8 gånger strecket.`,
+    note: `I 484 lopp med facit hade sådana hästar i snitt 36${NB}% streck men vann 22${NB}% av gångerna. En varning när du funderar på en spik, inget förbud.`,
+    anchor: "överspelad",
+  },
+  skorpa: {
+    title: "Skor på",
+    what: "Hästen går med skor fram eller bak i dag men gick utan dem senast.",
+    how: "Räknas som −2 i Signal och visas som eget märke.",
+    note: `I 484 lopp med facit vann sådana hästar 5,5${NB}% av gångerna, mot 9,3${NB}% som chansen sa. Det höll i båda halvorna av perioden.`,
+    anchor: "skor-på",
   },
   oense: {
     title: "Oense",

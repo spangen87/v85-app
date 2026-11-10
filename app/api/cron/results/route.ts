@@ -1,18 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { fetchAndStoreResults } from "@/lib/results";
+import { stockholmDate } from "@/lib/autoFetch";
 
 // Flera omgångar kan behöva rättas i samma körning
 export const maxDuration = 60;
 
 /** Antal dagar bakåt som omgångar utan resultat plockas upp (fångar missade körningar) */
 const LOOKBACK_DAYS = 7;
-
-function stockholmDate(offsetDays = 0): string {
-  const d = new Date(Date.now() + offsetDays * 86_400_000);
-  // sv-SE ger ISO-format YYYY-MM-DD
-  return d.toLocaleDateString("sv-SE", { timeZone: "Europe/Stockholm" });
-}
 
 /**
  * Schemalagd resultathämtning (Vercel Cron, se vercel.json).

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Badge, Button, FormStrip, StartNumber, Term, ValueDelta } from "@/components/ui";
+import { Button, FormStrip, RowBadges, StartNumber, Term, ValueDelta } from "@/components/ui";
 import { computeDistanceSignal, computeTrackFactor } from "@/lib/analysis";
 import { fmtKmTime, fmtNum, fmtOrdinal, fmtPct } from "@/lib/format";
 import type { RowModel } from "@/lib/raceView";
@@ -9,10 +9,7 @@ import type { Race } from "@/lib/raceTypes";
 import type { TrackConfig } from "@/lib/types";
 
 function badge(r: RowModel) {
-  if (r.badge === "skrall") return <Badge tone="skrall">Skräll</Badge>;
-  if (r.badge === "signal") return <Badge tone="signal">{`Signal +${r.edgeScore}`}</Badge>;
-  if (r.badge === "scratched") return <Badge>Struken</Badge>;
-  return null;
+  return <span className="inline-flex gap-1"><RowBadges badges={r.badges} signalScore={r.edgeScore} /></span>;
 }
 
 export function RaceTable({ races, rows, trackConfig, canSelect, onToggle, onOpen, showRace = false }: {

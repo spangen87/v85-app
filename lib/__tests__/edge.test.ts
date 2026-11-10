@@ -8,7 +8,6 @@ function makeStarter(overrides: Partial<EdgeInput> = {}): EdgeInput {
     shoes_back: true,
     shoes_front_changed: false,
     shoes_back_changed: false,
-    driver_win_pct: 8,
     last_5_results: [],
     ...overrides,
   };
@@ -38,12 +37,15 @@ describe("computeEdgeSignals — skosignaler", () => {
     expect(sig?.label).toBe("Barfota fram");
   });
 
-  it("ger -1 när hästen får skor på", () => {
+  it("ger -2 när hästen får skor på, och markerar shoesOn", () => {
     const [res] = computeEdgeSignals([
       makeStarter({ shoes_front: true, shoes_front_changed: true }),
     ]);
     const sig = res.signals.find((s) => s.key === "skor_pa");
-    expect(sig?.points).toBe(-1);
+    expect(sig?.points).toBe(EDGE_THRESHOLDS.shoesOnPoints);
+    expect(sig?.points).toBe(-2);
+    expect(res.shoesOn).toBe(true);
+    expect(computeEdgeSignals([makeStarter()])[0].shoesOn).toBe(false);
   });
 
   it("ignorerar skosignaler när skoinfo inte rapporterats", () => {
@@ -62,40 +64,6 @@ describe("computeEdgeSignals — skosignaler", () => {
       makeStarter({ shoes_front: false, shoes_back: false }),
     ]);
     expect(res.signals).toHaveLength(0);
-  });
-});
-
-describe("computeEdgeSignals — toppkusk", () => {
-  const field = [
-    makeStarter({ start_number: 1, driver_win_pct: 22 }),
-    makeStarter({ start_number: 2, driver_win_pct: 18 }),
-    makeStarter({ start_number: 3, driver_win_pct: 9 }),
-    makeStarter({ start_number: 4, driver_win_pct: 5 }),
-  ];
-
-  it("flaggar fältets två bästa kuskar över tröskeln", () => {
-    const results = computeEdgeSignals(field);
-    expect(results[0].signals.some((s) => s.key === "toppkusk")).toBe(true);
-    expect(results[1].signals.some((s) => s.key === "toppkusk")).toBe(true);
-    expect(results[2].signals.some((s) => s.key === "toppkusk")).toBe(false);
-  });
-
-  it("kräver minst driverMinWinPct även för fältets bästa kusk", () => {
-    const weakField = [
-      makeStarter({ start_number: 1, driver_win_pct: 12 }),
-      makeStarter({ start_number: 2, driver_win_pct: 8 }),
-      makeStarter({ start_number: 3, driver_win_pct: 6 }),
-    ];
-    const results = computeEdgeSignals(weakField);
-    expect(results.every((r) => !r.signals.some((s) => s.key === "toppkusk"))).toBe(true);
-  });
-
-  it("hoppar över signalen när färre än 3 kuskar har data", () => {
-    const results = computeEdgeSignals([
-      makeStarter({ start_number: 1, driver_win_pct: 25 }),
-      makeStarter({ start_number: 2, driver_win_pct: null }),
-    ]);
-    expect(results[0].signals.some((s) => s.key === "toppkusk")).toBe(false);
   });
 });
 
@@ -155,54 +123,26 @@ describe("computeEdgeSignals — formtrend", () => {
   });
 });
 
-describe("computeEdgeSignals — uppehåll", () => {
-  it("flaggar mer än 60 dagars uppehåll", () => {
-    const [res] = computeEdgeSignals(
-      [makeStarter({ last_5_results: [{ place: "1", date: "2026-03-01" }] })],
-      "2026-06-13"
-    );
-    const sig = res.signals.find((s) => s.key === "uppehall");
-    expect(sig?.points).toBe(-1);
-  });
-
-  it("flaggar inte normal vila", () => {
-    const [res] = computeEdgeSignals(
-      [makeStarter({ last_5_results: [{ place: "1", date: "2026-05-30" }] })],
-      "2026-06-13"
-    );
-    expect(res.signals.some((s) => s.key === "uppehall")).toBe(false);
-  });
-
-  it("hoppar över signalen utan loppdatum eller med oparsbart datum", () => {
-    const noDate = computeEdgeSignals([
-      makeStarter({ last_5_results: [{ place: "1", date: "2026-01-01" }] }),
-    ])[0];
-    expect(noDate.signals.some((s) => s.key === "uppehall")).toBe(false);
-
-    const badDate = computeEdgeSignals(
-      [makeStarter({ last_5_results: [{ place: "1", date: "okänt" }] })],
-      "2026-06-13"
-    )[0];
-    expect(badDate.signals.some((s) => s.key === "uppehall")).toBe(false);
-  });
-});
-
 describe("computeEdgeSignals — kantpoäng och flaggning", () => {
+  const rising = [
+    { place: "1", date: "2026-06-10" },
+    { place: "2", date: "2026-05-20" },
+    { place: "6", date: "2026-05-01" },
+    { place: "0", date: "2026-04-12" },
+  ];
+  const falling = [
+    { place: "8", date: "2026-03-01" },
+    { place: "d", date: "2026-02-10" },
+    { place: "1", date: "2026-01-20" },
+    { place: "2", date: "2026-01-02" },
+  ];
+
   it("summerar poäng och flaggar vid minEdgeScore", () => {
-    const field = [
-      // Barfota runt om (+2) + toppkusk (+1) = +3 ⇒ kant
-      makeStarter({
-        start_number: 1,
-        shoes_front: false,
-        shoes_back: false,
-        shoes_front_changed: true,
-        shoes_back_changed: true,
-        driver_win_pct: 20,
-      }),
-      makeStarter({ start_number: 2, driver_win_pct: 10 }),
-      makeStarter({ start_number: 3, driver_win_pct: 7 }),
-    ];
-    const results = computeEdgeSignals(field);
+    const results = computeEdgeSignals([
+      // Barfota runt om (+2) + stigande form (+1) = +3
+      makeStarter({ start_number: 1, shoes_front: false, shoes_back: false, shoes_front_changed: true, shoes_back_changed: true, last_5_results: rising }),
+      makeStarter({ start_number: 2 }),
+    ]);
     expect(results[0].score).toBe(3);
     expect(results[0].isEdge).toBe(true);
     expect(results[1].score).toBe(0);
@@ -210,28 +150,17 @@ describe("computeEdgeSignals — kantpoäng och flaggning", () => {
   });
 
   it("negativa signaler drar ner poängen under flaggningsgränsen", () => {
-    const [res] = computeEdgeSignals(
-      [
-        makeStarter({
-          shoes_front: false,
-          shoes_back: false,
-          shoes_front_changed: true,
-          shoes_back_changed: true,
-          last_5_results: [
-            { place: "8", date: "2026-03-01" },
-            { place: "d", date: "2026-02-10" },
-            { place: "1", date: "2026-01-20" },
-            { place: "2", date: "2026-01-02" },
-          ],
-        }),
-        makeStarter({ start_number: 2 }),
-        makeStarter({ start_number: 3 }),
-      ],
-      "2026-06-13"
-    );
-    // +2 barfota, -1 form ner, -1 uppehåll = 0
-    expect(res.score).toBe(0);
+    const [res] = computeEdgeSignals([
+      makeStarter({ shoes_front: false, shoes_back: false, shoes_front_changed: true, shoes_back_changed: true, last_5_results: falling }),
+    ]);
+    // +2 barfota, −1 form ner
+    expect(res.score).toBe(1);
     expect(res.isEdge).toBe(false);
+  });
+
+  it("toppkusk och uppehåll ger inga signaler längre", () => {
+    const [res] = computeEdgeSignals([makeStarter({ last_5_results: [{ place: "1", date: "2025-01-01" }] })]);
+    expect(res.signals).toHaveLength(0);
   });
 
   it("minEdgeScore-tröskeln är den dokumenterade", () => {
@@ -258,7 +187,6 @@ describe("computeEdgeMap", () => {
         shoes_back: null,
         shoes_front_changed: null,
         shoes_back_changed: null,
-        driver_win_pct: null,
         last_5_results: null,
       }),
     ]);

@@ -4,6 +4,7 @@ import GithubSlugger from "github-slugger";
 import { GLOSSARY, isTermId, manualHref, type TermId } from "../glossary";
 import { SKRALL_THRESHOLDS, SKRALLBUD } from "../skrall";
 import { EDGE_THRESHOLDS } from "../edge";
+import { OVERPLAYED } from "../overplayed";
 
 const NB = " ";
 
@@ -22,7 +23,7 @@ function manualSlugs(): Set<string> {
   return out;
 }
 
-const IDS: TermId[] = ["chans", "streck", "odds", "varde", "grund", "cs", "skrall", "skrallbud", "signal", "oense", "form", "spar", "vardeindex"];
+const IDS: TermId[] = ["chans", "streck", "odds", "varde", "grund", "cs", "skrall", "skrallbud", "signal", "overspelad", "skorpa", "oense", "form", "spar", "vardeindex"];
 
 describe("GLOSSARY", () => {
   it("har titel och förklaring för varje term", () => {
@@ -54,7 +55,14 @@ describe("GLOSSARY", () => {
   it("signaltexten stämmer med trösklarna", () => {
     const text = `${GLOSSARY.signal.what} ${GLOSSARY.signal.how}`;
     expect(text).toContain(`+${EDGE_THRESHOLDS.minEdgeScore}`);
-    expect(text).toContain(`${EDGE_THRESHOLDS.maxRestDays} dagar`);
+    expect(text).toContain(`skor på −${Math.abs(EDGE_THRESHOLDS.shoesOnPoints)}`);
+    expect(GLOSSARY.skorpa.how).toContain(`−${Math.abs(EDGE_THRESHOLDS.shoesOnPoints)}`);
+  });
+
+  it("texten om överspelad stämmer med trösklarna", () => {
+    const how = GLOSSARY.overspelad.how ?? "";
+    expect(how).toContain(`${OVERPLAYED.minStreck}${NB}%`);
+    expect(how).toContain(String(OVERPLAYED.maxRatio).replace(".", ","));
   });
 
   it("isTermId och manualHref", () => {

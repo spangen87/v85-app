@@ -34,6 +34,7 @@
 .ta-badge-skrall { background: var(--skrall-soft); color: var(--skrall); }
 .ta-badge-value { background: var(--value-soft); color: var(--value); }
 .ta-badge-signal { background: var(--surface-sunken); color: var(--ink); }
+.ta-badge-warn { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1px var(--line-strong); }
 .ta-badge-place { background: var(--place-1); color: var(--on-place); }
 .ta-badge-accent { background: var(--accent-soft); color: var(--accent); }
 

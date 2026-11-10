@@ -8,6 +8,7 @@ export { SegmentedControl } from "./SegmentedControl";
 export { Sheet } from "./Sheet";
 export { Term, ExplainSheet, ExplainBody } from "./Term";
 export { HorseList, HorseRow } from "./HorseRow";
+export { RowBadges } from "./RowBadges";
 export { RaceTabs } from "./RaceTabs";
 export { Assessment } from "./Assessment";
 export { PageHeader } from "./PageHeader";

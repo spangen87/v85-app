@@ -59,9 +59,11 @@ Appen är byggd för att ge dig ett bättre beslutsunderlag – den ersätter in
 
 ## 3. Hämta omgång
 
-Innan du kan analysera en omgång måste du hämta data från ATG.
+Kommande omgångar hämtas automatiskt: V85, V86, V75, GS75, V64 och V65 för i dag och två dagar framåt läggs in av sig själva. Odds och streck uppdateras också automatiskt, tätare ju närmare start: två gånger per dygn när det är mer än ett dygn kvar, var tredje timme samma dag, varje halvtimme de sista tre timmarna och var tionde minut den sista timmen. Efter första start uppdateras de inte mer.
 
-> **Snabbväg:** Om nästa V86/V85/V75 är tillgänglig visas en **Hämta**-knapp direkt på startsidan – klicka på den för att hämta utan att välja datum manuellt.
+När du öppnar appen visas den närmast kommande omgången. Finns ingen kommande visas den senaste.
+
+Vill du ha en annan omgång, till exempel en äldre, hämtar du den själv:
 
 1. Tryck på omgångens namn högst upp (t.ex. **V85 · Solvalla**, eller **Välj omgång** om ingen är inladdad). Ett blad öppnas med datumväljare, tillgängliga spel och sparade omgångar. Har du ingen omgång inladdad öppnar startsidans knapp **Hämta en omgång** bladet åt dig.
 2. Välj ett **datum** i datumväljaren.
@@ -87,7 +89,7 @@ Varje avdelning kan visas som **Lista** (en rad per häst) eller **Tabell** (all
 ### 4.2 Sortera och filtrera
 
 - **Sortera** – Chans (standard), Streck, Odds, Grund, CS eller Startnummer.
-- **Filter** – bara värde, bara skräll, bara omgångens skrällbud, bara signal, dölj långskott (odds över 50) och sök på häst, kusk eller tränare. Siffran på knappen visar hur många filter som är på.
+- **Filter** – bara värde, bara skräll, bara omgångens skrällbud, bara signal, bara överspelade favoriter, dölj långskott (odds över 50) och sök på häst, kusk eller tränare. Siffran på knappen visar hur många filter som är på.
 
 Strukna hästar hamnar alltid sist, nedtonade, med märket **Struken**.
 
@@ -98,6 +100,7 @@ Fliken **Alla** först bland avdelningarna samlar omgångens alla hästar i en l
 - Utan filter visas de **20** första. **Visa alla** visar resten.
 - **Skrällbud** visar omgångens fem bästa skrällbud: hästar under 15 % streck som är topp 3 i sitt lopp på pengar per start, sorterade på chans (se [Skrällbud](#skrällbud)). Listan finns alltid, även när ingen häst har märket **Skräll**.
 - **Värde** och **Signal** visar bara hästar med det märket i hela omgången.
+- **Överspelad** visar omgångens högt streckade hästar där chansen ligger klart under strecket (se [Överspelad](#överspelad)). Titta där innan du bestämmer dina spikar.
 - Siffran på knappen är hur många hästar det gäller. Tryck igen för att visa alla. Knapparna är samma filter som under **Filter**.
 - **Sortera** och **Filter** fungerar som i en avdelning.
 - Tryck på startnumret för att lägga hästen i systemet och på raden för att öppna detaljvyn. Tillbakaknappen leder till **Hela omgången**.
@@ -107,7 +110,7 @@ Fliken **Alla** först bland avdelningarna samlar omgångens alla hästar i en l
 Varje häst visas på en rad:
 
 - **Startnumret** till vänster. Tryck på det för att lägga hästen i systemet. Efter loppet visar det placeringen (guld, silver, brons).
-- **Namn, kusk och senaste 5** i mitten, och högst ett märke: **Skräll** eller **Signal +2**.
+- **Namn, kusk och senaste 5** i mitten, och hästens märken: **Skräll**, **Signal +2** och varningarna **Överspelad** och **Skor på**. En häst kan ha flera.
 - **Chans** stort till höger, och under det **streck** och **odds**, som hos ATG. En grön siffra bredvid Chans, till exempel **+4,2**, betyder att hästen har spelvärde.
 
 Alla understrukna ord går att trycka på för en förklaring.
@@ -132,7 +135,7 @@ CS rankar fältet från 0 till 100: streck 85 %, form 5 %, jämnhet 5 % och klas
 
 Tabellen visar **Häst, Chans, Streck, Odds, Värde, Grund** och **Märke** (på dator även **Senaste 5**). **Visa alla kolumner** lägger till **CS, Distans, Spår** och **Resultat**. Tryck på en rubrik för att se vad den betyder, på namnet för att öppna hästen och på numret för att lägga den i systemet.
 
-Värde räknas som Chans minus streck. Grönt betyder att värdet är plus och att CS är över 55. Skräll och Signal förklaras i [Ordlistan](#10-ordlista).
+Värde räknas som Chans minus streck. Grönt betyder att värdet är plus och att CS är över 55. Skräll, Signal, Överspelad och Skor på förklaras i [Ordlistan](#10-ordlista).
 
 ### 6.2 Grundchans
 
@@ -180,7 +183,7 @@ Systemet sparas automatiskt som utkast, med namnet du gett det, några sekunder 
 
 #### Uppdatera odds före spelstopp
 
-Odds och streck ändras fram till start. **Chans** och förslagen bygger till största delen på oddsen, och modellen är framtagen på oddsen vid start. Därför blir de säkrast om omgången hämtas nära start. **Uppdatera odds** finns i kupongen, i sidopanelen och under **Föreslå system**. Knappen hämtar omgången igen från ATG. Under knappen står när odds och streck senast hämtades, till exempel **Odds och streck från kl. 15:42**. Hästarna du valt ligger kvar, och Chans, Värde och träffchansen räknas om. Har du ett förslag öppet under **Föreslå system** räknas det om med samma budget och spikar. Det tar upp till en minut. Tryck gärna 10–20 minuter före första start, innan du lämnar in systemet.
+Odds och streck ändras fram till start. **Chans** och förslagen bygger till största delen på oddsen, och modellen är framtagen på oddsen vid start. Därför blir de säkrast om omgången hämtas nära start. Appen uppdaterar dem själv (se [Hämta omgång](#3-hämta-omgång)), och med **Uppdatera odds** gör du det direkt. Knappen finns i kupongen, i sidopanelen och under **Föreslå system**. Knappen hämtar omgången igen från ATG. Under knappen står när odds och streck senast hämtades, till exempel **Odds och streck från kl. 15:42**. Hästarna du valt ligger kvar, och Chans, Värde och träffchansen räknas om. Har du ett förslag öppet under **Föreslå system** räknas det om med samma budget och spikar. Det tar upp till en minut. Tryck gärna 10–20 minuter före första start, innan du lämnar in systemet.
 
 #### Föreslå system (administratörer, under utvärdering)
 
@@ -305,9 +308,10 @@ Anteckningar är kopplade till en specifik häst och visas för alla i de sälls
 
 ## 9. Utvärdering
 
-**Utvärdering** i menyn visar hur ofta modellernas toppval har vunnit.
+**Utvärdering** i menyn visar hur märkena och toppvalen har gått.
 
-- **Träffsäkerhet** jämför **CS** och **Grund** sida vid sida: hur ofta **toppvalet vinner** (hästen med högst värde i avdelningen) och hur ofta **vinnaren finns bland topp 3**. Under tabellen står hur många omgångar och avdelningar som räknas. Grund räknas bara på avdelningar där den finns, och strukna hästar räknas inte.
+- **Märkenas facit** har en rad per märke: **Favoriten** (högst streck i loppet), **Överspelad**, **Skor på**, **Skräll**, **Skrällbud**, **Signal** och **Värde**. **Hästar** är hur många som haft märket, **Streck** och **Chans** är deras snitt (alltså hur ofta de borde ha vunnit) och **Vann** är hur ofta de gjorde det. Ett märke håller när Vann ligger på rätt sida om Chans: över för Skräll, Skrällbud, Signal och Värde, under för Överspelad och Skor på. Tabellen räknas om varje gång en omgång rättas, med samma regler som loppvyn använder i dag. En asterisk betyder färre än 100 hästar, och då är siffran osäker. Odds och streck är de som gällde vid senaste hämtningen före start.
+- **Toppval** jämför **CS** och **Grund** sida vid sida: hur ofta **toppvalet vinner** (hästen med högst värde i avdelningen) och hur ofta **vinnaren finns bland topp 3**. Under tabellen står hur många omgångar och avdelningar som räknas. Grund räknas bara på avdelningar där den finns, och strukna hästar räknas inte.
 - **Per omgång** listar varje omgång med raden **Toppval vann 3 av 8**. Tryck på en omgång för att se vinnare, toppval och utfall per avdelning: **Vann** (guld), **Topp 3**, eller ett streck för miss.
 - **Omgångar** visar hur många omgångar som väntar på resultat. **Visa alla omgångar** listar alla inladdade omgångar som **Rättad** eller **Väntar på resultat**.
 
@@ -357,7 +361,17 @@ Omgångens fem bästa hästar på chans bland dem som är lågt streckade men ha
 
 ### Signal
 
-Tecken som inte syns i odds och streck: barfota-byte, toppkusk och stigande form ger plus. Skor på, sjunkande form och uppehåll över 60 dagar ger minus. Märket visas när summan är +2 eller mer.
+Tecken som inte syns i odds och streck: barfota-byte och stigande form ger plus. Skor på och sjunkande form ger minus. Barfota runt om +2, barfota fram eller bak +1, stigande form +1, sjunkande form −1 och skor på −2. Märket visas när summan är +2 eller mer. I 484 lopp med facit vann hästar med märket 10,5 % av gångerna, mot 8,7 % som chansen sa.
+
+Toppkusk och uppehåll över 60 dagar räknades tidigare men gav ingen skillnad i utfallet och är borttagna (november 2026).
+
+### Överspelad
+
+Högt streckad häst där chansen ligger klart under strecket. Spelarna har lagt mer på hästen än vinnaroddsen motiverar. Streck minst 20 % och chans högst 0,8 gånger strecket. I 484 lopp med facit hade sådana hästar i snitt 36 % streck men vann 22 % av gångerna. En varning när du funderar på en spik, inget förbud.
+
+### Skor på
+
+Hästen går med skor fram eller bak i dag men gick utan dem senast. Räknas som −2 i Signal och visas som eget märke. I 484 lopp med facit vann sådana hästar 5,5 % av gångerna, mot 9,3 % som chansen sa. Det höll i båda halvorna av perioden.
 
 ### Oense
 
@@ -392,4 +406,4 @@ Hur stor utdelningen väntas bli om systemet går in, jämfört med ett system m
 
 ---
 
-*Manual version 4.1 – Trava*
+*Manual version 4.2 – Trava*

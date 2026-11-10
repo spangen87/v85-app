@@ -16,10 +16,12 @@ describe("HorseRow", () => {
     expect(html(<HorseRow {...base} valueDelta={6.5} />)).not.toContain("ta-delta");
   });
   it("högst ett märke", () => {
-    expect(html(<HorseRow {...base} badge="skrall" />).match(/class="ta-badge/g)).toHaveLength(1);
-    expect(html(<HorseRow {...base} badge="signal" signalScore={3} />)).toContain("Signal +3");
-    expect(html(<HorseRow {...base} badge="scratched" dimmed />)).toContain("Struken");
-    expect(html(<HorseRow {...base} badge="scratched" dimmed />)).toContain("ta-row-scratched");
+    expect(html(<HorseRow {...base} badges={["skrall"]} />).match(/class="ta-badge/g)).toHaveLength(1);
+    expect(html(<HorseRow {...base} badges={["overplayed", "shoes"]} />)).toContain("Överspelad");
+    expect(html(<HorseRow {...base} badges={["overplayed", "shoes"]} />).match(/ta-badge-warn/g)).toHaveLength(2);
+    expect(html(<HorseRow {...base} badges={["signal"]} signalScore={3} />)).toContain("Signal +3");
+    expect(html(<HorseRow {...base} badges={["scratched"]} dimmed />)).toContain("Struken");
+    expect(html(<HorseRow {...base} badges={["scratched"]} dimmed />)).toContain("ta-row-scratched");
   });
   it("saknade värden blir tankstreck", () => {
     const out = html(<HorseRow {...base} chans={null} streck={null} odds={null} />);
