@@ -134,3 +134,5 @@ create policy "Service kan skriva starters" on starters for all using (auth.role
 -- alter table odds_snapshots enable row level security;
 -- create policy "Inloggade kan läsa odds_snapshots" on odds_snapshots for select using (auth.role() = 'authenticated');
 -- create policy "Service kan skriva odds_snapshots" on odds_snapshots for all using (auth.role() = 'service_role');
+
+-- Migration v17 (schemalagd hämtning: pg_cron-jobbet trava-games + tabellen cron_tokens) — se migration_v17_cron_games.sql

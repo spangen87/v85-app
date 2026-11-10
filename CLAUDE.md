@@ -219,6 +219,7 @@ supabase/
 **track_configs** – banspecifik konfiguration (open_stretch, short_race_threshold)
 **group_last_seen** – när användare senast besökte ett sällskap (aktivitetsbadges)
 **push_subscriptions** – web push-prenumerationer per enhet (endpoint, p256dh, auth)
+**cron_tokens** – SHA-256 av nycklar som får anropa `/api/cron/games` (name, token_hash); bara service-klienten läser
 **odds_snapshots** – odds och streck per start vid varje hämtning (game_id, race_id, race_number, start_number, horse_id, odds, bet_distribution, captured_at); ingen FK mot races
 
 ---
@@ -327,8 +328,10 @@ lopp i databasen med samma regler som loppvyn. Räknas vid sidladdning, inga lag
 `refreshDue` (12 h / 3 h / 30 min / 10 min beroende på tid till start). Varje hämtning sparar
 en ögonblicksbild i `odds_snapshots`. `fetchAndStoreGame` delas med `/api/games/fetch`;
 `reuseHistory` hoppar över historikanropen vid ren oddsuppdatering. Körs var tionde minut av
-pg_cron + pg_net i Supabase (`migration_v17_cron_games.sql`, kräver `app_url` och
-`cron_secret` i Vault) och en gång per dygn av Vercel Cron som reserv.
+pg_cron + pg_net i Supabase (`migration_v17_cron_games.sql`, kräver `app_url` i Vault) och en
+gång per dygn av Vercel Cron som reserv (Vercels gratisnivå tillåter inte tätare). Databasens
+jobb loggar in med en egen nyckel: den ligger i Vault och appen jämför dess SHA-256 mot
+tabellen `cron_tokens` (`lib/cronAuth.ts`), så `CRON_SECRET` behöver inte kopieras till Supabase.
 Startsidan visar närmast kommande omgång (`defaultGameId`).
 
 ### Distansfaktor

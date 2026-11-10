@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { fetchAvailableGames } from "@/lib/atg";
 import { fetchAndStoreGame } from "@/lib/gameFetch";
+import { isAuthorizedCron, type CronTokenStore } from "@/lib/cronAuth";
 import { AUTO_FETCH_LOOKAHEAD_DAYS, AUTO_FETCH_TYPES, refreshDue, stockholmDate } from "@/lib/autoFetch";
 
 export const maxDuration = 60;
@@ -18,20 +19,16 @@ const BUDGET_MS = 35_000;
  *
  * Tål att köras hur ofta som helst: när inget är dags görs bara tre
  * kalenderanrop och ett par databasfrågor. Det som inte hinns med tas i
- * nästa körning. Skyddas med CRON_SECRET som /api/cron/results.
+ * nästa körning. Skyddas med CRON_SECRET (Vercel Cron) eller databasens egen
+ * nyckel (pg_cron), se lib/cronAuth.ts.
  */
 export async function GET(request: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) {
-    return NextResponse.json({ error: "CRON_SECRET saknas i miljön" }, { status: 500 });
-  }
-  if (request.headers.get("authorization") !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: "Obehörig" }, { status: 401 });
-  }
-
   const started = Date.now();
   const hasTime = () => Date.now() - started < BUDGET_MS;
   const supabase = createServiceClient();
+  if (!(await isAuthorizedCron(request.headers.get("authorization"), supabase as unknown as CronTokenStore))) {
+    return NextResponse.json({ error: "Obehörig" }, { status: 401 });
+  }
   const report: { game_id: string; action: "new" | "refresh"; status: string }[] = [];
   let skipped = 0;
 
